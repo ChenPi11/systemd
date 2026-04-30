@@ -9,6 +9,18 @@
 #include <string.h>
 #include <sys/random.h>
 
+/* getrandom() was added to Android bionic in API level 28. On older API levels the libc
+ * function is not declared in headers; use the raw syscall instead. */
+#if !defined(__ANDROID_API__) || __ANDROID_API__ >= 28
+#  define _bionic_getrandom getrandom
+#else
+#  include <sys/syscall.h>
+#  include <unistd.h>
+static ssize_t _bionic_getrandom(void *buf, size_t buflen, unsigned int flags) {
+        return (ssize_t) syscall(__NR_getrandom, buf, buflen, flags);
+}
+#endif
+
 const char* missing_crypt_preferred_method(void) {
         return "$6$";
 }
@@ -25,7 +37,7 @@ char* missing_crypt_gensalt_ra(const char *prefix, unsigned long count, const ch
         uint8_t raw[16];
         for (size_t i = 0; i < sizeof(raw);) {
                 size_t n = sizeof(raw) - i;
-                ssize_t l = getrandom(raw + i, n, 0);
+                ssize_t l = _bionic_getrandom(raw + i, n, 0);
                 if (l < 0)
                         return NULL;
                 if (l == 0) {

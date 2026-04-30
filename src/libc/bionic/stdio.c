@@ -42,6 +42,27 @@ int missing_renameat2(int __oldfd, const char *__old, int __newfd, const char *_
 DEFINE_PUT(putc);
 DEFINE_PUT(putc_unlocked);
 DEFINE_PUT(fputc);
-DEFINE_PUT(fputc_unlocked);
 DEFINE_FPUTS(fputs);
+
+/* fputc_unlocked() and fputs_unlocked() were added to Android bionic in API level 28.
+ * On older API levels they are not declared in <stdio.h>; provide _check_writable wrappers
+ * that fall back to the locking fputc()/fputs() equivalents instead. */
+#if !defined(__ANDROID_API__) || __ANDROID_API__ >= 28
+DEFINE_PUT(fputc_unlocked);
 DEFINE_FPUTS(fputs_unlocked);
+#else
+int fputc_unlocked_check_writable(int c, FILE *stream) {
+        if (!__fwritable(stream)) {
+                errno = EBADF;
+                return EOF;
+        }
+        return fputc(c, stream);
+}
+int fputs_unlocked_check_writable(const char *s, FILE *stream) {
+        if (!__fwritable(stream)) {
+                errno = EBADF;
+                return EOF;
+        }
+        return fputs(s, stream);
+}
+#endif

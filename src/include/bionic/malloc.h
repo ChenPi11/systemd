@@ -7,8 +7,11 @@
 #include <stdio.h>
 
 /* mallinfo2() was added to Android bionic in API level 28. On older API levels or non-Android
- * platforms where the configure check did not find it, provide a stub returning zeroes. */
-#if !defined(HAVE_MALLINFO2) && (!defined(__ANDROID_API__) || __ANDROID_API__ < 28)
+ * platforms where the configure check did not find it, provide a stub returning zeroes.
+ * The extra !defined(__MALLINFO_BODY) guard handles NDK >= 24 which defines struct mallinfo2
+ * via the __MALLINFO_BODY macro in <malloc.h> even when targeting API levels < 28. In that
+ * case the struct and function are already declared and we must not redefine them. */
+#if !defined(HAVE_MALLINFO2) && !defined(__MALLINFO_BODY) && (!defined(__ANDROID_API__) || __ANDROID_API__ < 28)
 struct mallinfo2 {
         size_t arena;    /* non-mmapped space allocated from system */
         size_t ordblks;  /* number of free chunks */
