@@ -22,10 +22,12 @@ int fputc_check_writable(int c, FILE *stream);
 int fputc_unlocked_check_writable(int c, FILE *stream);
 int fputs_check_writable(const char *s, FILE *stream);
 int fputs_unlocked_check_writable(const char *s, FILE *stream);
+size_t fwrite_unlocked_check_writable(const void *ptr, size_t size, size_t n, FILE *stream);
 
-#define putc           putc_check_writable
-#define putc_unlocked  putc_unlocked_check_writable
-#define fputc          fputc_check_writable
-#define fputc_unlocked fputc_unlocked_check_writable
-#define fputs          fputs_check_writable
-#define fputs_unlocked fputs_unlocked_check_writable
+#define putc            putc_check_writable
+#define putc_unlocked   putc_unlocked_check_writable
+#define fputc           fputc_check_writable
+#define fputc_unlocked  fputc_unlocked_check_writable
+#define fputs           fputs_check_writable
+#define fputs_unlocked  fputs_unlocked_check_writable
+#define fwrite_unlocked fwrite_unlocked_check_writable
