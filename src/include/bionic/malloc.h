@@ -6,7 +6,9 @@
 #include <errno.h>
 #include <stdio.h>
 
-#ifndef HAVE_MALLINFO2
+/* mallinfo2() was added to Android bionic in API level 28. On older API levels or non-Android
+ * platforms where the configure check did not find it, provide a stub returning zeroes. */
+#if !defined(HAVE_MALLINFO2) && (!defined(__ANDROID_API__) || __ANDROID_API__ < 28)
 struct mallinfo2 {
         size_t arena;    /* non-mmapped space allocated from system */
         size_t ordblks;  /* number of free chunks */
@@ -25,7 +27,9 @@ static inline struct mallinfo2 mallinfo2(void) {
 }
 #endif
 
-#ifndef HAVE_MALLOC_INFO
+/* malloc_info() was added to Android bionic in API level 23. On older API levels or non-Android
+ * platforms where the configure check did not find it, provide a stub returning -EOPNOTSUPP. */
+#if !defined(HAVE_MALLOC_INFO) && (!defined(__ANDROID_API__) || __ANDROID_API__ < 23)
 static inline int malloc_info(int options, FILE *stream) {
         if (options != 0)
                 errno = EINVAL;
@@ -35,7 +39,9 @@ static inline int malloc_info(int options, FILE *stream) {
 }
 #endif
 
-#ifndef HAVE_MALLOC_TRIM
+/* malloc_trim() has been in Android bionic since API level 1, so no stub is needed on Android.
+ * On other platforms (e.g. musl), provide a no-op stub if the configure check did not find it. */
+#if !defined(HAVE_MALLOC_TRIM) && !defined(__ANDROID_API__)
 static inline int malloc_trim(size_t pad) {
         return 0;
 }
