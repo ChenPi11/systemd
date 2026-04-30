@@ -1780,6 +1780,13 @@ if get_option('libc') == 'musl'
         ] + system_include_args
 
         system_includes += include_directories('src/include/musl', is_system : true)
+
+        # Also add as a project-wide argument to ensure all compilation units pick it up,
+        # regardless of how their include_directories are chained.
+        add_project_arguments(
+                '-isystem', meson.project_build_root()  / 'src/include/musl',
+                '-isystem', meson.project_source_root() / 'src/include/musl',
+                language : 'c')
 elif get_option('libc') == 'bionic'
         system_include_args = [
                 '-isystem', meson.project_build_root()  / 'src/include/bionic',
@@ -1787,6 +1794,13 @@ elif get_option('libc') == 'bionic'
         ] + system_include_args
 
         system_includes += include_directories('src/include/bionic', is_system : true)
+
+        # Also add as a project-wide argument to ensure all compilation units pick it up,
+        # regardless of how their include_directories are chained.
+        add_project_arguments(
+                '-isystem', meson.project_build_root()  / 'src/include/bionic',
+                '-isystem', meson.project_source_root() / 'src/include/bionic',
+                language : 'c')
 endif
 
 basic_includes = [
