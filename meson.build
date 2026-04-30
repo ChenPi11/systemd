@@ -1015,13 +1015,21 @@ endif
 #####################################################################
 
 threads = dependency('threads')
-librt = cc.find_library('rt')
+# On Android/bionic, all librt functions are included in libc; there is no separate librt.
+if get_option('libc') == 'bionic'
+        librt = []
+else
+        librt = cc.find_library('rt')
+endif
 libm = cc.find_library('m')
 libdl = cc.find_library('dl')
 
 # On some distributions that use musl (e.g. Alpine), libintl.h may be provided by gettext rather than musl.
 # In that case, we need to explicitly link with libintl.so.
-if cc.has_function('dgettext',
+# On Android/bionic, there is no gettext/libintl — it is simply not available.
+if get_option('libc') == 'bionic'
+        libintl = []
+elif cc.has_function('dgettext',
                    prefix : '''#include <libintl.h>''',
                    args : '-D_GNU_SOURCE')
         libintl = []

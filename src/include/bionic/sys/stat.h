@@ -64,3 +64,15 @@ static_assert(offsetof(struct statx, __pad1) == offsetof(struct statx, stx_dev_m
 #ifndef STATX_ATTR_WRITE_ATOMIC
 #define STATX_ATTR_WRITE_ATOMIC 0x00400000
 #endif
+
+/* statx() was added to Android bionic headers in API level 30. On older API levels, struct statx
+ * is not exposed by sys/stat.h either. Include linux/stat.h for the struct definition and provide
+ * a syscall-based inline wrapper. The underlying kernel syscall has been available since kernel 4.11. */
+#if !defined(__ANDROID_API__) || __ANDROID_API__ < 30
+#  include <linux/stat.h>
+#  include <sys/syscall.h>
+#  include <unistd.h>
+static inline int statx(int dir_fd, const char *path, int flags, unsigned mask, struct statx *buf) {
+        return (int) syscall(__NR_statx, dir_fd, path, flags, mask, buf);
+}
+#endif

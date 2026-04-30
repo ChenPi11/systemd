@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <endian.h>
 #include "basic-forward.h"
 
 struct siphash {

@@ -39,9 +39,10 @@ static inline int malloc_info(int options, FILE *stream) {
 }
 #endif
 
-/* malloc_trim() has been in Android bionic since API level 1, so no stub is needed on Android.
- * On other platforms (e.g. musl), provide a no-op stub if the configure check did not find it. */
-#if !defined(HAVE_MALLOC_TRIM) && !defined(__ANDROID_API__)
+/* malloc_trim() is not declared in Android bionic's <malloc.h> and is not exported from the
+ * NDK stub libraries. Provide a no-op inline for Android and for other platforms (e.g. musl)
+ * where the configure check did not find it. */
+#ifndef HAVE_MALLOC_TRIM
 static inline int malloc_trim(size_t pad) {
         return 0;
 }
