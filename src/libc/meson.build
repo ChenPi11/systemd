@@ -18,6 +18,7 @@ libc_wrapper_sources = files(
 )
 
 subdir('musl')
+subdir('bionic')
 
 sources += libc_wrapper_sources
 

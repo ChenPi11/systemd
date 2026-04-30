@@ -58,8 +58,13 @@ struct ucred;
 
 /* To forward declare FILE and DIR, we have to declare the internal struct names for them. Since these are
  * used for C++ symbol name mangling, they're effectively part of the ABI and won't actually change. */
+#if defined(__BIONIC__)
+typedef struct __sFILE FILE;
+typedef struct DIR DIR;
+#else
 typedef struct _IO_FILE FILE;
 typedef struct __dirstream DIR;
+#endif
 
 /* 3rd-party library forward declarations */
 

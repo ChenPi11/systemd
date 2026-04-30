@@ -68,8 +68,8 @@ static int filter_glob_result(char * const *result, const char *path, char ***re
                 if (!ret)
                         return 0; /* Found at least one entry, let's return earlier. */
 
-                /* When musl is used, each entry is not a head of allocated memory. Hence, it is
-                 * necessary to copy the string. */
+                /* When musl is used (or other non-glibc libc), each entry may not be a head of allocated
+                 * memory. Hence, it is necessary to copy the string. */
                 r = strv_extend_with_size(&filtered, &n_filtered, *p);
                 if (r < 0)
                         return r;
@@ -87,6 +87,7 @@ static int filter_glob_result(char * const *result, const char *path, char ***re
 DEFINE_TRIVIAL_DESTRUCTOR(closedir_wrapper, void, closedir);
 
 int safe_glob_full(const char *path, int flags, opendir_t opendir_func, char ***ret) {
+#ifdef GLOB_ALTDIRFUNC
         _cleanup_(globfree) glob_t g = {
                 .gl_closedir = closedir_wrapper,
                 .gl_readdir = (struct dirent* (*)(void *)) readdir_no_dot,
@@ -94,12 +95,19 @@ int safe_glob_full(const char *path, int flags, opendir_t opendir_func, char ***
                 .gl_lstat = lstat,
                 .gl_stat = stat,
         };
+#else
+        _cleanup_(globfree) glob_t g = {};
+#endif
         int r;
 
         assert(path);
 
         errno = 0;
+#ifdef GLOB_ALTDIRFUNC
         r = glob(path, flags | GLOB_ALTDIRFUNC, NULL, &g);
+#else
+        r = glob(path, flags, NULL, &g);
+#endif
         if (r == GLOB_NOMATCH)
                 return -ENOENT;
         if (r == GLOB_NOSPACE)

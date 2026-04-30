@@ -1046,7 +1046,7 @@ else
         libatomic = []
 endif
 
-if get_option('libc') == 'musl'
+if get_option('libc') in ['musl', 'bionic']
         libcrypt = []
         libcrypt_cflags = []
         have = get_option('libcrypt').allowed()
@@ -1555,7 +1555,7 @@ foreach tuple : [
                 ['efi'],
                 ['environment-d'],
                 ['firstboot'],
-                ['gshadow',         get_option('libc') != 'musl', 'musl does not support it'],
+                ['gshadow',         get_option('libc') not in ['musl', 'bionic'], 'musl/bionic does not support it'],
                 ['hibernate'],
                 ['hostnamed'],
                 ['hwdb'],
@@ -1571,8 +1571,8 @@ foreach tuple : [
                 ['mountfsd'],
                 ['networkd'],
                 ['nsresourced'],
-                ['nss-myhostname',  get_option('libc') != 'musl', 'musl does not support it'],
-                ['nss-systemd',     get_option('libc') != 'musl', 'musl does not support it'],
+                ['nss-myhostname',  get_option('libc') not in ['musl', 'bionic'], 'musl/bionic does not support it'],
+                ['nss-systemd',     get_option('libc') not in ['musl', 'bionic'], 'musl/bionic does not support it'],
                 ['oomd'],
                 ['portabled'],
                 ['pstore'],
@@ -1587,7 +1587,7 @@ foreach tuple : [
                 ['timesyncd'],
                 ['tmpfiles'],
                 ['tpm'],
-                ['utmp',            get_option('libc') != 'musl', 'musl does not support it'],
+                ['utmp',            get_option('libc') not in ['musl', 'bionic'], 'musl/bionic does not support it'],
                 ['userdb'],
                 ['vconsole'],
                 ['xdg-autostart'],
@@ -1609,15 +1609,15 @@ foreach tuple : [['nss-mymachines', 'machined'],
                  ['nss-resolve',    'resolve']]
         want = get_option(tuple[0])
         if want.enabled()
-                if get_option('libc') == 'musl'
-                        error('@0@ is requested but musl does not support it'.format(tuple[0]))
+                if get_option('libc') in ['musl', 'bionic']
+                        error('@0@ is requested but musl/bionic does not support it'.format(tuple[0]))
                 endif
                 if not get_option(tuple[1])
                         error('@0@ is requested but @1@ is disabled'.format(tuple[0], tuple[1]))
                 endif
                 have = true
         elif want.allowed()
-                have = get_option(tuple[1]) and get_option('libc') != 'musl'
+                have = get_option(tuple[1]) and get_option('libc') not in ['musl', 'bionic']
         else
                 have = false
         endif
@@ -1780,6 +1780,13 @@ if get_option('libc') == 'musl'
         ] + system_include_args
 
         system_includes += include_directories('src/include/musl', is_system : true)
+elif get_option('libc') == 'bionic'
+        system_include_args = [
+                '-isystem', meson.project_build_root()  / 'src/include/bionic',
+                '-isystem', meson.project_source_root() / 'src/include/bionic',
+        ] + system_include_args
+
+        system_includes += include_directories('src/include/bionic', is_system : true)
 endif
 
 basic_includes = [

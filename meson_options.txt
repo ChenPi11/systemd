@@ -413,7 +413,7 @@ option('ima', type : 'boolean',
 option('ipe', type : 'boolean',
        description : 'IPE support')
 
-option('libc', type : 'combo', choices : ['glibc', 'musl'],
+option('libc', type : 'combo', choices : ['glibc', 'musl', 'bionic'],
        description : 'libc implementation to be used')
 option('acl', type : 'feature', deprecated : { 'true' : 'enabled', 'false' : 'disabled' },
        description : 'libacl support')
