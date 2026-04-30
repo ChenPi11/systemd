@@ -19,5 +19,5 @@
 #endif
 
 #ifndef PR_THP_DISABLE_EXCEPT_ADVISED
-#define PR_THP_DISABLE_EXCEPT_ADVISED	(1 << 1)
+#define PR_THP_DISABLE_EXCEPT_ADVISED   (1 << 1)
 #endif
