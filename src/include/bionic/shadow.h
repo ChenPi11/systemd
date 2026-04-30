@@ -1,12 +1,9 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 #pragma once
 
-/* Android/bionic does not have shadow password support. Provide minimal stubs so that code
- * that handles shadow passwords gracefully compiles; at runtime these stubs return errors. */
-
 #include <errno.h>
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 
 struct spwd {
         char   *sp_namp;   /* Login name */

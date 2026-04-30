@@ -3,6 +3,7 @@
 
 #include <errno.h>
 #include <stddef.h>
+#include <stdio.h>
 
 struct sgrp {
         char *sg_namp;
@@ -19,4 +20,10 @@ static inline int getsgnam_r(
                 struct sgrp **__result) {
 
         return EOPNOTSUPP; /* this function returns positive errno in case of error. */
+}
+
+/* fgetsgent() is a GNU extension not available in Android bionic. */
+static inline struct sgrp *fgetsgent(FILE *stream) {
+        errno = EOPNOTSUPP;
+        return NULL;
 }
