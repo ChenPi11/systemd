@@ -45,7 +45,7 @@ static inline ssize_t copy_file_range(int fd_in, off64_t *off_in, int fd_out, of
 
 /* syncfs() was added to Android bionic headers in API level 28. Provide a syscall-based wrapper
  * for older API levels; the syscall has been available in the kernel since Linux 2.6.39. */
-#if defined(__ANDROID_API__) && __ANDROID_API__ < 28
+#if !defined(__ANDROID_API__) || __ANDROID_API__ < 28
 #  include <sys/syscall.h>
 static inline int syncfs(int fd) {
         return (int) syscall(__NR_syncfs, fd);
