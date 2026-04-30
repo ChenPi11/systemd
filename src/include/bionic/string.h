@@ -16,10 +16,10 @@ char* strerror_r_gnu(int errnum, char *buf, size_t buflen);
  * sysroot headers (including r29) do not expose a declaration for it in <string.h>.
  * Provide an inline implementation unconditionally for all Android API levels so that
  * code using explicit_bzero() compiles regardless of the target API level. On API >= 28
- * this inline will simply shadow the libc symbol (both do the same thing, so this is safe). */
+ * this inline will simply shadow the libc symbol (both do the same thing, so this is safe).
+ * The asm volatile clobbers both "memory" and the buffer itself via a char-array cast to
+ * ensure the compiler cannot eliminate the memset as a dead store. */
 static inline void explicit_bzero(void *p, size_t n) {
-        if (n > 0) {
-                memset(p, 0, n);
-                __asm__ __volatile__("" : : "r"(p) : "memory");
-        }
+        memset(p, 0, n);
+        __asm__ __volatile__("" : : "r"(p), "m"(*(char (*)[n]) p) : "memory");
 }

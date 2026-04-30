@@ -32,7 +32,10 @@ static inline void *reallocarray(void *ptr, size_t nmemb, size_t size) {
 #endif
 
 /* qsort_r() was added to Android bionic headers in API level 36. Provide an implementation
- * for older API levels using a thread-local variable to pass the comparison context. */
+ * for older API levels using a thread-local variable to pass the comparison context.
+ * Note: this implementation is not reentrant — if the comparison function itself calls
+ * qsort_r(), the inner call will overwrite _bionic_qsort_r_ctx. This matches the usage
+ * patterns in systemd where no comparison function recursively calls qsort_r(). */
 #if !defined(__ANDROID_API__) || __ANDROID_API__ < 36
 static __thread struct {
         int (*compar)(const void *, const void *, void *);

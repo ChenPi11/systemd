@@ -9,6 +9,8 @@
 
 #include <sys/syscall.h>
 #include <sys/types.h>
+#include <stdarg.h>
+#include <fcntl.h>
 #include <time.h>
 #include <unistd.h>
 #include <errno.h>
@@ -41,8 +43,16 @@ static inline int mq_unlink(const char *name) {
 }
 
 static inline mqd_t mq_open(const char *name, int oflag, ...) {
-        /* mq_open() is variadic (mode and attr are optional). As a syscall wrapper we use a fixed
-         * signature; callers with mode/attr arguments will still work because the extra args are
-         * placed in the registers that the syscall reads. */
-        return (mqd_t) syscall(__NR_mq_open, name, oflag, 0666, NULL);
+        /* mq_open() is variadic: when oflag includes O_CREAT, callers pass mode (mode_t)
+         * and optionally attr (struct mq_attr *). Extract them via va_list. */
+        mode_t mode = 0;
+        struct mq_attr *attr = NULL;
+        if (oflag & O_CREAT) {
+                va_list ap;
+                va_start(ap, oflag);
+                mode = va_arg(ap, mode_t);
+                attr = va_arg(ap, struct mq_attr *);
+                va_end(ap);
+        }
+        return (mqd_t) syscall(__NR_mq_open, name, oflag, (unsigned long) mode, attr);
 }
