@@ -52,8 +52,8 @@ static inline void qsort_r(void *base, size_t nmemb, size_t size,
 }
 #endif
 
-/* program_invocation_name and program_invocation_short_name are GNU extensions provided by
- * glibc's CRT startup code. On Android, declare them here; they are defined and initialized
- * in src/libc/bionic/stdlib.c via a constructor attribute. */
-extern char *program_invocation_name;
-extern char *program_invocation_short_name;
+/* program_invocation_name and program_invocation_short_name are GNU extensions declared in
+ * <errno.h> on glibc. On Android, they are declared via our bionic/errno.h override and
+ * defined in src/libc/bionic/stdlib.c. Include errno.h here to ensure they are visible
+ * to any code that only includes <stdlib.h>. */
+#include <errno.h>
