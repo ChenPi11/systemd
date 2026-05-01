@@ -618,6 +618,77 @@ foreach ident : [
         conf.set10('HAVE_' + ident[0].to_upper(), have)
 endforeach
 
+# For bionic environments (stock Android NDK and variants such as Termux), probe which
+# user/group/shadow API functions and headers are natively provided.  Different bionic
+# variants differ considerably: stock NDK may lack shadow support entirely, while Termux
+# ships stub implementations of most of these APIs.  The bionic shim headers under
+# src/include/bionic use the resulting HAVE_* macros to skip stub definitions for
+# functions that already exist in the target environment.
+#
+# We use cc.links() with -Wl,--no-undefined rather than cc.has_function() because some
+# bionic variants (e.g. Termux) declare these functions in their system headers without
+# providing a working implementation in the library.  cc.has_function() can be fooled by
+# such declarations; cc.links() with --no-undefined catches the missing symbols at link
+# time, which matches how the final build is linked.
+if get_option('libc') == 'bionic'
+        _bionic_link_args = ['-D_GNU_SOURCE', '-Wl,--no-undefined']
+
+        # Functions with standard system headers available on all bionic variants.
+        foreach ident : [
+                ['setpwent',  '#include <pwd.h>',                     'setpwent();'],
+                ['getpwent',  '#include <pwd.h>',                     'getpwent();'],
+                ['endpwent',  '#include <pwd.h>',                     'endpwent();'],
+                ['fgetpwent', '#include <stdio.h>\n#include <pwd.h>', 'fgetpwent(0);'],
+                ['putpwent',  '#include <stdio.h>\n#include <pwd.h>', 'putpwent(0, 0);'],
+                ['setgrent',  '#include <grp.h>',                     'setgrent();'],
+                ['getgrent',  '#include <grp.h>',                     'getgrent();'],
+                ['endgrent',  '#include <grp.h>',                     'endgrent();'],
+                ['fgetgrent', '#include <stdio.h>\n#include <grp.h>', 'fgetgrent(0);'],
+                ['putgrent',  '#include <stdio.h>\n#include <grp.h>', 'putgrent(0, 0);'],
+        ]
+                have = cc.links(
+                        ident[1] + '\nint main(void) { ' + ident[2] + ' return 0; }',
+                        name : ident[0],
+                        args : _bionic_link_args,
+                )
+                conf.set10('HAVE_' + ident[0].to_upper(), have)
+        endforeach
+
+        # Shadow/GShadow functions: bionic has no system shadow.h or gshadow.h.  Provide
+        # minimal struct and function forward-declarations for the link test only.
+        _spwd_decls = '''
+#include <stddef.h>
+#include <stdio.h>
+struct spwd { char *sp_namp, *sp_pwdp; long sp_lstchg, sp_min, sp_max, sp_warn, sp_inact, sp_expire; unsigned long sp_flag; };
+struct spwd *getspnam(const char *name);
+int getspnam_r(const char *name, struct spwd *spbuf, char *buf, size_t buflen, struct spwd **spbufp);
+struct spwd *fgetspent(FILE *stream);
+int putspent(const struct spwd *sp, FILE *stream);
+'''
+        _sgrp_decls = '''
+#include <stddef.h>
+#include <stdio.h>
+struct sgrp { char *sg_namp, *sg_passwd; char **sg_adm, **sg_mem; };
+struct sgrp *fgetsgent(FILE *stream);
+int getsgnam_r(const char *name, struct sgrp *result_buf, char *buffer, size_t buflen, struct sgrp **result);
+'''
+        foreach ident : [
+                ['getspnam',   _spwd_decls, 'getspnam(0);'],
+                ['getspnam_r', _spwd_decls, 'getspnam_r(0, 0, 0, 0, 0);'],
+                ['fgetspent',  _spwd_decls, 'fgetspent(0);'],
+                ['putspent',   _spwd_decls, 'putspent(0, 0);'],
+                ['fgetsgent',  _sgrp_decls, 'fgetsgent(0);'],
+                ['getsgnam_r', _sgrp_decls, 'getsgnam_r(0, 0, 0, 0, 0);'],
+        ]
+                have = cc.links(
+                        ident[1] + 'int main(void) { ' + ident[2] + ' return 0; }',
+                        name : ident[0],
+                        args : _bionic_link_args,
+                )
+                conf.set10('HAVE_' + ident[0].to_upper(), have)
+        endforeach
+endif
+
 #####################################################################
 
 awk    = find_program('awk')
@@ -1015,13 +1086,21 @@ endif
 #####################################################################
 
 threads = dependency('threads')
-librt = cc.find_library('rt')
+# On Android/bionic, all librt functions are included in libc; there is no separate librt.
+if get_option('libc') == 'bionic'
+        librt = []
+else
+        librt = cc.find_library('rt')
+endif
 libm = cc.find_library('m')
 libdl = cc.find_library('dl')
 
 # On some distributions that use musl (e.g. Alpine), libintl.h may be provided by gettext rather than musl.
 # In that case, we need to explicitly link with libintl.so.
-if cc.has_function('dgettext',
+# On Android/bionic, there is no gettext/libintl — it is simply not available.
+if get_option('libc') == 'bionic'
+        libintl = []
+elif cc.has_function('dgettext',
                    prefix : '''#include <libintl.h>''',
                    args : '-D_GNU_SOURCE')
         libintl = []
@@ -1046,7 +1125,7 @@ else
         libatomic = []
 endif
 
-if get_option('libc') == 'musl'
+if get_option('libc') in ['musl', 'bionic']
         libcrypt = []
         libcrypt_cflags = []
         have = get_option('libcrypt').allowed()
@@ -1555,7 +1634,7 @@ foreach tuple : [
                 ['efi'],
                 ['environment-d'],
                 ['firstboot'],
-                ['gshadow',         get_option('libc') != 'musl', 'musl does not support it'],
+                ['gshadow',         get_option('libc') not in ['musl', 'bionic'], 'musl/bionic does not support it'],
                 ['hibernate'],
                 ['hostnamed'],
                 ['hwdb'],
@@ -1571,8 +1650,8 @@ foreach tuple : [
                 ['mountfsd'],
                 ['networkd'],
                 ['nsresourced'],
-                ['nss-myhostname',  get_option('libc') != 'musl', 'musl does not support it'],
-                ['nss-systemd',     get_option('libc') != 'musl', 'musl does not support it'],
+                ['nss-myhostname',  get_option('libc') not in ['musl', 'bionic'], 'musl/bionic does not support it'],
+                ['nss-systemd',     get_option('libc') not in ['musl', 'bionic'], 'musl/bionic does not support it'],
                 ['oomd'],
                 ['portabled'],
                 ['pstore'],
@@ -1587,7 +1666,7 @@ foreach tuple : [
                 ['timesyncd'],
                 ['tmpfiles'],
                 ['tpm'],
-                ['utmp',            get_option('libc') != 'musl', 'musl does not support it'],
+                ['utmp',            get_option('libc') not in ['musl', 'bionic'], 'musl/bionic does not support it'],
                 ['userdb'],
                 ['vconsole'],
                 ['xdg-autostart'],
@@ -1609,15 +1688,15 @@ foreach tuple : [['nss-mymachines', 'machined'],
                  ['nss-resolve',    'resolve']]
         want = get_option(tuple[0])
         if want.enabled()
-                if get_option('libc') == 'musl'
-                        error('@0@ is requested but musl does not support it'.format(tuple[0]))
+                if get_option('libc') in ['musl', 'bionic']
+                        error('@0@ is requested but musl/bionic does not support it'.format(tuple[0]))
                 endif
                 if not get_option(tuple[1])
                         error('@0@ is requested but @1@ is disabled'.format(tuple[0], tuple[1]))
                 endif
                 have = true
         elif want.allowed()
-                have = get_option(tuple[1]) and get_option('libc') != 'musl'
+                have = get_option(tuple[1]) and get_option('libc') not in ['musl', 'bionic']
         else
                 have = false
         endif
@@ -1780,6 +1859,27 @@ if get_option('libc') == 'musl'
         ] + system_include_args
 
         system_includes += include_directories('src/include/musl', is_system : true)
+
+        # Also add as a project-wide argument to ensure all compilation units pick it up,
+        # regardless of how their include_directories are chained.
+        add_project_arguments(
+                '-isystem', meson.project_build_root()  / 'src/include/musl',
+                '-isystem', meson.project_source_root() / 'src/include/musl',
+                language : 'c')
+elif get_option('libc') == 'bionic'
+        system_include_args = [
+                '-isystem', meson.project_build_root()  / 'src/include/bionic',
+                '-isystem', meson.project_source_root() / 'src/include/bionic',
+        ] + system_include_args
+
+        system_includes += include_directories('src/include/bionic', is_system : true)
+
+        # Also add as a project-wide argument to ensure all compilation units pick it up,
+        # regardless of how their include_directories are chained.
+        add_project_arguments(
+                '-isystem', meson.project_build_root()  / 'src/include/bionic',
+                '-isystem', meson.project_source_root() / 'src/include/bionic',
+                language : 'c')
 endif
 
 basic_includes = [

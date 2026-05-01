@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 #pragma once
 
+#include <endian.h>
 #include "basic-forward.h"
 
 #define UTF8_REPLACEMENT_CHARACTER "\xef\xbf\xbd"
