@@ -646,9 +646,6 @@ if get_option('libc') == 'bionic'
                 have = cc.has_function(ident[0], prefix : ident[1], args : '-D_GNU_SOURCE')
                 conf.set10('HAVE_' + ident[0].to_upper(), have)
         endforeach
-
-        conf.set10('HAVE_SHADOW_H',  cc.has_header('shadow.h'))
-        conf.set10('HAVE_GSHADOW_H', cc.has_header('gshadow.h'))
 endif
 
 #####################################################################

@@ -2,16 +2,14 @@
 #pragma once
 
 /* Android/bionic does not have shadow password support in the stock NDK.  Some bionic
- * variants (e.g. Termux) do provide their own shadow.h with stub implementations.
- * When meson detected a native shadow.h (HAVE_SHADOW_H), delegate to it via #include_next
- * so that its struct spwd definition and any functions it declares are used directly.
- * Otherwise, provide our own struct spwd definition and full function stubs. */
+ * variants (e.g. Termux) provide stub implementations of shadow functions, but do not
+ * ship a standalone shadow.h header.  Always define struct spwd here so callers get a
+ * consistent definition, and provide function stubs for any functions that meson did not
+ * find in the target environment (guarded by HAVE_<FUNC> from config.h). */
 
-#ifdef HAVE_SHADOW_H
-#  include_next <shadow.h>
-#else
-
+#include <errno.h>
 #include <stddef.h>
+#include <stdio.h>
 
 struct spwd {
         char   *sp_namp;   /* Login name */
@@ -24,13 +22,6 @@ struct spwd {
         long    sp_expire; /* Date when account expires */
         unsigned long sp_flag; /* Reserved */
 };
-
-#endif /* HAVE_SHADOW_H */
-
-/* Provide stubs for any shadow functions that were not found in the native headers.
- * Each stub is guarded by HAVE_<FUNCNAME> set by meson's cc.has_function() probe. */
-#include <errno.h>
-#include <stdio.h>
 
 #ifndef HAVE_GETSPNAM
 static inline struct spwd *getspnam(const char *name) {

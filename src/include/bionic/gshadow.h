@@ -1,14 +1,14 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 #pragma once
 
-/* Android/bionic does not have GShadow (group shadow) support in the stock NDK.  Some
- * bionic variants may provide their own gshadow.h.  When meson detected a native gshadow.h
- * (HAVE_GSHADOW_H), delegate to it via #include_next.  Otherwise provide our own struct
- * sgrp definition and function stubs. */
+/* Android/bionic does not have GShadow (group shadow) support in the stock NDK, and no
+ * known bionic variant ships a standalone gshadow.h.  Always define struct sgrp here and
+ * provide function stubs for any functions that meson did not find in the target
+ * environment (guarded by HAVE_<FUNC> from config.h). */
 
-#ifdef HAVE_GSHADOW_H
-#  include_next <gshadow.h>
-#else
+#include <errno.h>
+#include <stddef.h>
+#include <stdio.h>
 
 struct sgrp {
         char *sg_namp;
@@ -16,13 +16,6 @@ struct sgrp {
         char **sg_adm;
         char **sg_mem;
 };
-
-#endif /* HAVE_GSHADOW_H */
-
-/* Provide stubs for any gshadow functions that were not found in the native headers. */
-#include <errno.h>
-#include <stddef.h>
-#include <stdio.h>
 
 #ifndef HAVE_GETSGNAM_R
 static inline int getsgnam_r(
