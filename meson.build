@@ -618,6 +618,39 @@ foreach ident : [
         conf.set10('HAVE_' + ident[0].to_upper(), have)
 endforeach
 
+# For bionic environments (stock Android NDK and variants such as Termux), probe which
+# user/group/shadow API functions and headers are natively provided.  Different bionic
+# variants differ considerably: stock NDK may lack shadow support entirely, while Termux
+# ships stub implementations of most of these APIs.  The bionic shim headers under
+# src/include/bionic use the resulting HAVE_* macros to skip stub definitions for
+# functions that already exist in the target environment.
+if get_option('libc') == 'bionic'
+        foreach ident : [
+                ['setpwent',   '#include <pwd.h>'],
+                ['getpwent',   '#include <pwd.h>'],
+                ['endpwent',   '#include <pwd.h>'],
+                ['fgetpwent',  '#include <stdio.h>\n#include <pwd.h>'],
+                ['putpwent',   '#include <stdio.h>\n#include <pwd.h>'],
+                ['setgrent',   '#include <grp.h>'],
+                ['getgrent',   '#include <grp.h>'],
+                ['endgrent',   '#include <grp.h>'],
+                ['fgetgrent',  '#include <stdio.h>\n#include <grp.h>'],
+                ['putgrent',   '#include <stdio.h>\n#include <grp.h>'],
+                ['getspnam',   '#include <shadow.h>'],
+                ['getspnam_r', '#include <shadow.h>'],
+                ['fgetspent',  '#include <shadow.h>'],
+                ['putspent',   '#include <shadow.h>'],
+                ['fgetsgent',  '#include <gshadow.h>'],
+                ['getsgnam_r', '#include <gshadow.h>'],
+        ]
+                have = cc.has_function(ident[0], prefix : ident[1], args : '-D_GNU_SOURCE')
+                conf.set10('HAVE_' + ident[0].to_upper(), have)
+        endforeach
+
+        conf.set10('HAVE_SHADOW_H',  cc.has_header('shadow.h'))
+        conf.set10('HAVE_GSHADOW_H', cc.has_header('gshadow.h'))
+endif
+
 #####################################################################
 
 awk    = find_program('awk')
