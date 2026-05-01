@@ -17,7 +17,7 @@ struct sgrp {
         char **sg_mem;
 };
 
-#ifdef HAVE_GETSGNAM_R
+#if HAVE_GETSGNAM_R
 int getsgnam_r(const char *__name, struct sgrp *__result_buf, char *__buffer, size_t __buflen, struct sgrp **__result);
 #else
 static inline int getsgnam_r(
@@ -31,7 +31,7 @@ static inline int getsgnam_r(
 }
 #endif
 
-#ifdef HAVE_FGETSGENT
+#if HAVE_FGETSGENT
 /* fgetsgent() is a GNU extension not available in Android bionic. */
 struct sgrp *fgetsgent(FILE *stream);
 #else

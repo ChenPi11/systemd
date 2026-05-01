@@ -27,7 +27,7 @@ struct spwd {
  * Always provide at least a declaration so callers can use them.  When meson confirmed the
  * function is absent (HAVE_xxx unset), provide a full inline stub that returns an error. */
 
-#ifdef HAVE_GETSPNAM
+#if HAVE_GETSPNAM
 struct spwd *getspnam(const char *name);
 #else
 static inline struct spwd *getspnam(const char *name) {
@@ -36,7 +36,7 @@ static inline struct spwd *getspnam(const char *name) {
 }
 #endif
 
-#ifdef HAVE_GETSPNAM_R
+#if HAVE_GETSPNAM_R
 int getspnam_r(const char *name, struct spwd *spbuf, char *buf, size_t buflen, struct spwd **spbufp);
 #else
 static inline int getspnam_r(
@@ -49,7 +49,7 @@ static inline int getspnam_r(
 }
 #endif
 
-#ifdef HAVE_FGETSPENT
+#if HAVE_FGETSPENT
 struct spwd *fgetspent(FILE *stream);
 #else
 static inline struct spwd *fgetspent(FILE *stream) {
@@ -58,7 +58,7 @@ static inline struct spwd *fgetspent(FILE *stream) {
 }
 #endif
 
-#ifdef HAVE_PUTSPENT
+#if HAVE_PUTSPENT
 int putspent(const struct spwd *sp, FILE *stream);
 #else
 static inline int putspent(const struct spwd *sp, FILE *stream) {

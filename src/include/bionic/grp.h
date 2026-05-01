@@ -10,7 +10,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#ifdef HAVE_FGETGRENT
+#if HAVE_FGETGRENT
 struct group *fgetgrent(FILE *stream);
 #else
 static inline struct group *fgetgrent(FILE *stream) {
@@ -19,7 +19,7 @@ static inline struct group *fgetgrent(FILE *stream) {
 }
 #endif
 
-#ifdef HAVE_PUTGRENT
+#if HAVE_PUTGRENT
 int putgrent(const struct group *gr, FILE *stream);
 #else
 static inline int putgrent(const struct group *gr, FILE *stream) {
@@ -32,17 +32,17 @@ static inline int putgrent(const struct group *gr, FILE *stream) {
  * level 26.  Some bionic variants (e.g. Termux) already provide them at any API level but
  * may not declare them in grp.h.  Always provide at least a declaration; provide a no-op
  * stub only when meson confirmed the function is absent. */
-#ifdef HAVE_SETGRENT
+#if HAVE_SETGRENT
 void setgrent(void);
 #else
 static inline void setgrent(void) {}
 #endif
-#ifdef HAVE_ENDGRENT
+#if HAVE_ENDGRENT
 void endgrent(void);
 #else
 static inline void endgrent(void) {}
 #endif
-#ifdef HAVE_GETGRENT
+#if HAVE_GETGRENT
 struct group *getgrent(void);
 #else
 static inline struct group *getgrent(void) {

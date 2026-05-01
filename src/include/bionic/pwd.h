@@ -10,7 +10,7 @@
 #include <errno.h>
 #include <stdio.h>
 
-#ifdef HAVE_FGETPWENT
+#if HAVE_FGETPWENT
 struct passwd *fgetpwent(FILE *stream);
 #else
 static inline struct passwd *fgetpwent(FILE *stream) {
@@ -19,7 +19,7 @@ static inline struct passwd *fgetpwent(FILE *stream) {
 }
 #endif
 
-#ifdef HAVE_PUTPWENT
+#if HAVE_PUTPWENT
 int putpwent(const struct passwd *pw, FILE *stream);
 #else
 static inline int putpwent(const struct passwd *pw, FILE *stream) {
@@ -32,17 +32,17 @@ static inline int putpwent(const struct passwd *pw, FILE *stream) {
  * level 26.  Some bionic variants (e.g. Termux) already provide them at any API level but
  * may not declare them in pwd.h.  Always provide at least a declaration; provide a no-op
  * stub only when meson confirmed the function is absent. */
-#ifdef HAVE_SETPWENT
+#if HAVE_SETPWENT
 void setpwent(void);
 #else
 static inline void setpwent(void) {}
 #endif
-#ifdef HAVE_ENDPWENT
+#if HAVE_ENDPWENT
 void endpwent(void);
 #else
 static inline void endpwent(void) {}
 #endif
-#ifdef HAVE_GETPWENT
+#if HAVE_GETPWENT
 struct passwd *getpwent(void);
 #else
 static inline struct passwd *getpwent(void) {

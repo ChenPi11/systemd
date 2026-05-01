@@ -624,26 +624,67 @@ endforeach
 # ships stub implementations of most of these APIs.  The bionic shim headers under
 # src/include/bionic use the resulting HAVE_* macros to skip stub definitions for
 # functions that already exist in the target environment.
+#
+# We use cc.links() with -Wl,--no-undefined rather than cc.has_function() because some
+# bionic variants (e.g. Termux) declare these functions in their system headers without
+# providing a working implementation in the library.  cc.has_function() can be fooled by
+# such declarations; cc.links() with --no-undefined catches the missing symbols at link
+# time, which matches how the final build is linked.
 if get_option('libc') == 'bionic'
+        _bionic_link_args = ['-D_GNU_SOURCE', '-Wl,--no-undefined']
+
+        # Functions with standard system headers available on all bionic variants.
         foreach ident : [
-                ['setpwent',   '#include <pwd.h>'],
-                ['getpwent',   '#include <pwd.h>'],
-                ['endpwent',   '#include <pwd.h>'],
-                ['fgetpwent',  '#include <stdio.h>\n#include <pwd.h>'],
-                ['putpwent',   '#include <stdio.h>\n#include <pwd.h>'],
-                ['setgrent',   '#include <grp.h>'],
-                ['getgrent',   '#include <grp.h>'],
-                ['endgrent',   '#include <grp.h>'],
-                ['fgetgrent',  '#include <stdio.h>\n#include <grp.h>'],
-                ['putgrent',   '#include <stdio.h>\n#include <grp.h>'],
-                ['getspnam',   '#include <shadow.h>'],
-                ['getspnam_r', '#include <shadow.h>'],
-                ['fgetspent',  '#include <shadow.h>'],
-                ['putspent',   '#include <shadow.h>'],
-                ['fgetsgent',  '#include <gshadow.h>'],
-                ['getsgnam_r', '#include <gshadow.h>'],
+                ['setpwent',  '#include <pwd.h>',                     'setpwent();'],
+                ['getpwent',  '#include <pwd.h>',                     'getpwent();'],
+                ['endpwent',  '#include <pwd.h>',                     'endpwent();'],
+                ['fgetpwent', '#include <stdio.h>\n#include <pwd.h>', 'fgetpwent(0);'],
+                ['putpwent',  '#include <stdio.h>\n#include <pwd.h>', 'putpwent(0, 0);'],
+                ['setgrent',  '#include <grp.h>',                     'setgrent();'],
+                ['getgrent',  '#include <grp.h>',                     'getgrent();'],
+                ['endgrent',  '#include <grp.h>',                     'endgrent();'],
+                ['fgetgrent', '#include <stdio.h>\n#include <grp.h>', 'fgetgrent(0);'],
+                ['putgrent',  '#include <stdio.h>\n#include <grp.h>', 'putgrent(0, 0);'],
         ]
-                have = cc.has_function(ident[0], prefix : ident[1], args : '-D_GNU_SOURCE')
+                have = cc.links(
+                        ident[1] + '\nint main(void) { ' + ident[2] + ' return 0; }',
+                        name : ident[0],
+                        args : _bionic_link_args,
+                )
+                conf.set10('HAVE_' + ident[0].to_upper(), have)
+        endforeach
+
+        # Shadow/GShadow functions: bionic has no system shadow.h or gshadow.h.  Provide
+        # minimal struct and function forward-declarations for the link test only.
+        _spwd_decls = '''
+#include <stddef.h>
+#include <stdio.h>
+struct spwd { char *sp_namp, *sp_pwdp; long sp_lstchg, sp_min, sp_max, sp_warn, sp_inact, sp_expire; unsigned long sp_flag; };
+struct spwd *getspnam(const char *name);
+int getspnam_r(const char *name, struct spwd *spbuf, char *buf, size_t buflen, struct spwd **spbufp);
+struct spwd *fgetspent(FILE *stream);
+int putspent(const struct spwd *sp, FILE *stream);
+'''
+        _sgrp_decls = '''
+#include <stddef.h>
+#include <stdio.h>
+struct sgrp { char *sg_namp, *sg_passwd; char **sg_adm, **sg_mem; };
+struct sgrp *fgetsgent(FILE *stream);
+int getsgnam_r(const char *name, struct sgrp *result_buf, char *buffer, size_t buflen, struct sgrp **result);
+'''
+        foreach ident : [
+                ['getspnam',   _spwd_decls, 'getspnam(0);'],
+                ['getspnam_r', _spwd_decls, 'getspnam_r(0, 0, 0, 0, 0);'],
+                ['fgetspent',  _spwd_decls, 'fgetspent(0);'],
+                ['putspent',   _spwd_decls, 'putspent(0, 0);'],
+                ['fgetsgent',  _sgrp_decls, 'fgetsgent(0);'],
+                ['getsgnam_r', _sgrp_decls, 'getsgnam_r(0, 0, 0, 0, 0);'],
+        ]
+                have = cc.links(
+                        ident[1] + 'int main(void) { ' + ident[2] + ' return 0; }',
+                        name : ident[0],
+                        args : _bionic_link_args,
+                )
                 conf.set10('HAVE_' + ident[0].to_upper(), have)
         endforeach
 endif
