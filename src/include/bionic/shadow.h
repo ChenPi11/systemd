@@ -23,14 +23,22 @@ struct spwd {
         unsigned long sp_flag; /* Reserved */
 };
 
-#ifndef HAVE_GETSPNAM
+/* Termux provides shadow functions in libc but does not ship a shadow.h that declares them.
+ * Always provide at least a declaration so callers can use them.  When meson confirmed the
+ * function is absent (HAVE_xxx unset), provide a full inline stub that returns an error. */
+
+#ifdef HAVE_GETSPNAM
+struct spwd *getspnam(const char *name);
+#else
 static inline struct spwd *getspnam(const char *name) {
         errno = EOPNOTSUPP;
         return NULL;
 }
 #endif
 
-#ifndef HAVE_GETSPNAM_R
+#ifdef HAVE_GETSPNAM_R
+int getspnam_r(const char *name, struct spwd *spbuf, char *buf, size_t buflen, struct spwd **spbufp);
+#else
 static inline int getspnam_r(
                 const char *name,
                 struct spwd *spbuf,
@@ -41,14 +49,18 @@ static inline int getspnam_r(
 }
 #endif
 
-#ifndef HAVE_FGETSPENT
+#ifdef HAVE_FGETSPENT
+struct spwd *fgetspent(FILE *stream);
+#else
 static inline struct spwd *fgetspent(FILE *stream) {
         errno = EOPNOTSUPP;
         return NULL;
 }
 #endif
 
-#ifndef HAVE_PUTSPENT
+#ifdef HAVE_PUTSPENT
+int putspent(const struct spwd *sp, FILE *stream);
+#else
 static inline int putspent(const struct spwd *sp, FILE *stream) {
         errno = EOPNOTSUPP;
         return -1;

@@ -4,20 +4,24 @@
 #include_next <pwd.h>
 
 /* fgetpwent() and putpwent() are GNU extensions not available in stock Android bionic.
- * Provide stubs that return errors, since Android does not use traditional /etc/passwd-style
- * files.  Some bionic variants (e.g. Termux) already provide these; skip the stubs when
- * meson detected them via HAVE_FGETPWENT / HAVE_PUTPWENT. */
+ * Termux provides them in libc but does not declare them in its pwd.h.  Always provide at
+ * least a declaration so callers can use them.  When meson confirmed the function is absent
+ * (HAVE_xxx unset), provide a full inline stub that returns an error. */
 #include <errno.h>
 #include <stdio.h>
 
-#ifndef HAVE_FGETPWENT
+#ifdef HAVE_FGETPWENT
+struct passwd *fgetpwent(FILE *stream);
+#else
 static inline struct passwd *fgetpwent(FILE *stream) {
         errno = EOPNOTSUPP;
         return NULL;
 }
 #endif
 
-#ifndef HAVE_PUTPWENT
+#ifdef HAVE_PUTPWENT
+int putpwent(const struct passwd *pw, FILE *stream);
+#else
 static inline int putpwent(const struct passwd *pw, FILE *stream) {
         errno = EOPNOTSUPP;
         return -1;
@@ -25,16 +29,22 @@ static inline int putpwent(const struct passwd *pw, FILE *stream) {
 #endif
 
 /* setpwent(), getpwent(), and endpwent() were added to stock Android bionic headers in API
- * level 26.  Some bionic variants (e.g. Termux) already provide them at any API level.
- * Only provide no-op stubs when meson confirmed they are absent (HAVE_SETPWENT etc.
- * unset); the underlying /etc/passwd database is always empty on Android anyway. */
-#ifndef HAVE_SETPWENT
+ * level 26.  Some bionic variants (e.g. Termux) already provide them at any API level but
+ * may not declare them in pwd.h.  Always provide at least a declaration; provide a no-op
+ * stub only when meson confirmed the function is absent. */
+#ifdef HAVE_SETPWENT
+void setpwent(void);
+#else
 static inline void setpwent(void) {}
 #endif
-#ifndef HAVE_ENDPWENT
+#ifdef HAVE_ENDPWENT
+void endpwent(void);
+#else
 static inline void endpwent(void) {}
 #endif
-#ifndef HAVE_GETPWENT
+#ifdef HAVE_GETPWENT
+struct passwd *getpwent(void);
+#else
 static inline struct passwd *getpwent(void) {
         return NULL;
 }
