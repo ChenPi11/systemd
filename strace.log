@@ -1,0 +1,1404 @@
+execve("/data/data/com.termux/files/home/systemd/build/systemd", ["./build/systemd", "--system"], 0x7fca8ba788 /* 48 vars */) = 0
+getpid()                                = 5718
+mmap(NULL, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7348ff5000
+set_tid_address(0x7349131508)           = 5718
+faccessat(AT_FDCWD, "/dev/urandom", R_OK) = 0
+getrandom("\x08\xfe\x52\x3d\x95\xfc\xe3\x33\x3a\x81\x35\x9f\x55\x7e\xf8\xc6\x12\xd1\x40\x1d\x04\x34\x43\x6f\x05\x15\xcd\x03\xa8\x63\xb2\xc6"..., 40, GRND_NONBLOCK) = 40
+mmap(NULL, 1104, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7348ff4000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7348ff4000, 1104, "arc4random data") = 0
+sched_getscheduler(0)                   = 0 (SCHED_OTHER)
+mmap(NULL, 36864, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7348feb000
+mprotect(0x7348feb000, 4096, PROT_NONE) = 0
+sigaltstack({ss_sp=0x7348fec000, ss_flags=0, ss_size=32768}, NULL) = 0
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7348fec000, 32768, "thread signal stack") = 0
+mmap(NULL, 16777216, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347feb000
+mprotect(0x73489e4000, 8192, PROT_READ|PROT_WRITE) = 0
+mprotect(0x734911d000, 32768, PROT_READ) = 0
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7349127000, 49152, ".bss") = 0
+mprotect(0x7349130000, 4096, PROT_READ) = 0
+mprotect(0x7349130000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7349130000, 4096, PROT_READ) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347fea000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347fea000, 4096, "atexit handlers") = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347fe9000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347fe9000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347fe8000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347fe8000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 409600, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347f84000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347f84000, 409600, "linker_alloc") = 0
+mprotect(0x7347f84000, 409600, PROT_READ|PROT_WRITE) = 0
+fcntl(0, F_GETFL)                       = 0x20002 (flags O_RDWR|O_LARGEFILE)
+fcntl(1, F_GETFL)                       = 0x20002 (flags O_RDWR|O_LARGEFILE)
+fcntl(2, F_GETFL)                       = 0x20001 (flags O_WRONLY|O_LARGEFILE)
+newfstatat(AT_FDCWD, "/dev/__properties__", {st_mode=S_IFDIR|0711, st_size=11860, ...}, 0) = 0
+faccessat(AT_FDCWD, "/dev/__properties__/property_info", R_OK) = 0
+openat(AT_FDCWD, "/dev/__properties__/property_info", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=138888, ...}) = 0
+mmap(NULL, 138888, PROT_READ, MAP_SHARED, 3, 0) = 0x7347f62000
+close(3)                                = 0
+mmap(NULL, 23560, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347f5c000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347f5c000, 23560, "System property context nodes") = 0
+openat(AT_FDCWD, "/dev/__properties__/properties_serial", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=131072, ...}) = 0
+mmap(NULL, 131072, PROT_READ, MAP_SHARED, 3, 0) = 0x7347f3c000
+close(3)                                = 0
+mmap(NULL, 40960, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347f32000
+mprotect(0x7347f33000, 32768, PROT_READ|PROT_WRITE) = 0
+openat(AT_FDCWD, "/dev/__properties__/u:object_r:build_prop:s0", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=131072, ...}) = 0
+mmap(NULL, 131072, PROT_READ, MAP_SHARED, 3, 0) = 0x7347f12000
+close(3)                                = 0
+rt_sigaction(SIGABRT, {sa_handler=0x7349051540, sa_mask=~[], sa_flags=SA_ONSTACK|SA_RESTART|SA_SIGINFO|0x800}, NULL, 8) = 0
+rt_sigaction(SIGBUS, {sa_handler=0x7349051540, sa_mask=~[], sa_flags=SA_ONSTACK|SA_RESTART|SA_SIGINFO|0x800}, NULL, 8) = 0
+rt_sigaction(SIGFPE, {sa_handler=0x7349051540, sa_mask=~[], sa_flags=SA_ONSTACK|SA_RESTART|SA_SIGINFO|0x800}, NULL, 8) = 0
+rt_sigaction(SIGILL, {sa_handler=0x7349051540, sa_mask=~[], sa_flags=SA_ONSTACK|SA_RESTART|SA_SIGINFO|0x800}, NULL, 8) = 0
+rt_sigaction(SIGSEGV, {sa_handler=0x7349051540, sa_mask=~[], sa_flags=SA_ONSTACK|SA_RESTART|SA_SIGINFO|0x800}, NULL, 8) = 0
+rt_sigaction(SIGSTKFLT, {sa_handler=0x7349051540, sa_mask=~[], sa_flags=SA_ONSTACK|SA_RESTART|SA_SIGINFO|0x800}, NULL, 8) = 0
+rt_sigaction(SIGSYS, {sa_handler=0x7349051540, sa_mask=~[], sa_flags=SA_ONSTACK|SA_RESTART|SA_SIGINFO|0x800}, NULL, 8) = 0
+rt_sigaction(SIGTRAP, {sa_handler=0x7349051540, sa_mask=~[], sa_flags=SA_ONSTACK|SA_RESTART|SA_SIGINFO|0x800}, NULL, 8) = 0
+rt_sigaction(SIGRT_3, {sa_handler=0x7349051540, sa_mask=~[], sa_flags=SA_ONSTACK|SA_RESTART|SA_SIGINFO|0x800}, NULL, 8) = 0
+prctl(PR_GET_DUMPABLE)                  = 1 (SUID_DUMP_USER)
+openat(AT_FDCWD, "/dev/__properties__/u:object_r:debug_prop:s0", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=131072, ...}) = 0
+mmap(NULL, 131072, PROT_READ, MAP_SHARED, 3, 0) = 0x7347ef2000
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/proc/self/exe", {st_mode=S_IFREG|0700, st_size=384624, ...}, 0) = 0
+readlinkat(AT_FDCWD, "/proc/self/exe", "/data/data/com.termux/files/home"..., 4096) = 54
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347ef1000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347ef1000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 409600, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e8d000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e8d000, 409600, "linker_alloc") = 0
+openat(AT_FDCWD, "/dev/__properties__/u:object_r:arm64_memtag_prop:s0", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=131072, ...}) = 0
+mmap(NULL, 131072, PROT_READ, MAP_SHARED, 3, 0) = 0x7347e6d000
+close(3)                                = 0
+prctl(PR_SET_TAGGED_ADDR_CTRL, PR_TAGGED_ADDR_ENABLE|PR_MTE_TCF_NONE, 0, 0, 0) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e6c000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e6c000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e6b000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e6b000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e6a000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e6a000, 4096, "bionic_alloc_small_objects") = 0
+newfstatat(AT_FDCWD, "/system/etc/ld.config.arm64.txt", 0x7fdb1abc90, 0) = -1 ENOENT (No such file or directory)
+newfstatat(AT_FDCWD, "/linkerconfig/ld.config.txt", {st_mode=S_IFREG|0644, st_size=175186, ...}, 0) = 0
+openat(AT_FDCWD, "/linkerconfig/ld.config.txt", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=175186, ...}) = 0
+mmap(NULL, 176128, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3f000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3f000, 176128, "bionic_alloc_lob") = 0
+read(3, "dir.system = /system/bin/\ndir.sy"..., 1024) = 1024
+read(3, "id_i18n,com_android_media,com_an"..., 1024) = 1024
+read(3, "e.default.permitted.paths += /ve"..., 1024) = 1024
+read(3, "ch.paths += /system_ext/${LIB}\nn"..., 1024) = 1024
+read(3, "space.default.asan.permitted.pat"..., 1024) = 1024
+read(3, "an/system/vendor/priv-app\nnamesp"..., 1024) = 1024
+read(3, ".permitted.paths += /data\nnamesp"..., 1024) = 1024
+read(3, "_i18n.shared_libs += libicuuc.so"..., 1024) = 1024
+read(3, "${LIB}\nnamespace.com_android_adb"..., 1024) = 1024
+read(3, "_android_adbd.link.default.share"..., 1024) = 1024
+read(3, "\nnamespace.com_android_appsearch"..., 1024) = 1024
+read(3, "pace.com_android_appsearch.link."..., 1024) = 1024
+read(3, "m_android_adbd,com_android_i18n,"..., 1024) = 1024
+read(3, "asan-arm-android.so:libclang_rt."..., 1024) = 1024
+read(3, "an.permitted.paths += /data/asan"..., 1024) = 1024
+read(3, "mespace.com_android_btservices.l"..., 1024) = 1024
+read(3, "d.paths += /system/${LIB}\nnamesp"..., 1024) = 1024
+read(3, "nk.default.shared_libs += libm.s"..., 1024) = 1024
+read(3, "id_i18n.link.default.shared_libs"..., 1024) = 1024
+read(3, "roid_media.permitted.paths += /s"..., 1024) = 1024
+read(3, "diandk.so\nnamespace.com_android_"..., 1024) = 1024
+read(3, "com.android.neuralnetworks/${LIB"..., 1024) = 1024
+read(3, "etworks.link.default.shared_libs"..., 1024) = 1024
+read(3, "search.paths = /apex/com.android"..., 1024) = 1024
+read(3, "d_os_statsd.link.default.shared_"..., 1024) = 1024
+read(3, "}\nnamespace.com_android_resolv.a"..., 1024) = 1024
+read(3, "lv.link.com_android_os_statsd.sh"..., 1024) = 1024
+read(3, " libc.so\nnamespace.com_android_r"..., 1024) = 1024
+read(3, ".paths += /data/asan/system/${LI"..., 1024) = 1024
+read(3, "t.ubsan_standalone-arm-android.s"..., 1024) = 1024
+read(3, "b.link.default.shared_libs += li"..., 1024) = 1024
+read(3, "duct.links = default,vndk_produc"..., 1024) = 1024
+read(3, "one-aarch64-android.so:libclang_"..., 1024) = 1024
+read(3, "o:libutilscallstack.so:libz.so\nn"..., 1024) = 1024
+read(3, "rs.asan.search.paths += /data/as"..., 1024) = 1024
+read(3, "ult.shared_libs += libft2.so\nnam"..., 1024) = 1024
+read(3, "pace.sphal.asan.search.paths += "..., 1024) = 1024
+read(3, "k.so:libc.so:libcgrouprc.so:libc"..., 1024) = 1024
+read(3, "on@1.2.so:android.hardware.graph"..., 1024) = 1024
+read(3, "amespace.vndk.permitted.paths = "..., 1024) = 1024
+read(3, "ths += /odm/${LIB}/hw\nnamespace."..., 1024) = 1024
+read(3, "droid.so:libclang_rt.hwasan-aarc"..., 1024) = 1024
+read(3, "paths = /data/asan/product/${LIB"..., 1024) = 1024
+read(3, "ed_libs += libm.so\nnamespace.vnd"..., 1024) = 1024
+read(3, "= /data/asan/odm/${LIB}\nnamespac"..., 1024) = 1024
+read(3, "t.so:libbinder_ndk.so:libc.so:li"..., 1024) = 1024
+read(3, "raphics.mapper@2.1.so:android.ha"..., 1024) = 1024
+read(3, ".0.so:android.hardware.graphics."..., 1024) = 1024
+read(3, "android.hidl.token@1.0-utils.so:"..., 1024) = 1024
+read(3, ".0.so:libstagefright_bufferqueue"..., 1024) = 1024
+read(3, "o\nnamespace.com_android_adbd.lin"..., 1024) = 1024
+read(3, "apex/com.android.art/${LIB}\nname"..., 1024) = 1024
+read(3, "stem.so\nnamespace.com_android_ar"..., 1024) = 1024
+read(3, "ibadbconnection_client.so\nnamesp"..., 1024) = 1024
+read(3, " libdl.so\nnamespace.com_android_"..., 1024) = 1024
+read(3, "B}\nnamespace.com_android_media.a"..., 1024) = 1024
+read(3, "ared_libs += libnativewindow.so\n"..., 1024) = 1024
+read(3, "ralnetworks.permitted.paths += /"..., 1024) = 1024
+read(3, "m_android_neuralnetworks.link.sy"..., 1024) = 1024
+read(3, "statsd/${LIB}\nnamespace.com_andr"..., 1024) = 1024
+read(3, "_android_os_statsd.link.system.s"..., 1024) = 1024
+read(3, "sd\nnamespace.com_android_resolv."..., 1024) = 1024
+read(3, "e = true\nnamespace.com_android_r"..., 1024) = 1024
+read(3, "\nnamespace.com_android_runtime.l"..., 1024) = 1024
+read(3, "g.link.system.shared_libs = liba"..., 1024) = 1024
+read(3, "${LIB}/vndk-sp\nnamespace.rs.sear"..., 1024) = 1024
+read(3, "amespace.rs.asan.permitted.paths"..., 1024) = 1024
+read(3, "hared_libs += libm.so\nnamespace."..., 1024) = 1024
+read(3, "space.system.permitted.paths += "..., 1024) = 1024
+read(3, "ace.system.asan.search.paths += "..., 1024) = 1024
+read(3, "pace.system.asan.permitted.paths"..., 1024) = 1024
+read(3, "or/app\nnamespace.system.asan.per"..., 1024) = 1024
+read(3, "= /data/asan/data\nnamespace.syst"..., 1024) = 1024
+read(3, "e.system.link.com_android_i18n.s"..., 1024) = 1024
+read(3, "search.paths += /odm/${LIB}/vndk"..., 1024) = 1024
+read(3, "+= /vendor/${LIB}/vndk-sp\nnamesp"..., 1024) = 1024
+read(3, "ed.paths += /system/vendor/${LIB"..., 1024) = 1024
+read(3, "ndroid.so:libclang_rt.hwasan-aar"..., 1024) = 1024
+read(3, ":libbinder_ndk.so:libc.so:libcgr"..., 1024) = 1024
+read(3, "so:android.hardware.graphics.map"..., 1024) = 1024
+read(3, "vider-V1-ndk.so:android.hardware"..., 1024) = 1024
+read(3, "hardware.radio-V1-ndk.so:android"..., 1024) = 1024
+read(3, "pes-V1-ndk.so:android.system.key"..., 1024) = 1024
+read(3, ".so:libtinyxml2.so:libui.so:libu"..., 1024) = 1024
+read(3, "d_libs += libdl.so\nnamespace.com"..., 1024) = 1024
+read(3, "ndroid_art.permitted.paths += /d"..., 1024) = 1024
+read(3, ".shared_libs += libdl.so\nnamespa"..., 1024) = 1024
+read(3, "amespace.com_android_art.link.co"..., 1024) = 1024
+read(3, "hared_libs += libc.so\nnamespace."..., 1024) = 1024
+read(3, "m_android_media.asan.permitted.p"..., 1024) = 1024
+read(3, "e.com_android_media.link.system."..., 1024) = 1024
+read(3, "rks.asan.permitted.paths = /apex"..., 1024) = 1024
+read(3, ".com_android_neuralnetworks.link"..., 1024) = 1024
+read(3, ".com_android_os_statsd.asan.perm"..., 1024) = 1024
+read(3, "ared_libs += libclang_rt.asan-aa"..., 1024) = 1024
+read(3, "tem.shared_libs += libdl.so\nname"..., 1024) = 1024
+read(3, "e.com_android_runtime.permitted."..., 1024) = 1024
+read(3, "arm-android.so:libclang_rt.hwasa"..., 1024) = 1024
+read(3, "\nnamespace.com_android_tethering"..., 1024) = 1024
+read(3, "permitted.paths += /system/${LIB"..., 1024) = 1024
+read(3, "+= /product/app\nnamespace.system"..., 1024) = 1024
+read(3, "asan.permitted.paths += /system_"..., 1024) = 1024
+read(3, "itted.paths += /vendor/app\nnames"..., 1024) = 1024
+read(3, "pp\nnamespace.system.asan.permitt"..., 1024) = 1024
+read(3, "oid_adbd.shared_libs = libadb_pa"..., 1024) = 1024
+read(3, "solv.so\nnamespace.system.link.co"..., 1024) = 1024
+read(3, "inks = system,com_android_neural"..., 1024) = 1024
+read(3, "oid_adbd,com_android_appsearch,c"..., 1024) = 1024
+read(3, "earch.paths += /vendor/${LIB}\nna"..., 1024) = 1024
+read(3, "s += libjdwp.so\nnamespace.defaul"..., 1024) = 1024
+read(3, "namespace.com_android_adbd.asan."..., 1024) = 1024
+read(3, "fault.shared_libs += libclang_rt"..., 1024) = 1024
+read(3, "droid_appsearch.link.default.sha"..., 1024) = 1024
+read(3, "{LIB}\nnamespace.com_android_art."..., 1024) = 1024
+read(3, "om_android_art.link.default.shar"..., 1024) = 1024
+read(3, "nnection_client.so\nnamespace.com"..., 1024) = 1024
+read(3, "android_btservices.link.default."..., 1024) = 1024
+read(3, "pace.com_android_btservices.link"..., 1024) = 1024
+read(3, "roid_conscrypt.asan.permitted.pa"..., 1024) = 1024
+read(3, "andalone-aarch64-android.so:libc"..., 1024) = 1024
+read(3, "libs += libc.so\nnamespace.com_an"..., 1024) = 1024
+read(3, "android_media.asan.permitted.pat"..., 1024) = 1024
+read(3, "so\nnamespace.com_android_media.l"..., 1024) = 1024
+read(3, "oid_neuralnetworks.asan.permitte"..., 1024) = 1024
+read(3, "bvndksupport.so\nnamespace.com_an"..., 1024) = 1024
+read(3, "id_os_statsd.asan.search.paths ="..., 1024) = 1024
+read(3, "tatsd.link.default.shared_libs +"..., 1024) = 1024
+read(3, "com_android_resolv.link.default."..., 1024) = 1024
+read(3, "ime/${LIB}\nnamespace.com_android"..., 1024) = 1024
+read(3, "espace.com_android_runtime.link."..., 1024) = 1024
+read(3, "d_libs = libandroid.so\nnamespace"..., 1024) = 1024
+read(3, "roid_uwb.search.paths = /apex/co"..., 1024) = 1024
+read(3, "bs += libdl.so\nnamespace.com_and"..., 1024) = 1024
+read(3, "earch.paths += /data/asan/vendor"..., 1024) = 1024
+read(3, ".so:libcgrouprc.so:libclang_rt.a"..., 1024) = 1024
+read(3, " /vendor/${LIB}/egl\nnamespace.sp"..., 1024) = 1024
+read(3, "ths += /system/vendor/${LIB}\nnam"..., 1024) = 1024
+read(3, "ace.sphal.link.vndk.shared_libs "..., 1024) = 1024
+read(3, "espace.vndk.visible = true\nnames"..., 1024) = 1024
+read(3, "paths += /data/asan/odm/${LIB}\nn"..., 1024) = 1024
+read(3, "LIB}/hw\nnamespace.vndk.links = d"..., 1024) = 1024
+read(3, "mespace.default.isolated = false"..., 1024) = 1024
+read(3, "pace.com_android_adbd.search.pat"..., 1024) = 1024
+read(3, "bd.link.system.shared_libs += li"..., 1024) = 1024
+read(3, "san.permitted.paths += /data/asa"..., 1024) = 1024
+read(3, "bsan_standalone-arm-android.so\nn"..., 1024) = 1024
+read(3, "e.com_android_art.links = system"..., 1024) = 1024
+read(3, "droid.so:libclang_rt.asan-arm-an"..., 1024) = 1024
+read(3, "android_btservices.asan.permitte"..., 1024) = 1024
+read(3, "ibz.so\nnamespace.com_android_bts"..., 1024) = 1024
+read(3, "itted.paths += /system/${LIB}\nna"..., 1024) = 1024
+read(3, "ystem.shared_libs += libm.so\nnam"..., 1024) = 1024
+read(3, "link.system.shared_libs += libdl"..., 1024) = 1024
+read(3, "tted.paths += /system/${LIB}\nnam"..., 1024) = 1024
+read(3, "droid_media.link.system.shared_l"..., 1024) = 1024
+read(3, "\nnamespace.com_android_neuralnet"..., 1024) = 1024
+read(3, "tivewindow.so\nnamespace.com_andr"..., 1024) = 1024
+read(3, "}\nnamespace.com_android_os_stats"..., 1024) = 1024
+read(3, "e.com_android_os_statsd.link.sys"..., 1024) = 1024
+read(3, "em/${LIB}\nnamespace.com_android_"..., 1024) = 1024
+read(3, ".com_android_runtime.isolated = "..., 1024) = 1024
+read(3, "namespace.com_android_runtime.li"..., 1024) = 1024
+read(3, "ed.paths += /system/${LIB}\nnames"..., 1024) = 1024
+read(3, "red_libs = libnativehelper.so\nna"..., 1024) = 1024
+read(3, "dksupport.so\nnamespace.com_andro"..., 1024) = 1024
+read(3, "iv-app\nnamespace.system.permitte"..., 1024) = 1024
+read(3, "space.system.permitted.paths += "..., 1024) = 1024
+read(3, "ace.system.asan.permitted.paths "..., 1024) = 1024
+read(3, "ystem.asan.permitted.paths += /s"..., 1024) = 1024
+read(3, "roduct/app\nnamespace.system.asan"..., 1024) = 1024
+read(3, "d_i18n.shared_libs = libandroidi"..., 1024) = 1024
+read(3, "l.so\nnamespace.system.link.com_a"..., 1024) = 82
+read(3, "", 1024)                       = 0
+close(3)                                = 0
+faccessat(AT_FDCWD, "/system/bin", R_OK) = -1 EACCES (Permission denied)
+faccessat(AT_FDCWD, "/system/xbin", R_OK) = -1 EACCES (Permission denied)
+faccessat(AT_FDCWD, "/system_ext/bin", R_OK) = -1 EACCES (Permission denied)
+faccessat(AT_FDCWD, "/product/bin", R_OK) = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/odm/bin", R_OK)   = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/vendor/bin", R_OK) = -1 EACCES (Permission denied)
+faccessat(AT_FDCWD, "/data/nativetest/odm", R_OK) = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/data/nativetest64/odm", R_OK) = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/data/benchmarktest/odm", R_OK) = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/data/benchmarktest64/odm", R_OK) = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/data/nativetest/vendor", R_OK) = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/data/nativetest64/vendor", R_OK) = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/data/benchmarktest/vendor", R_OK) = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/data/benchmarktest64/vendor", R_OK) = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/data/nativetest/unrestricted", R_OK) = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/data/nativetest64/unrestricted", R_OK) = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/data/local/tmp/isolated", R_OK) = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/data/local/tests/product", R_OK) = -1 EACCES (Permission denied)
+faccessat(AT_FDCWD, "/data/local/tests/system", R_OK) = -1 EACCES (Permission denied)
+faccessat(AT_FDCWD, "/data/local/tests/unrestricted", R_OK) = -1 EACCES (Permission denied)
+faccessat(AT_FDCWD, "/data/local/tests/vendor", R_OK) = -1 EACCES (Permission denied)
+faccessat(AT_FDCWD, "/data/local/tmp", R_OK) = -1 EACCES (Permission denied)
+faccessat(AT_FDCWD, "/postinstall", R_OK) = -1 EACCES (Permission denied)
+faccessat(AT_FDCWD, "/data", R_OK)      = -1 EACCES (Permission denied)
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3e000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3e000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3d000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3d000, 4096, "bionic_alloc_lob") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3c000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3c000, 4096, "bionic_alloc_lob") = 0
+munmap(0x7347e3d000, 4096)              = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3d000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3d000, 4096, "bionic_alloc_lob") = 0
+munmap(0x7347e3c000, 4096)              = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3c000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3c000, 4096, "bionic_alloc_lob") = 0
+munmap(0x7347e3d000, 4096)              = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3d000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3d000, 4096, "bionic_alloc_lob") = 0
+munmap(0x7347e3c000, 4096)              = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3c000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3c000, 4096, "bionic_alloc_lob") = 0
+munmap(0x7347e3d000, 4096)              = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3d000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3d000, 4096, "bionic_alloc_lob") = 0
+munmap(0x7347e3c000, 4096)              = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3c000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3c000, 4096, "bionic_alloc_lob") = 0
+munmap(0x7347e3d000, 4096)              = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3d000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3d000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3b000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3b000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3a000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3a000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e39000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e39000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e38000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e38000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e37000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e37000, 4096, "bionic_alloc_lob") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e36000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e36000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e35000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e35000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e34000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e34000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e33000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e33000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e32000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e32000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e31000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e31000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e30000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e30000, 4096, "bionic_alloc_small_objects") = 0
+munmap(0x7347e3f000, 176128)            = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e69000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e69000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e68000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e68000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e67000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e67000, 4096, "bionic_alloc_small_objects") = 0
+openat(AT_FDCWD, "/dev/__properties__/u:object_r:vndk_prop:s0", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=131072, ...}) = 0
+mmap(NULL, 131072, PROT_READ, MAP_SHARED, 3, 0) = 0x7347e47000
+close(3)                                = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+mprotect(0x7347fea000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7347fea000, 4096, PROT_READ) = 0
+openat(AT_FDCWD, "/odm/lib64/vndk-sp", O_RDONLY|O_CLOEXEC|O_PATH) = -1 ENOENT (No such file or directory)
+newfstatat(AT_FDCWD, "/odm/lib64/vndk-sp", 0x7fdb1a97f0, 0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/vendor/lib64/vndk-sp", O_RDONLY|O_CLOEXEC|O_PATH) = -1 ENOENT (No such file or directory)
+newfstatat(AT_FDCWD, "/vendor/lib64/vndk-sp", 0x7fdb1a97f0, 0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/apex/com.android.vndk.v31/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/apex/com.android.vndk.v31/lib64", 4095) = 32
+newfstatat(AT_FDCWD, "/apex/com.android.vndk.v31/lib64", {st_mode=S_IFDIR|0755, st_size=8192, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/apex/com.android.vndk.v31/lib64", {st_mode=S_IFDIR|0755, st_size=8192, ...}, 0) = 0
+openat(AT_FDCWD, "/odm/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = -1 ENOENT (No such file or directory)
+newfstatat(AT_FDCWD, "/odm/lib64", 0x7fdb1a97f0, 0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/vendor/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=49152, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/vendor/lib64", 4095) = 13
+newfstatat(AT_FDCWD, "/vendor/lib64", {st_mode=S_IFDIR|0755, st_size=49152, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/vendor/lib64", {st_mode=S_IFDIR|0755, st_size=49152, ...}, 0) = 0
+openat(AT_FDCWD, "/product/lib64/vndk-sp", O_RDONLY|O_CLOEXEC|O_PATH) = -1 ENOENT (No such file or directory)
+newfstatat(AT_FDCWD, "/product/lib64/vndk-sp", 0x7fdb1a97f0, 0) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/apex/com.android.vndk.v33/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=8192, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/apex/com.android.vndk.v33/lib64", 4095) = 32
+newfstatat(AT_FDCWD, "/apex/com.android.vndk.v33/lib64", {st_mode=S_IFDIR|0755, st_size=8192, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/apex/com.android.vndk.v33/lib64", {st_mode=S_IFDIR|0755, st_size=8192, ...}, 0) = 0
+openat(AT_FDCWD, "/product/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = -1 ENOENT (No such file or directory)
+newfstatat(AT_FDCWD, "/product/lib64", 0x7fdb1a97f0, 0) = -1 ENOENT (No such file or directory)
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e46000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e46000, 4096, "bionic_alloc_small_objects") = 0
+openat(AT_FDCWD, "/apex/com.android.uwb/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/apex/com.android.uwb/lib64", 4095) = 27
+newfstatat(AT_FDCWD, "/apex/com.android.uwb/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/apex/com.android.uwb/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+openat(AT_FDCWD, "/apex/com.android.tethering/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/apex/com.android.tethering/lib6"..., 4095) = 33
+newfstatat(AT_FDCWD, "/apex/com.android.tethering/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/apex/com.android.tethering/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+openat(AT_FDCWD, "/apex/com.android.runtime/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/apex/com.android.runtime/lib64", 4095) = 31
+newfstatat(AT_FDCWD, "/apex/com.android.runtime/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/apex/com.android.runtime/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e45000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e45000, 4096, "bionic_alloc_small_objects") = 0
+openat(AT_FDCWD, "/apex/com.android.art/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/apex/com.android.art/lib64", 4095) = 27
+newfstatat(AT_FDCWD, "/apex/com.android.art/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/apex/com.android.art/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e44000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e44000, 4096, "bionic_alloc_small_objects") = 0
+openat(AT_FDCWD, "/apex/com.android.resolv/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/apex/com.android.resolv/lib64", 4095) = 30
+newfstatat(AT_FDCWD, "/apex/com.android.resolv/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/apex/com.android.resolv/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+openat(AT_FDCWD, "/apex/com.android.conscrypt/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/apex/com.android.conscrypt/lib6"..., 4095) = 33
+newfstatat(AT_FDCWD, "/apex/com.android.conscrypt/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/apex/com.android.conscrypt/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+openat(AT_FDCWD, "/apex/com.android.media/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/apex/com.android.media/lib64", 4095) = 29
+newfstatat(AT_FDCWD, "/apex/com.android.media/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/apex/com.android.media/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e43000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e43000, 4096, "bionic_alloc_small_objects") = 0
+openat(AT_FDCWD, "/apex/com.android.btservices/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/apex/com.android.btservices/lib"..., 4095) = 34
+newfstatat(AT_FDCWD, "/apex/com.android.btservices/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/apex/com.android.btservices/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e42000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e42000, 4096, "bionic_alloc_small_objects") = 0
+openat(AT_FDCWD, "/vendor/lib64/egl", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/vendor/lib64/egl", 4095) = 17
+newfstatat(AT_FDCWD, "/vendor/lib64/egl", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/vendor/lib64/egl", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+openat(AT_FDCWD, "/vendor/lib64/hw", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/vendor/lib64/hw", 4095) = 16
+newfstatat(AT_FDCWD, "/vendor/lib64/hw", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/vendor/lib64/hw", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+openat(AT_FDCWD, "/apex/com.android.neuralnetworks/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/apex/com.android.neuralnetworks"..., 4095) = 38
+newfstatat(AT_FDCWD, "/apex/com.android.neuralnetworks/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/apex/com.android.neuralnetworks/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+openat(AT_FDCWD, "/apex/com.android.i18n/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/apex/com.android.i18n/lib64", 4095) = 28
+newfstatat(AT_FDCWD, "/apex/com.android.i18n/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/apex/com.android.i18n/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+openat(AT_FDCWD, "/apex/com.android.appsearch/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/apex/com.android.appsearch/lib6"..., 4095) = 33
+newfstatat(AT_FDCWD, "/apex/com.android.appsearch/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/apex/com.android.appsearch/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e41000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e41000, 4096, "bionic_alloc_small_objects") = 0
+openat(AT_FDCWD, "/apex/com.android.os.statsd/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/apex/com.android.os.statsd/lib6"..., 4095) = 33
+newfstatat(AT_FDCWD, "/apex/com.android.os.statsd/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/apex/com.android.os.statsd/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+openat(AT_FDCWD, "/apex/com.android.adbd/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/apex/com.android.adbd/lib64", 4095) = 28
+newfstatat(AT_FDCWD, "/apex/com.android.adbd/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/apex/com.android.adbd/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+openat(AT_FDCWD, "/system/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/system/lib64", 4095) = 13
+newfstatat(AT_FDCWD, "/system/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/system/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+openat(AT_FDCWD, "/system_ext/lib64", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/system_ext/lib64", 4095) = 17
+newfstatat(AT_FDCWD, "/system_ext/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/system_ext/lib64", {st_mode=S_IFDIR|0755, st_size=4096, ...}, 0) = 0
+munmap(0x7347e3e000, 4096)              = 0
+munmap(0x7347e33000, 4096)              = 0
+munmap(0x7347e3a000, 4096)              = 0
+munmap(0x7347e3c000, 4096)              = 0
+munmap(0x7347e3d000, 4096)              = 0
+munmap(0x7347e38000, 4096)              = 0
+munmap(0x7347e36000, 4096)              = 0
+munmap(0x7347e37000, 4096)              = 0
+mmap(NULL, 409600, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347dcc000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347dcc000, 409600, "linker_alloc") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e40000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e40000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3f000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3f000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3e000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3e000, 4096, "bionic_alloc_lob") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3d000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3d000, 4096, "bionic_alloc_small_objects") = 0
+munmap(0x7347e3e000, 4096)              = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3e000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3e000, 4096, "bionic_alloc_lob") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3c000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3c000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3a000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3a000, 4096, "bionic_alloc_small_objects") = 0
+munmap(0x7347e3e000, 4096)              = 0
+munmap(0x7347e3a000, 4096)              = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3e000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3e000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3a000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3a000, 4096, "bionic_alloc_lob") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e38000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e38000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e37000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e37000, 4096, "bionic_alloc_small_objects") = 0
+munmap(0x7347e3d000, 4096)              = 0
+munmap(0x7347e3a000, 4096)              = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347e3d000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347e3d000, 4096, "bionic_alloc_small_objects") = 0
+openat(AT_FDCWD, "/data/data/com.termux/files/usr/bin/../../usr/lib", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0700, st_size=249856, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/data/data/com.termux/files/usr/"..., 4095) = 35
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", {st_mode=S_IFDIR|0700, st_size=249856, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", {st_mode=S_IFDIR|0700, st_size=249856, ...}, 0) = 0
+openat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/core", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0700, st_size=3488, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/data/data/com.termux/files/home"..., 4095) = 55
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/core", {st_mode=S_IFDIR|0700, st_size=3488, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/core", {st_mode=S_IFDIR|0700, st_size=3488, ...}, 0) = 0
+openat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/shared", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstat(3, {st_mode=S_IFDIR|0700, st_size=3488, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/data/data/com.termux/files/home"..., 4095) = 57
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/shared", {st_mode=S_IFDIR|0700, st_size=3488, ...}, 0) = 0
+close(3)                                = 0
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/shared", {st_mode=S_IFDIR|0700, st_size=3488, ...}, 0) = 0
+mmap(NULL, 409600, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347d68000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347d68000, 409600, "linker_alloc") = 0
+mmap(NULL, 409600, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347d04000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347d04000, 409600, "linker_alloc") = 0
+openat(AT_FDCWD, "/data/data/com.termux/files/usr/lib/libtermux-exec-ld-preload.so", O_RDONLY|O_CLOEXEC) = 3
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/data/data/com.termux/files/usr/"..., 4096) = 64
+fstat(3, {st_mode=S_IFREG|0700, st_size=53544, ...}) = 0
+fstatfs(3, {f_type=F2FS_SUPER_MAGIC, f_bsize=4096, f_blocks=28132856, f_bfree=435376, f_bavail=380030, f_files=13511677, f_ffree=380030, f_fsid={val=[0xfd28, 0]}, f_namelen=255, f_frsize=4096, f_flags=ST_VALID|ST_NOSUID|ST_NODEV|ST_NOATIME}) = 0
+pread64(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 64, 0) = 64
+mmap(NULL, 688, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7347e3a000
+mmap(NULL, 7248, PROT_READ, MAP_PRIVATE, 3, 0xc000) = 0x7347d02000
+mmap(NULL, 3328, PROT_READ, MAP_PRIVATE, 3, 0xc000) = 0x7347e36000
+mmap(NULL, 5917, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7347d00000
+openat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", O_RDONLY|O_CLOEXEC|O_PATH) = 4
+fstat(4, {st_mode=S_IFDIR|0700, st_size=249856, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/4", "/data/data/com.termux/files/usr/"..., 4095) = 35
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", {st_mode=S_IFDIR|0700, st_size=249856, ...}, 0) = 0
+close(4)                                = 0
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", {st_mode=S_IFDIR|0700, st_size=249856, ...}, 0) = 0
+openat(AT_FDCWD, "/data/data/com.termux/files/usr/lib/libsystemd-core-261.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/core/libsystemd-core-261.so", O_RDONLY|O_CLOEXEC) = 4
+readlinkat(AT_FDCWD, "/proc/self/fd/4", "/data/data/com.termux/files/home"..., 4096) = 78
+fstat(4, {st_mode=S_IFREG|0700, st_size=7100488, ...}) = 0
+fstatfs(4, {f_type=F2FS_SUPER_MAGIC, f_bsize=4096, f_blocks=28132856, f_bfree=435376, f_bavail=380030, f_files=13511677, f_ffree=380030, f_fsid={val=[0xfd28, 0]}, f_namelen=255, f_frsize=4096, f_flags=ST_VALID|ST_NOSUID|ST_NODEV|ST_NOATIME}) = 0
+pread64(4, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 64, 0) = 64
+mmap(NULL, 632, PROT_READ, MAP_PRIVATE, 4, 0) = 0x7347e33000
+mmap(NULL, 10256, PROT_READ, MAP_PRIVATE, 4, 0x6c4000) = 0x7347cfd000
+mmap(NULL, 5520, PROT_READ, MAP_PRIVATE, 4, 0x3ac000) = 0x7347cfb000
+mmap(NULL, 58813, PROT_READ, MAP_PRIVATE, 4, 0x11000) = 0x7347cec000
+openat(AT_FDCWD, "/data/data/com.termux/files/usr/bin/../../usr/lib", O_RDONLY|O_CLOEXEC|O_PATH) = 5
+fstat(5, {st_mode=S_IFDIR|0700, st_size=249856, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/5", "/data/data/com.termux/files/usr/"..., 4095) = 35
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", {st_mode=S_IFDIR|0700, st_size=249856, ...}, 0) = 0
+close(5)                                = 0
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", {st_mode=S_IFDIR|0700, st_size=249856, ...}, 0) = 0
+openat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/core/../shared", O_RDONLY|O_CLOEXEC|O_PATH) = 5
+fstat(5, {st_mode=S_IFDIR|0700, st_size=3488, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/5", "/data/data/com.termux/files/home"..., 4095) = 57
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/shared", {st_mode=S_IFDIR|0700, st_size=3488, ...}, 0) = 0
+close(5)                                = 0
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/shared", {st_mode=S_IFDIR|0700, st_size=3488, ...}, 0) = 0
+openat(AT_FDCWD, "/data/data/com.termux/files/usr/lib/libsystemd-shared-261.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/core/libsystemd-shared-261.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/shared/libsystemd-shared-261.so", O_RDONLY|O_CLOEXEC) = 5
+readlinkat(AT_FDCWD, "/proc/self/fd/5", "/data/data/com.termux/files/home"..., 4096) = 82
+fstat(5, {st_mode=S_IFREG|0700, st_size=15346072, ...}) = 0
+fstatfs(5, {f_type=F2FS_SUPER_MAGIC, f_bsize=4096, f_blocks=28132856, f_bfree=435375, f_bavail=380029, f_files=13511677, f_ffree=380029, f_fsid={val=[0xfd28, 0]}, f_namelen=255, f_frsize=4096, f_flags=ST_VALID|ST_NOSUID|ST_NODEV|ST_NOATIME}) = 0
+pread64(5, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 64, 0) = 64
+mmap(NULL, 632, PROT_READ, MAP_PRIVATE, 5, 0) = 0x7347ceb000
+mmap(NULL, 2608, PROT_READ, MAP_PRIVATE, 5, 0xea2000) = 0x7347cea000
+mmap(NULL, 5504, PROT_READ, MAP_PRIVATE, 5, 0x834000) = 0x7347ce8000
+mmap(NULL, 143318, PROT_READ, MAP_PRIVATE, 5, 0x35000) = 0x7347cc5000
+openat(AT_FDCWD, "/data/data/com.termux/files/usr/bin/../../usr/lib", O_RDONLY|O_CLOEXEC|O_PATH) = 6
+fstat(6, {st_mode=S_IFDIR|0700, st_size=249856, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/6", "/data/data/com.termux/files/usr/"..., 4095) = 35
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", {st_mode=S_IFDIR|0700, st_size=249856, ...}, 0) = 0
+close(6)                                = 0
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", {st_mode=S_IFDIR|0700, st_size=249856, ...}, 0) = 0
+openat(AT_FDCWD, "/data/data/com.termux/files/usr/lib/libc.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/core/libc.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/shared/libc.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/system/lib64/libc.so", O_RDONLY|O_CLOEXEC) = 6
+readlinkat(AT_FDCWD, "/proc/self/fd/6", "/apex/com.android.runtime/lib64/"..., 4096) = 46
+fstat(6, {st_mode=S_IFREG|0644, st_size=1372016, ...}) = 0
+fstatfs(6, {f_type=EXT2_SUPER_MAGIC, f_bsize=4096, f_blocks=2191, f_bfree=9, f_bavail=0, f_files=64, f_ffree=14, f_fsid={val=[0x2ba2bd9, 0x8b5c2839]}, f_namelen=255, f_frsize=4096, f_flags=ST_VALID|ST_RDONLY|ST_NODEV|ST_NOATIME}) = 0
+pread64(6, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 64, 0) = 64
+mmap(NULL, 744, PROT_READ, MAP_PRIVATE, 6, 0) = 0x7347cc4000
+mmap(NULL, 6048, PROT_READ, MAP_PRIVATE, 6, 0x14e000) = 0x7347cc2000
+mmap(NULL, 2096, PROT_READ, MAP_PRIVATE, 6, 0x10c000) = 0x7347cc1000
+mmap(NULL, 19827, PROT_READ, MAP_PRIVATE, 6, 0xc000) = 0x7347cbc000
+openat(AT_FDCWD, "/data/data/com.termux/files/usr/lib/libm.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/shared/libm.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/system/lib64/libm.so", O_RDONLY|O_CLOEXEC) = 7
+readlinkat(AT_FDCWD, "/proc/self/fd/7", "/apex/com.android.runtime/lib64/"..., 4096) = 46
+fstat(7, {st_mode=S_IFREG|0644, st_size=233376, ...}) = 0
+fstatfs(7, {f_type=EXT2_SUPER_MAGIC, f_bsize=4096, f_blocks=2191, f_bfree=9, f_bavail=0, f_files=64, f_ffree=14, f_fsid={val=[0x2ba2bd9, 0x8b5c2839]}, f_namelen=255, f_frsize=4096, f_flags=ST_VALID|ST_RDONLY|ST_NODEV|ST_NOATIME}) = 0
+pread64(7, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 64, 0) = 64
+mmap(NULL, 688, PROT_READ, MAP_PRIVATE, 7, 0) = 0x7347cbb000
+mmap(NULL, 6336, PROT_READ, MAP_PRIVATE, 7, 0x38000) = 0x7347cb9000
+mmap(NULL, 480, PROT_READ, MAP_PRIVATE, 7, 0x38000) = 0x7347cb8000
+mmap(NULL, 6360, PROT_READ, MAP_PRIVATE, 7, 0x2000) = 0x7347cb6000
+openat(AT_FDCWD, "/data/data/com.termux/files/usr/lib/libdl.so", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/system/lib64/libdl.so", O_RDONLY|O_CLOEXEC) = 8
+readlinkat(AT_FDCWD, "/proc/self/fd/8", "/apex/com.android.runtime/lib64/"..., 4096) = 47
+fstat(8, {st_mode=S_IFREG|0644, st_size=13728, ...}) = 0
+fstatfs(8, {f_type=EXT2_SUPER_MAGIC, f_bsize=4096, f_blocks=2191, f_bfree=9, f_bavail=0, f_files=64, f_ffree=14, f_fsid={val=[0x2ba2bd9, 0x8b5c2839]}, f_namelen=255, f_frsize=4096, f_flags=ST_VALID|ST_RDONLY|ST_NODEV|ST_NOATIME}) = 0
+pread64(8, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 64, 0) = 64
+mmap(NULL, 688, PROT_READ, MAP_PRIVATE, 8, 0) = 0x7347cb5000
+mmap(NULL, 1792, PROT_READ, MAP_PRIVATE, 8, 0x3000) = 0x7347cb4000
+mmap(NULL, 272, PROT_READ, MAP_PRIVATE, 8, 0x2000) = 0x7347cb3000
+mmap(NULL, 3706, PROT_READ, MAP_PRIVATE, 8, 0) = 0x7347cb2000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347cb1000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347cb1000, 4096, "bionic_alloc_small_objects") = 0
+mmap(NULL, 4190208, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x73478b2000
+munmap(0x73478b2000, 4190208)           = 0
+mmap(NULL, 27258880, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x73462b2000
+munmap(0x73462b2000, 1654784)           = 0
+munmap(0x7346800000, 0)                 = -1 EINVAL (Invalid argument)
+munmap(0x7347c00000, 724992)            = 0
+mmap(0x7346446000, 3425584, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED, 4, 0) = 0x7346446000
+mmap(0x734678e000, 446216, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 4, 0x344000) = 0x734678e000
+mmap(0x73467fe000, 4072, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 4, 0x3b0000) = 0x73467fe000
+mmap(0x73467ff000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x73467ff000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x73467ff000, 4096, ".bss") = 0
+mmap(NULL, 520192, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347c32000
+munmap(0x7347c32000, 229376)            = 0
+munmap(0x7347c6f000, 270336)            = 0
+mmap(0x7347c6a000, 2972, PROT_READ, MAP_PRIVATE|MAP_FIXED, 8, 0) = 0x7347c6a000
+mmap(0x7347c6b000, 800, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED, 8, 0x1000) = 0x7347c6b000
+mmap(0x7347c6c000, 384, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 8, 0x2000) = 0x7347c6c000
+mmap(0x7347c6e000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7347c6e000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347c6e000, 4096, ".bss") = 0
+mmap(NULL, 520192, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x73463c7000
+munmap(0x73463c7000, 245760)            = 0
+munmap(0x734643d000, 36864)             = 0
+mmap(0x7346403000, 70580, PROT_READ, MAP_PRIVATE|MAP_FIXED, 7, 0) = 0x7346403000
+mmap(0x7346415000, 152928, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED, 7, 0x12000) = 0x7346415000
+mmap(0x734643b000, 720, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 7, 0x38000) = 0x734643b000
+mmap(0x734643c000, 848, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 7, 0x38000) = 0x734643c000
+mmap(NULL, 3665920, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7346084000
+munmap(0x7346084000, 3665920)           = 0
+mmap(NULL, 10481664, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345a04000
+munmap(0x7345a04000, 2719744)           = 0
+munmap(0x7345fc6000, 237568)            = 0
+munmap(0x7346400000, 12288)             = 0
+mmap(0x7345c9c000, 290116, PROT_READ, MAP_PRIVATE|MAP_FIXED, 6, 0) = 0x7345c9c000
+mmap(0x7345ce3000, 784384, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED, 6, 0x47000) = 0x7345ce3000
+mmap(0x7345da3000, 26736, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 6, 0x107000) = 0x7345da3000
+mmap(0x7345daa000, 8216, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 6, 0x10d000) = 0x7345daa000
+mmap(0x7345dad000, 2199552, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7345dad000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7345dad000, 2199552, ".bss") = 0
+mmap(NULL, 9170944, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x73453dd000
+munmap(0x73453dd000, 9170944)           = 0
+mmap(NULL, 52424704, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7342a9d000
+munmap(0x7342a9d000, 2617344)           = 0
+munmap(0x7343565000, 634880)            = 0
+munmap(0x7345c00000, 638976)            = 0
+mmap(0x7342d1c000, 8264256, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED, 5, 0) = 0x7342d1c000
+mmap(0x7343501000, 375888, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 5, 0x7e1000) = 0x7343501000
+mmap(0x7343560000, 9560, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 5, 0x83c000) = 0x7343560000
+mmap(0x7343563000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7343563000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7343563000, 8192, ".bss") = 0
+mmap(NULL, 520192, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c1d000
+munmap(0x7345c1d000, 188416)            = 0
+munmap(0x7345c65000, 225280)            = 0
+mmap(0x7345c4b000, 20612, PROT_READ, MAP_PRIVATE|MAP_FIXED, 3, 0) = 0x7345c4b000
+mmap(0x7345c54000, 30112, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED, 3, 0x5000) = 0x7345c54000
+mmap(0x7345c5f000, 2352, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0xc000) = 0x7345c5f000
+mmap(0x7345c63000, 2424, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0xc000) = 0x7345c63000
+mmap(0x7345c64000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7345c64000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7345c64000, 4096, ".bss") = 0
+openat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", O_RDONLY|O_CLOEXEC|O_PATH) = 9
+fstat(9, {st_mode=S_IFDIR|0700, st_size=249856, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/9", "/data/data/com.termux/files/usr/"..., 4095) = 35
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", {st_mode=S_IFDIR|0700, st_size=249856, ...}, 0) = 0
+close(9)                                = 0
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", {st_mode=S_IFDIR|0700, st_size=249856, ...}, 0) = 0
+openat(AT_FDCWD, "/data/data/com.termux/files/usr/bin/../../usr/lib", O_RDONLY|O_CLOEXEC|O_PATH) = 9
+fstat(9, {st_mode=S_IFDIR|0700, st_size=249856, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/9", "/data/data/com.termux/files/usr/"..., 4095) = 35
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", {st_mode=S_IFDIR|0700, st_size=249856, ...}, 0) = 0
+close(9)                                = 0
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", {st_mode=S_IFDIR|0700, st_size=249856, ...}, 0) = 0
+openat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/core/../shared", O_RDONLY|O_CLOEXEC|O_PATH) = 9
+fstat(9, {st_mode=S_IFDIR|0700, st_size=3488, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/9", "/data/data/com.termux/files/home"..., 4095) = 57
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/shared", {st_mode=S_IFDIR|0700, st_size=3488, ...}, 0) = 0
+close(9)                                = 0
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/home/systemd/build/src/shared", {st_mode=S_IFDIR|0700, st_size=3488, ...}, 0) = 0
+openat(AT_FDCWD, "/data/data/com.termux/files/usr/bin/../../usr/lib", O_RDONLY|O_CLOEXEC|O_PATH) = 9
+fstat(9, {st_mode=S_IFDIR|0700, st_size=249856, ...}) = 0
+readlinkat(AT_FDCWD, "/proc/self/fd/9", "/data/data/com.termux/files/usr/"..., 4095) = 35
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", {st_mode=S_IFDIR|0700, st_size=249856, ...}, 0) = 0
+close(9)                                = 0
+newfstatat(AT_FDCWD, "/data/data/com.termux/files/usr/lib", {st_mode=S_IFDIR|0700, st_size=249856, ...}, 0) = 0
+rt_sigprocmask(SIG_BLOCK, ~[], [RTMIN], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [RTMIN], NULL, 8) = 0
+mmap(NULL, 409600, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347c06000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347c06000, 409600, "linker_alloc") = 0
+mprotect(0x5a4a79f000, 8192, PROT_READ) = 0
+mprotect(0x7345c5f000, 4096, PROT_READ) = 0
+mprotect(0x734678e000, 446464, PROT_READ) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347cb0000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347cb0000, 4096, "bionic_alloc_small_objects") = 0
+mprotect(0x7343501000, 376832, PROT_READ) = 0
+mprotect(0x7345da3000, 28672, PROT_READ) = 0
+mprotect(0x734643b000, 4096, PROT_READ) = 0
+mprotect(0x7347c6c000, 4096, PROT_READ) = 0
+close(3)                                = 0
+close(4)                                = 0
+close(5)                                = 0
+close(6)                                = 0
+close(7)                                = 0
+close(8)                                = 0
+munmap(0x7347cb2000, 3706)              = 0
+munmap(0x7347cb3000, 272)               = 0
+munmap(0x7347cb4000, 1792)              = 0
+munmap(0x7347cb5000, 688)               = 0
+munmap(0x7347cbc000, 19827)             = 0
+munmap(0x7347cc1000, 2096)              = 0
+munmap(0x7347cc2000, 6048)              = 0
+munmap(0x7347cc4000, 744)               = 0
+munmap(0x7347cec000, 58813)             = 0
+munmap(0x7347cfb000, 5520)              = 0
+munmap(0x7347cfd000, 10256)             = 0
+munmap(0x7347e33000, 632)               = 0
+munmap(0x7347d00000, 5917)              = 0
+munmap(0x7347e36000, 3328)              = 0
+munmap(0x7347d02000, 7248)              = 0
+munmap(0x7347e3a000, 688)               = 0
+munmap(0x7347cb6000, 6360)              = 0
+munmap(0x7347cb8000, 480)               = 0
+munmap(0x7347cb9000, 6336)              = 0
+munmap(0x7347cbb000, 688)               = 0
+munmap(0x7347cc5000, 143318)            = 0
+munmap(0x7347ce8000, 5504)              = 0
+munmap(0x7347cea000, 2608)              = 0
+munmap(0x7347ceb000, 632)               = 0
+mmap(NULL, 20480, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0x7347cff000
+mprotect(0x7347d00000, 12288, PROT_READ|PROT_WRITE) = 0
+rt_sigprocmask(SIG_BLOCK, ~[], [RTMIN], 8) = 0
+rt_sigprocmask(SIG_SETMASK, [RTMIN], NULL, 8) = 0
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347d00000, 12288, "stack_and_tls:main") = 0
+munmap(0x7348ff5000, 12288)             = 0
+mprotect(0x7345fbd000, 4096, PROT_READ) = 0
+mprotect(0x7345fbd000, 4096, PROT_READ|PROT_WRITE) = 0
+faccessat(AT_FDCWD, "/dev/urandom", R_OK) = 0
+getrandom("\x67\xdd\x56\xae\xfc\x2a\xd6\x23\x1e\xe4\xf8\x6c\xf8\x8f\x71\x7c\x67\xa8\x9a\x6c\x59\xd1\xcb\x18\xea\xda\x9f\xb7\xbb\x93\xd9\xf9"..., 40, GRND_NONBLOCK) = 40
+mmap(NULL, 1104, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7348ff7000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7348ff7000, 1104, "arc4random data") = 0
+mprotect(0x7345fbd000, 4096, PROT_READ) = 0
+newfstatat(AT_FDCWD, "/dev/__properties__", {st_mode=S_IFDIR|0711, st_size=11860, ...}, 0) = 0
+faccessat(AT_FDCWD, "/dev/__properties__/property_info", R_OK) = 0
+openat(AT_FDCWD, "/dev/__properties__/property_info", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=138888, ...}) = 0
+mmap(NULL, 138888, PROT_READ, MAP_SHARED, 3, 0) = 0x7347cdd000
+close(3)                                = 0
+mmap(NULL, 23560, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7347cd7000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7347cd7000, 23560, "System property context nodes") = 0
+openat(AT_FDCWD, "/dev/__properties__/properties_serial", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=131072, ...}) = 0
+mmap(NULL, 131072, PROT_READ, MAP_SHARED, 3, 0) = 0x7347cb7000
+close(3)                                = 0
+openat(AT_FDCWD, "/dev/__properties__/u:object_r:debug_prop:s0", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=131072, ...}) = 0
+mmap(NULL, 131072, PROT_READ, MAP_SHARED, 3, 0) = 0x7347c90000
+close(3)                                = 0
+rt_sigaction(SIGRT_7, {sa_handler=0x7345d2dad0, sa_mask=[], sa_flags=SA_RESTART}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+mprotect(0x7345fbd000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7345fbd000, 4096, PROT_READ) = 0
+mprotect(0x7345fbd000, 4096, PROT_READ|PROT_WRITE) = 0
+openat(AT_FDCWD, "/dev/__properties__/u:object_r:gwp_asan_prop:s0", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=131072, ...}) = 0
+mmap(NULL, 131072, PROT_READ, MAP_SHARED, 3, 0) = 0x7347c70000
+close(3)                                = 0
+openat(AT_FDCWD, "/dev/__properties__/u:object_r:build_prop:s0", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=131072, ...}) = 0
+mmap(NULL, 131072, PROT_READ, MAP_SHARED, 3, 0) = 0x7345fe0000
+close(3)                                = 0
+openat(AT_FDCWD, "/dev/__properties__/u:object_r:libc_debug_prop:s0", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=131072, ...}) = 0
+mmap(NULL, 131072, PROT_READ, MAP_SHARED, 3, 0) = 0x7345c7c000
+close(3)                                = 0
+openat(AT_FDCWD, "/dev/__properties__/u:object_r:heapprofd_prop:s0", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=131072, ...}) = 0
+mmap(NULL, 131072, PROT_READ, MAP_SHARED, 3, 0) = 0x7345c2b000
+close(3)                                = 0
+openat(AT_FDCWD, "/dev/__properties__/u:object_r:default_prop:s0", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=131072, ...}) = 0
+mmap(NULL, 131072, PROT_READ, MAP_SHARED, 3, 0) = 0x7345c0b000
+close(3)                                = 0
+mprotect(0x7345fbd000, 4096, PROT_READ) = 0
+rt_sigaction(SIGRT_4, {sa_handler=0x7345ce56f0, sa_mask=[], sa_flags=SA_RESTART|SA_SIGINFO}, NULL, 8) = 0
+rt_sigaction(SIGRT_6, {sa_handler=SIG_IGN, sa_mask=[], sa_flags=SA_RESTART}, {sa_handler=SIG_IGN, sa_mask=[], sa_flags=0}, 8) = 0
+openat(AT_FDCWD, "/sys/kernel/mm/transparent_hugepage/enabled", O_RDONLY) = -1 ENOENT (No such file or directory)
+mmap(NULL, 2097152, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7342b1c000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7342b1c000, 2097152, "libc_malloc") = 0
+munmap(0x7342b1c000, 2097152)           = 0
+mmap(NULL, 4190208, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x734291d000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x734291d000, 4190208, "libc_malloc") = 0
+munmap(0x734291d000, 929792)            = 0
+munmap(0x7342c00000, 1163264)           = 0
+mmap(NULL, 2097152, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7342800000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7342800000, 2097152, "libc_malloc") = 0
+mmap(NULL, 4194304, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7342400000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7342400000, 4194304, "libc_malloc") = 0
+madvise(0x7342805000, 4096, MADV_DONTNEED) = 0
+getuid()                                = 10244
+prctl(PR_GET_DUMPABLE)                  = 1 (SUID_DUMP_USER)
+openat(AT_FDCWD, "/system/lib64/libnetd_client.so", O_RDONLY|O_CLOEXEC) = 3
+readlinkat(AT_FDCWD, "/proc/self/fd/3", "/system/lib64/libnetd_client.so", 4096) = 31
+fstat(3, {st_mode=S_IFREG|0644, st_size=36848, ...}) = 0
+fstatfs(3, {f_type=OVERLAYFS_SUPER_MAGIC, f_bsize=4096, f_blocks=1049342, f_bfree=3173, f_bavail=0, f_files=2112, f_ffree=37, f_fsid={val=[0xbf777a1d, 0x93ac82aa]}, f_namelen=255, f_frsize=4096, f_flags=ST_VALID|ST_RDONLY|ST_RELATIME}) = 0
+pread64(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 64, 0) = 64
+mmap(NULL, 688, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7348ff6000
+mmap(NULL, 6560, PROT_READ, MAP_PRIVATE, 3, 0x8000) = 0x7347cb5000
+mmap(NULL, 576, PROT_READ, MAP_PRIVATE, 3, 0x8000) = 0x7348ff5000
+mmap(NULL, 7739, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7347cb3000
+openat(AT_FDCWD, "/system/lib64/libcutils.so", O_RDONLY|O_CLOEXEC) = 4
+readlinkat(AT_FDCWD, "/proc/self/fd/4", "/system/lib64/libcutils.so", 4096) = 26
+fstat(4, {st_mode=S_IFREG|0644, st_size=91200, ...}) = 0
+fstatfs(4, {f_type=OVERLAYFS_SUPER_MAGIC, f_bsize=4096, f_blocks=1049342, f_bfree=3173, f_bavail=0, f_files=2112, f_ffree=37, f_fsid={val=[0xbf777a1d, 0x93ac82aa]}, f_namelen=255, f_frsize=4096, f_flags=ST_VALID|ST_RDONLY|ST_RELATIME}) = 0
+pread64(4, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 64, 0) = 64
+mmap(NULL, 688, PROT_READ, MAP_PRIVATE, 4, 0) = 0x7347e3a000
+mmap(NULL, 8704, PROT_READ, MAP_PRIVATE, 4, 0x15000) = 0x7347c03000
+mmap(NULL, 576, PROT_READ, MAP_PRIVATE, 4, 0x15000) = 0x7347e36000
+mmap(NULL, 10832, PROT_READ, MAP_PRIVATE, 4, 0x2000) = 0x7347c00000
+openat(AT_FDCWD, "/system/lib64/libc++.so", O_RDONLY|O_CLOEXEC) = 5
+readlinkat(AT_FDCWD, "/proc/self/fd/5", "/system/lib64/libc++.so", 4096) = 23
+fstat(5, {st_mode=S_IFREG|0644, st_size=716640, ...}) = 0
+fstatfs(5, {f_type=OVERLAYFS_SUPER_MAGIC, f_bsize=4096, f_blocks=1049342, f_bfree=3173, f_bavail=0, f_files=2112, f_ffree=37, f_fsid={val=[0xbf777a1d, 0x93ac82aa]}, f_namelen=255, f_frsize=4096, f_flags=ST_VALID|ST_RDONLY|ST_RELATIME}) = 0
+pread64(5, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 64, 0) = 64
+mmap(NULL, 688, PROT_READ, MAP_PRIVATE, 5, 0) = 0x7347e33000
+mmap(NULL, 6144, PROT_READ, MAP_PRIVATE, 5, 0xae000) = 0x7346444000
+mmap(NULL, 7840, PROT_READ, MAP_PRIVATE, 5, 0xab000) = 0x7346442000
+mmap(NULL, 104252, PROT_READ, MAP_PRIVATE, 5, 0x12000) = 0x7345fc6000
+openat(AT_FDCWD, "/system/lib64/liblog.so", O_RDONLY|O_CLOEXEC) = 6
+readlinkat(AT_FDCWD, "/proc/self/fd/6", "/system/lib64/liblog.so", 4096) = 23
+fstat(6, {st_mode=S_IFREG|0644, st_size=62112, ...}) = 0
+fstatfs(6, {f_type=OVERLAYFS_SUPER_MAGIC, f_bsize=4096, f_blocks=1049342, f_bfree=3173, f_bavail=0, f_files=2112, f_ffree=37, f_fsid={val=[0xbf777a1d, 0x93ac82aa]}, f_namelen=255, f_frsize=4096, f_flags=ST_VALID|ST_RDONLY|ST_RELATIME}) = 0
+pread64(6, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 64, 0) = 64
+mmap(NULL, 688, PROT_READ, MAP_PRIVATE, 6, 0) = 0x7347cb2000
+mmap(NULL, 7872, PROT_READ, MAP_PRIVATE, 6, 0xe000) = 0x7346440000
+mmap(NULL, 528, PROT_READ, MAP_PRIVATE, 6, 0xe000) = 0x7347c6f000
+mmap(NULL, 5711, PROT_READ, MAP_PRIVATE, 6, 0x1000) = 0x734643e000
+openat(AT_FDCWD, "/system/lib64/libbase.so", O_RDONLY|O_CLOEXEC) = 7
+readlinkat(AT_FDCWD, "/proc/self/fd/7", "/system/lib64/libbase.so", 4096) = 24
+fstat(7, {st_mode=S_IFREG|0644, st_size=263440, ...}) = 0
+fstatfs(7, {f_type=OVERLAYFS_SUPER_MAGIC, f_bsize=4096, f_blocks=1049342, f_bfree=3173, f_bavail=0, f_files=2112, f_ffree=37, f_fsid={val=[0xbf777a1d, 0x93ac82aa]}, f_namelen=255, f_frsize=4096, f_flags=ST_VALID|ST_RDONLY|ST_RELATIME}) = 0
+pread64(7, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0\267\0\1\0\0\0\0\0\0\0\0\0\0\0"..., 64, 0) = 64
+mmap(NULL, 688, PROT_READ, MAP_PRIVATE, 7, 0) = 0x734643d000
+mmap(NULL, 9120, PROT_READ, MAP_PRIVATE, 7, 0x3f000) = 0x7346400000
+mmap(NULL, 1792, PROT_READ, MAP_PRIVATE, 7, 0x3e000) = 0x7345c7b000
+mmap(NULL, 28799, PROT_READ, MAP_PRIVATE, 7, 0x3000) = 0x7345c73000
+mmap(NULL, 1044480, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7342c1d000
+munmap(0x7342c1d000, 147456)            = 0
+munmap(0x7342cf3000, 167936)            = 0
+mmap(0x7342c41000, 297076, PROT_READ, MAP_PRIVATE|MAP_FIXED, 5, 0) = 0x7342c41000
+mmap(0x7342c8a000, 383984, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED, 5, 0x49000) = 0x7342c8a000
+mmap(0x7342ce8000, 25112, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 5, 0xa7000) = 0x7342ce8000
+mmap(0x7342cef000, 577, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 5, 0xad000) = 0x7342cef000
+mmap(0x7342cf0000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7342cf0000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7342cf0000, 12288, ".bss") = 0
+mmap(NULL, 520192, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7343581000
+munmap(0x7343581000, 450560)            = 0
+munmap(0x73435f9000, 28672)             = 0
+mmap(0x73435ef000, 9492, PROT_READ, MAP_PRIVATE|MAP_FIXED, 3, 0) = 0x73435ef000
+mmap(0x73435f2000, 16416, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED, 3, 0x3000) = 0x73435f2000
+mmap(0x73435f7000, 984, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x8000) = 0x73435f7000
+mmap(0x73435f8000, 1081, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 3, 0x8000) = 0x73435f8000
+mmap(NULL, 520192, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7343570000
+munmap(0x7343570000, 65536)             = 0
+munmap(0x73435c0000, 192512)            = 0
+mmap(0x7343580000, 70212, PROT_READ, MAP_PRIVATE|MAP_FIXED, 7, 0) = 0x7343580000
+mmap(0x7343592000, 177504, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED, 7, 0x12000) = 0x7343592000
+mmap(0x73435be000, 3416, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 7, 0x3e000) = 0x73435be000
+mmap(0x73435bf000, 3432, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 7, 0x3e000) = 0x73435bf000
+mmap(NULL, 520192, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7342381000
+munmap(0x7342381000, 393216)            = 0
+munmap(0x73423f8000, 32768)             = 0
+mmap(0x73423e1000, 34460, PROT_READ, MAP_PRIVATE|MAP_FIXED, 4, 0) = 0x73423e1000
+mmap(0x73423ea000, 43008, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED, 4, 0x9000) = 0x73423ea000
+mmap(0x73423f5000, 6184, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 4, 0x14000) = 0x73423f5000
+mmap(0x73423f7000, 2141, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 4, 0x15000) = 0x73423f7000
+mmap(NULL, 520192, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7342362000
+munmap(0x7342362000, 172032)            = 0
+munmap(0x734239c000, 282624)            = 0
+mmap(0x734238c000, 16964, PROT_READ, MAP_PRIVATE|MAP_FIXED, 6, 0) = 0x734238c000
+mmap(0x7342391000, 36176, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED, 6, 0x5000) = 0x7342391000
+mmap(0x734239a000, 1376, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 6, 0xe000) = 0x734239a000
+mmap(0x734239b000, 1520, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED, 6, 0xe000) = 0x734239b000
+mprotect(0x73435f7000, 4096, PROT_READ) = 0
+mmap(NULL, 2147483648, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS|MAP_NORESERVE, -1, 0) = 0x72c238c000
+mprotect(0x7347c6e000, 4096, PROT_READ) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c265e000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c265e000) = 0x72c265e000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x72c238c000, 2147483648, "cfi shadow") = 0
+mprotect(0x73423f5000, 8192, PROT_READ) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x72c238c000, 2147483648, "cfi shadow") = 0
+mprotect(0x7342ce8000, 28672, PROT_READ) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x72c238c000, 2147483648, "cfi shadow") = 0
+mprotect(0x734239a000, 4096, PROT_READ) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x72c238c000, 2147483648, "cfi shadow") = 0
+mprotect(0x73435be000, 4096, PROT_READ) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7345c72000
+mprotect(0x72c2726000, 4096, PROT_READ) = 0
+mprotect(0x7345c72000, 4096, PROT_READ) = 0
+mremap(0x7345c72000, 4096, 4096, MREMAP_MAYMOVE|MREMAP_FIXED, 0x72c2726000) = 0x72c2726000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x72c238c000, 2147483648, "cfi shadow") = 0
+close(3)                                = 0
+close(4)                                = 0
+close(5)                                = 0
+close(6)                                = 0
+close(7)                                = 0
+munmap(0x734643e000, 5711)              = 0
+munmap(0x7347c6f000, 528)               = 0
+munmap(0x7346440000, 7872)              = 0
+munmap(0x7347cb2000, 688)               = 0
+munmap(0x7345fc6000, 104252)            = 0
+munmap(0x7346442000, 7840)              = 0
+munmap(0x7346444000, 6144)              = 0
+munmap(0x7347e33000, 688)               = 0
+munmap(0x7347c00000, 10832)             = 0
+munmap(0x7347e36000, 576)               = 0
+munmap(0x7347c03000, 8704)              = 0
+munmap(0x7347e3a000, 688)               = 0
+munmap(0x7345c73000, 28799)             = 0
+munmap(0x7345c7b000, 1792)              = 0
+munmap(0x7346400000, 9120)              = 0
+munmap(0x734643d000, 688)               = 0
+munmap(0x7347cb3000, 7739)              = 0
+munmap(0x7348ff5000, 576)               = 0
+munmap(0x7347cb5000, 6560)              = 0
+munmap(0x7348ff6000, 688)               = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7348ff6000
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, 0x7348ff6000, 4096, "atexit handlers") = 0
+mprotect(0x7348ff6000, 4096, PROT_READ) = 0
+mprotect(0x7348ff6000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7348ff6000, 4096, PROT_READ) = 0
+mprotect(0x7348ff6000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7348ff6000, 4096, PROT_READ) = 0
+munmap(0x7347d04000, 409600)            = 0
+prctl(PR_GET_DUMPABLE)                  = 1 (SUID_DUMP_USER)
+prctl(PR_GET_DUMPABLE)                  = 1 (SUID_DUMP_USER)
+prctl(PR_GET_DUMPABLE)                  = 1 (SUID_DUMP_USER)
+openat(AT_FDCWD, "/dev/__properties__/u:object_r:vendor_socket_hook_prop:s0", O_RDONLY|O_NOFOLLOW|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=131072, ...}) = 0
+mmap(NULL, 131072, PROT_READ, MAP_SHARED, 3, 0) = 0x7347d48000
+close(3)                                = 0
+prctl(PR_GET_DUMPABLE)                  = 1 (SUID_DUMP_USER)
+prctl(PR_GET_DUMPABLE)                  = 1 (SUID_DUMP_USER)
+prctl(PR_GET_DUMPABLE)                  = 1 (SUID_DUMP_USER)
+prctl(PR_GET_DUMPABLE)                  = 1 (SUID_DUMP_USER)
+prctl(PR_GET_DUMPABLE)                  = 1 (SUID_DUMP_USER)
+futex(0x7345fbbd00, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+mprotect(0x7347e8d000, 409600, PROT_READ) = 0
+mprotect(0x7347f84000, 409600, PROT_READ) = 0
+mprotect(0x7347dcc000, 409600, PROT_READ) = 0
+mprotect(0x7347d68000, 409600, PROT_READ) = 0
+prctl(PR_SET_NAME, "systemd")           = 0
+openat(AT_FDCWD, "/dev/console", O_WRONLY|O_NOCTTY|O_CLOEXEC) = -1 EACCES (Permission denied)
+faccessat(AT_FDCWD, "/sys/fs/smackfs/", F_OK) = -1 ENOENT (No such file or directory)
+getrlimit(RLIMIT_NOFILE, {rlim_cur=32*1024, rlim_max=32*1024}) = 0
+getrlimit(RLIMIT_MEMLOCK, {rlim_cur=RLIM64_INFINITY, rlim_max=RLIM64_INFINITY}) = 0
+rt_sigaction(SIGHUP, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGINT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGQUIT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGILL, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGTRAP, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGABRT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGBUS, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGFPE, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGUSR1, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGSEGV, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGUSR2, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGPIPE, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGALRM, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGTERM, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGSTKFLT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGCHLD, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGCONT, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGTSTP, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGTTIN, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGTTOU, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGURG, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGXCPU, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGXFSZ, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGVTALRM, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGPROF, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGWINCH, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGIO, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGPWR, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGSYS, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRTMIN, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_1, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_2, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_3, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_4, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_5, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_6, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_7, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_8, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_9, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_10, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_11, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_12, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_13, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_14, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_15, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_16, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_17, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_18, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_19, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_20, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_21, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_22, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_23, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_24, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_25, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_26, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_27, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_28, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_29, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_30, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_31, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGRT_32, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+rt_sigaction(SIGPIPE, {sa_handler=SIG_IGN, sa_mask=[], sa_flags=SA_RESTART}, NULL, 8) = 0
+openat(AT_FDCWD, "/", O_RDONLY|O_CLOEXEC|O_PATH|O_DIRECTORY) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_TYPE|STATX_MODE|STATX_NLINK|STATX_UID|STATX_GID|STATX_MTIME|STATX_CTIME|STATX_INO|STATX_SIZE|STATX_BLOCKS|STATX_BTIME, stx_attributes=0, stx_mode=S_IFDIR|0755, stx_size=4096, ...}) = 0
+openat(3, "data", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 4
+statx(4, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_BASIC_STATS, stx_attributes=0, stx_mode=S_IFDIR|0771, stx_size=4096, ...}) = 0
+close(3)                                = 0
+openat(4, "data", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_BASIC_STATS, stx_attributes=STATX_ATTR_ENCRYPTED, stx_mode=S_IFDIR|0771, stx_size=53248, ...}) = 0
+close(4)                                = 0
+openat(3, "com.termux", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 4
+statx(4, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_BASIC_STATS, stx_attributes=STATX_ATTR_ENCRYPTED, stx_mode=S_IFDIR|0700, stx_size=3488, ...}) = 0
+close(3)                                = 0
+openat(4, "files", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_BASIC_STATS, stx_attributes=STATX_ATTR_ENCRYPTED, stx_mode=S_IFDIR|0771, stx_size=3488, ...}) = 0
+close(4)                                = 0
+openat(3, "home", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 4
+statx(4, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_BASIC_STATS, stx_attributes=STATX_ATTR_ENCRYPTED, stx_mode=S_IFDIR|0700, stx_size=4096, ...}) = 0
+close(3)                                = 0
+openat(4, ".config", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_BASIC_STATS, stx_attributes=STATX_ATTR_ENCRYPTED, stx_mode=S_IFDIR|0700, stx_size=3488, ...}) = 0
+close(4)                                = 0
+openat(3, "systemd", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 4
+statx(4, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_BASIC_STATS, stx_attributes=STATX_ATTR_ENCRYPTED, stx_mode=S_IFDIR|0700, stx_size=3488, ...}) = 0
+close(3)                                = 0
+openat(4, "user.conf.d", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = -1 ENOENT (No such file or directory)
+close(4)                                = 0
+openat(AT_FDCWD, "/", O_RDONLY|O_CLOEXEC|O_PATH|O_DIRECTORY) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_TYPE|STATX_MODE|STATX_NLINK|STATX_UID|STATX_GID|STATX_MTIME|STATX_CTIME|STATX_INO|STATX_SIZE|STATX_BLOCKS|STATX_BTIME, stx_attributes=0, stx_mode=S_IFDIR|0755, stx_size=4096, ...}) = 0
+openat(3, "etc", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 4
+statx(4, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_TYPE|STATX_MODE|STATX_NLINK|STATX_UID|STATX_GID|STATX_MTIME|STATX_CTIME|STATX_INO|STATX_SIZE|STATX_BLOCKS|STATX_BTIME, stx_attributes=0, stx_mode=S_IFLNK|0644, stx_size=11, ...}) = 0
+readlinkat(3, "etc", "/system/etc", 4096) = 11
+close(3)                                = 0
+openat(AT_FDCWD, "/", O_RDONLY|O_CLOEXEC|O_PATH|O_DIRECTORY) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_TYPE|STATX_MODE|STATX_NLINK|STATX_UID|STATX_GID|STATX_MTIME|STATX_CTIME|STATX_INO|STATX_SIZE|STATX_BLOCKS|STATX_BTIME, stx_attributes=0, stx_mode=S_IFDIR|0755, stx_size=4096, ...}) = 0
+close(4)                                = 0
+openat(3, "system", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 4
+statx(4, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_TYPE|STATX_MODE|STATX_NLINK|STATX_UID|STATX_GID|STATX_MTIME|STATX_CTIME|STATX_INO|STATX_SIZE|STATX_BLOCKS|STATX_BTIME, stx_attributes=0, stx_mode=S_IFDIR|0755, stx_size=4096, ...}) = 0
+close(3)                                = 0
+openat(4, "etc", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_TYPE|STATX_MODE|STATX_NLINK|STATX_UID|STATX_GID|STATX_MTIME|STATX_CTIME|STATX_INO|STATX_SIZE|STATX_BLOCKS|STATX_BTIME, stx_attributes=0, stx_mode=S_IFDIR|0755, stx_size=4096, ...}) = 0
+close(4)                                = 0
+openat(3, "systemd", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = -1 ENOENT (No such file or directory)
+close(3)                                = 0
+openat(AT_FDCWD, "/", O_RDONLY|O_CLOEXEC|O_PATH|O_DIRECTORY) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_TYPE|STATX_MODE|STATX_NLINK|STATX_UID|STATX_GID|STATX_MTIME|STATX_CTIME|STATX_INO|STATX_SIZE|STATX_BLOCKS|STATX_BTIME, stx_attributes=0, stx_mode=S_IFDIR|0755, stx_size=4096, ...}) = 0
+openat(3, "run", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = -1 ENOENT (No such file or directory)
+close(3)                                = 0
+openat(AT_FDCWD, "/", O_RDONLY|O_CLOEXEC|O_PATH|O_DIRECTORY) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_TYPE|STATX_MODE|STATX_NLINK|STATX_UID|STATX_GID|STATX_MTIME|STATX_CTIME|STATX_INO|STATX_SIZE|STATX_BLOCKS|STATX_BTIME, stx_attributes=0, stx_mode=S_IFDIR|0755, stx_size=4096, ...}) = 0
+openat(3, "usr", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = -1 ENOENT (No such file or directory)
+close(3)                                = 0
+openat(AT_FDCWD, "/", O_RDONLY|O_CLOEXEC|O_PATH|O_DIRECTORY) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_TYPE|STATX_MODE|STATX_NLINK|STATX_UID|STATX_GID|STATX_MTIME|STATX_CTIME|STATX_INO|STATX_SIZE|STATX_BLOCKS|STATX_BTIME, stx_attributes=0, stx_mode=S_IFDIR|0755, stx_size=4096, ...}) = 0
+openat(3, "usr", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = -1 ENOENT (No such file or directory)
+close(3)                                = 0
+openat(AT_FDCWD, "/", O_RDONLY|O_CLOEXEC|O_PATH|O_DIRECTORY) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_TYPE|STATX_MODE|STATX_NLINK|STATX_UID|STATX_GID|STATX_MTIME|STATX_CTIME|STATX_INO|STATX_SIZE|STATX_BLOCKS|STATX_BTIME, stx_attributes=0, stx_mode=S_IFDIR|0755, stx_size=4096, ...}) = 0
+openat(3, "data", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 4
+statx(4, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_BASIC_STATS, stx_attributes=0, stx_mode=S_IFDIR|0771, stx_size=4096, ...}) = 0
+close(3)                                = 0
+openat(4, "data", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_BASIC_STATS, stx_attributes=STATX_ATTR_ENCRYPTED, stx_mode=S_IFDIR|0771, stx_size=53248, ...}) = 0
+close(4)                                = 0
+openat(3, "com.termux", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 4
+statx(4, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_BASIC_STATS, stx_attributes=STATX_ATTR_ENCRYPTED, stx_mode=S_IFDIR|0700, stx_size=3488, ...}) = 0
+close(3)                                = 0
+openat(4, "files", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_BASIC_STATS, stx_attributes=STATX_ATTR_ENCRYPTED, stx_mode=S_IFDIR|0771, stx_size=3488, ...}) = 0
+close(4)                                = 0
+openat(3, "home", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 4
+statx(4, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_BASIC_STATS, stx_attributes=STATX_ATTR_ENCRYPTED, stx_mode=S_IFDIR|0700, stx_size=4096, ...}) = 0
+close(3)                                = 0
+openat(4, ".config", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_BASIC_STATS, stx_attributes=STATX_ATTR_ENCRYPTED, stx_mode=S_IFDIR|0700, stx_size=3488, ...}) = 0
+close(4)                                = 0
+openat(3, "systemd", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 4
+statx(4, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_BASIC_STATS, stx_attributes=STATX_ATTR_ENCRYPTED, stx_mode=S_IFDIR|0700, stx_size=3488, ...}) = 0
+close(3)                                = 0
+openat(4, "user.conf", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = -1 ENOENT (No such file or directory)
+openat(4, "user.conf", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = -1 ENOENT (No such file or directory)
+close(4)                                = 0
+openat(AT_FDCWD, "/", O_RDONLY|O_CLOEXEC|O_PATH|O_DIRECTORY) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_TYPE|STATX_MODE|STATX_NLINK|STATX_UID|STATX_GID|STATX_MTIME|STATX_CTIME|STATX_INO|STATX_SIZE|STATX_BLOCKS|STATX_BTIME, stx_attributes=0, stx_mode=S_IFDIR|0755, stx_size=4096, ...}) = 0
+openat(3, "etc", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 4
+statx(4, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_TYPE|STATX_MODE|STATX_NLINK|STATX_UID|STATX_GID|STATX_MTIME|STATX_CTIME|STATX_INO|STATX_SIZE|STATX_BLOCKS|STATX_BTIME, stx_attributes=0, stx_mode=S_IFLNK|0644, stx_size=11, ...}) = 0
+readlinkat(3, "etc", "/system/etc", 4096) = 11
+close(3)                                = 0
+openat(AT_FDCWD, "/", O_RDONLY|O_CLOEXEC|O_PATH|O_DIRECTORY) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_TYPE|STATX_MODE|STATX_NLINK|STATX_UID|STATX_GID|STATX_MTIME|STATX_CTIME|STATX_INO|STATX_SIZE|STATX_BLOCKS|STATX_BTIME, stx_attributes=0, stx_mode=S_IFDIR|0755, stx_size=4096, ...}) = 0
+close(4)                                = 0
+openat(3, "system", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 4
+statx(4, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_TYPE|STATX_MODE|STATX_NLINK|STATX_UID|STATX_GID|STATX_MTIME|STATX_CTIME|STATX_INO|STATX_SIZE|STATX_BLOCKS|STATX_BTIME, stx_attributes=0, stx_mode=S_IFDIR|0755, stx_size=4096, ...}) = 0
+close(3)                                = 0
+openat(4, "etc", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = 3
+statx(3, "", AT_STATX_SYNC_AS_STAT|AT_EMPTY_PATH, STATX_TYPE|STATX_UID|STATX_INO|STATX_MNT_ID|STATX_MNT_ID_UNIQUE, {stx_mask=STATX_TYPE|STATX_MODE|STATX_NLINK|STATX_UID|STATX_GID|STATX_MTIME|STATX_CTIME|STATX_INO|STATX_SIZE|STATX_BLOCKS|STATX_BTIME, stx_attributes=0, stx_mode=S_IFDIR|0755, stx_size=4096, ...}) = 0
+close(4)                                = 0
+openat(3, "systemd", O_RDONLY|O_NOFOLLOW|O_CLOEXEC|O_PATH) = -1 ENOENT (No such file or directory)
+close(3)                                = 0
+getuid()                                = 10244
+openat(AT_FDCWD, "/proc/self/oom_score_adj", O_RDONLY|O_NOCTTY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=0, ...}) = 0
+futex(0x7343564580, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+read(3, "0\n", 4096)                    = 2
+close(3)                                = 0
+openat(AT_FDCWD, "/proc/1/root", O_RDONLY|O_CLOEXEC|O_PATH) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/proc/", O_RDONLY|O_CLOEXEC|O_PATH) = 3
+fstatfs(3, {f_type=PROC_SUPER_MAGIC, f_bsize=4096, f_blocks=0, f_bfree=0, f_bavail=0, f_files=0, f_ffree=0, f_fsid={val=[0, 0]}, f_namelen=255, f_frsize=4096, f_flags=ST_VALID|ST_RELATIME}) = 0
+close(3)                                = 0
+chdir("/")                              = 0
+openat(AT_FDCWD, "/proc/self/fd", O_RDONLY|O_CLOEXEC|O_DIRECTORY) = 3
+getrandom(0x734356426c, 16, GRND_INSECURE) = -1 EINVAL (Invalid argument)
+openat(AT_FDCWD, "/dev/urandom", O_RDONLY|O_NOCTTY|O_CLOEXEC) = 4
+read(4, "\346f>E\366\377\247\177\31\305\260qz\215\225\324", 16) = 16
+close(4)                                = 0
+futex(0x7343564268, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+getdents64(3, 0xb400007342802840 /* 6 entries */, 4200) = 144
+getdents64(3, 0xb400007342802840 /* 0 entries */, 4200) = 0
+close(3)                                = 0
+setsid()                                = 5718
+openat(AT_FDCWD, "/dev/tty", O_RDWR|O_NOCTTY|O_NONBLOCK|O_CLOEXEC) = -1 ENXIO (No such device or address)
+openat(AT_FDCWD, "/dev/console", O_WRONLY|O_NOCTTY|O_CLOEXEC) = -1 EACCES (Permission denied)
+faccessat(AT_FDCWD, "/proc/vz", F_OK)   = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/proc/sys/kernel/osrelease", O_RDONLY|O_CLOEXEC) = -1 EACCES (Permission denied)
+openat(AT_FDCWD, "/proc/self/status", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+read(3, "Name:\tsystemd\nUmask:\t0077\nState:"..., 1024) = 1024
+ioctl(3, TCGETS, 0x7fdb1ad680)          = -1 EACCES (Permission denied)
+ioctl(3, TCGETS, 0x7fdb1ad680)          = -1 EACCES (Permission denied)
+ioctl(3, TCGETS, 0x7fdb1ad680)          = -1 EACCES (Permission denied)
+ioctl(3, TCGETS, 0x7fdb1ad680)          = -1 EACCES (Permission denied)
+ioctl(3, TCGETS, 0x7fdb1ad680)          = -1 EACCES (Permission denied)
+ioctl(3, TCGETS, 0x7fdb1ad680)          = -1 EACCES (Permission denied)
+ioctl(3, TCGETS, 0x7fdb1ad680)          = -1 EACCES (Permission denied)
+ioctl(3, TCGETS, 0x7fdb1ad680)          = -1 EACCES (Permission denied)
+close(3)                                = 0
+openat(AT_FDCWD, "/proc/5716/comm", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=0, ...}) = 0
+read(3, "strace\n", 1024)               = 7
+ioctl(3, TCGETS, 0x7fdb1ad660)          = -1 EACCES (Permission denied)
+read(3, "", 1024)                       = 0
+close(3)                                = 0
+openat(AT_FDCWD, "/run/host/container-manager", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/run/systemd/container", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/proc/1/environ", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/run/.containerenv", F_OK) = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/.dockerenv", F_OK) = -1 ENOENT (No such file or directory)
+newfstatat(AT_FDCWD, "/proc/self/ns/pid", 0x7fdb1ad708, 0) = -1 EACCES (Permission denied)
+openat(AT_FDCWD, "/sys/class/dmi/id/product_name", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/sys/class/dmi/id/sys_vendor", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/sys/class/dmi/id/board_vendor", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/sys/class/dmi/id/bios_vendor", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/sys/class/dmi/id/product_version", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/sys/firmware/dmi/entries/0-0/raw", O_RDONLY|O_NOCTTY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/proc/cpuinfo", O_RDONLY|O_CLOEXEC) = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+read(3, "processor\t: 0\nBogoMIPS\t: 26.00\nF"..., 1024) = 1024
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+read(3, "a2 crc32 atomics fphp asimdhp cp"..., 1024) = 895
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+ioctl(3, TCGETS, 0x7fdb1ad910)          = -1 ENOTTY (Inappropriate ioctl for device)
+read(3, "", 1024)                       = 0
+read(3, "", 1024)                       = 0
+close(3)                                = 0
+faccessat(AT_FDCWD, "/proc/xen", F_OK)  = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/sys/hypervisor/type", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/proc/device-tree/hypervisor/compatible", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+faccessat(AT_FDCWD, "/proc/device-tree/ibm,partition-name", F_OK) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/proc/device-tree", O_RDONLY|O_CLOEXEC|O_DIRECTORY) = -1 EACCES (Permission denied)
+faccessat(AT_FDCWD, "/sys/devices/platform/arm-cca-dev", F_OK) = -1 ENOENT (No such file or directory)
+uname({sysname="Linux", nodename="localhost", ...}) = 0
+faccessat(AT_FDCWD, "/etc/initrd-release", F_OK) = -1 ENOENT (No such file or directory)
+openat(AT_FDCWD, "/proc/cmdline", O_RDONLY|O_CLOEXEC) = -1 EACCES (Permission denied)
+openat(AT_FDCWD, "/etc/machine-id", O_RDONLY|O_CLOEXEC) = -1 ENOENT (No such file or directory)
+uname({sysname="Linux", nodename="localhost", ...}) = 0
+statfs("/sys/fs/cgroup/", {f_type=TMPFS_MAGIC, f_bsize=4096, f_blocks=955318, f_bfree=955317, f_bavail=955317, f_files=955318, f_ffree=955313, f_fsid={val=[0, 0]}, f_namelen=255, f_frsize=4096, f_flags=ST_VALID|ST_RELATIME}) = 0
+mprotect(0x7348ff6000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7348ff6000, 4096, PROT_READ) = 0
+mprotect(0x7348ff6000, 4096, PROT_READ|PROT_WRITE) = 0
+mprotect(0x7348ff6000, 4096, PROT_READ) = 0
+exit_group(1)                           = ?
++++ exited with 1 +++
