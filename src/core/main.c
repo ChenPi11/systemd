@@ -2936,12 +2936,6 @@ static int safety_checks(void) {
                 return log_error_errno(SYNTHETIC_ERRNO(EPERM),
                                        "Can't run --user mode as PID 1.");
 
-        if (arg_action == ACTION_RUN &&
-            arg_runtime_scope == RUNTIME_SCOPE_SYSTEM &&
-            getpid_cached() != 1)
-                return log_error_errno(SYNTHETIC_ERRNO(EPERM),
-                                       "Can't run system mode unless PID 1.");
-
         if (arg_action == ACTION_TEST &&
             geteuid() == 0)
                 return log_error_errno(SYNTHETIC_ERRNO(EPERM),
