@@ -1089,22 +1089,30 @@ int fds_inode_and_mount_same(int fd1, int fd2) {
         assert(fd1 >= 0 || IN_SET(fd1, AT_FDCWD, XAT_FDROOT));
         assert(fd2 >= 0 || IN_SET(fd2, AT_FDCWD, XAT_FDROOT));
 
-        r = xstatx(fd1, /* path = */ NULL, AT_EMPTY_PATH,
-                   STATX_TYPE|STATX_INO|STATX_MNT_ID,
-                   &sx1);
+        /* Request STATX_MNT_ID as optional: some kernels/filesystems (e.g. Android FUSE) don't return it. */
+        r = xstatx_full(fd1, /* path= */ NULL, AT_EMPTY_PATH, /* xstatx_flags= */ 0,
+                        /* mandatory_mask= */ STATX_TYPE|STATX_INO,
+                        /* optional_mask= */ STATX_MNT_ID,
+                        /* mandatory_attributes= */ 0,
+                        &sx1);
         if (r < 0)
                 return r;
 
         if (fd1 == fd2) /* Shortcut things if fds are the same (only after validating the fd) */
                 return true;
 
-        r = xstatx(fd2, /* path = */ NULL, AT_EMPTY_PATH,
-                   STATX_TYPE|STATX_INO|STATX_MNT_ID,
-                   &sx2);
+        r = xstatx_full(fd2, /* path= */ NULL, AT_EMPTY_PATH, /* xstatx_flags= */ 0,
+                        /* mandatory_mask= */ STATX_TYPE|STATX_INO,
+                        /* optional_mask= */ STATX_MNT_ID,
+                        /* mandatory_attributes= */ 0,
+                        &sx2);
         if (r < 0)
                 return r;
 
         r = statx_mount_same(&sx1, &sx2);
+        if (r == -ENODATA)
+                /* Mount IDs not available; fall back to inode-only comparison. */
+                return statx_inode_same(&sx1, &sx2);
         if (r <= 0)
                 return r;
 

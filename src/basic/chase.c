@@ -370,10 +370,13 @@ int chaseat(int root_fd, int dir_fd, const char *path, ChaseFlags flags, char **
                                 bool is_root = root_fd == dir_fd && empty_or_root(done);
                                 if (!is_root && statx_inode_same(&stx, &root_stx)) {
                                         r = statx_mount_same(&stx, &root_stx);
-                                        if (r < 0)
+                                        if (r < 0 && r != -ENODATA)
                                                 return r;
 
-                                        is_root = r > 0;
+                                        /* When mount IDs are unavailable (-ENODATA, e.g. Android/FUSE
+                                         * filesystems), we cannot confirm same mount; conservatively treat
+                                         * as not root to avoid incorrectly clamping traversal. */
+                                        is_root = r > 0; /* false when -ENODATA */
                                 }
                                 if (is_root) {
                                         if (FLAGS_SET(flags, CHASE_STEP))

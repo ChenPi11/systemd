@@ -441,7 +441,9 @@ int xstatx_full(int fd,
 
         if (FLAGS_SET(xstatx_flags, XSTATX_MNT_ID_BEST) &&
             !(sx.stx_mask & (STATX_MNT_ID|STATX_MNT_ID_UNIQUE)))
-                return log_debug_errno(SYNTHETIC_ERRNO(EUNATCH), "statx() did not return either STATX_MNT_ID or STATX_MNT_ID_UNIQUE.");
+                /* Kernel or filesystem doesn't support mount IDs (e.g. some Android/FUSE filesystems).
+                 * Proceed without them; callers must handle absent mount IDs via statx_mount_same(). */
+                log_debug("statx() did not return either STATX_MNT_ID or STATX_MNT_ID_UNIQUE, continuing without mount ID.");
 
         if (!FLAGS_SET(sx.stx_mask, mandatory_mask)) {
                 if (DEBUG_LOGGING) {
