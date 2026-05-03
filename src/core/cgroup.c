@@ -3233,10 +3233,11 @@ static int cg_bpf_mask_supported(CGroupMask *ret) {
 
 int manager_setup_cgroup(Manager *m) {
         int r;
+        bool pid1;
 
         assert(m);
 
-        bool pid1 = getpid_cached() == 1;
+        pid1 = getpid_cached() == 1;
 
         /* 1. Determine hierarchy */
         m->cgroup_root = mfree(m->cgroup_root);
