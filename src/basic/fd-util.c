@@ -1111,8 +1111,9 @@ int fds_inode_and_mount_same(int fd1, int fd2) {
 
         r = statx_mount_same(&sx1, &sx2);
         if (r == -ENODATA)
-                /* Mount IDs not available; fall back to inode-only comparison. */
-                return statx_inode_same(&sx1, &sx2);
+                /* Mount IDs not available (e.g. Android/FUSE filesystems); conservatively report
+                 * as not the same to avoid false positives. */
+                return false;
         if (r <= 0)
                 return r;
 
