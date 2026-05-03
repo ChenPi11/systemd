@@ -3236,11 +3236,22 @@ int manager_setup_cgroup(Manager *m) {
 
         assert(m);
 
+        bool pid1 = getpid_cached() == 1;
+
         /* 1. Determine hierarchy */
         m->cgroup_root = mfree(m->cgroup_root);
         r = cg_pid_get_path(0, &m->cgroup_root);
-        if (r < 0)
-                return log_error_errno(r, "Cannot determine cgroup we are running in: %m");
+        if (r < 0) {
+                if (!pid1) {
+                        /* When running as a non-PID1 system manager (e.g. on Android without root /
+                         * with cgroup v1 only), degrade gracefully rather than refusing to start. */
+                        log_warning_errno(r, "Cannot determine cgroup path, running with no cgroup support: %m");
+                        m->cgroup_root = strdup("");
+                        if (!m->cgroup_root)
+                                return -ENOMEM;
+                } else
+                        return log_error_errno(r, "Cannot determine cgroup we are running in: %m");
+        }
 
         /* Chop off the init scope, if we are already located in it */
         char *e = endswith(m->cgroup_root, "/" SPECIAL_INIT_SCOPE);
@@ -3306,20 +3317,31 @@ int manager_setup_cgroup(Manager *m) {
                 if (r < 0)
                         log_warning_errno(r, "Couldn't move remaining userspace processes, ignoring: %m");
 
-        } else if (!MANAGER_IS_TEST_RUN(m))
+        } else if (MANAGER_IS_TEST_RUN(m) || !pid1) {
+                if (!MANAGER_IS_TEST_RUN(m))
+                        log_warning_errno(r, "Failed to create %s control group, running with degraded cgroup support: %m", scope_path);
+        } else
                 return log_error_errno(r, "Failed to create %s control group: %m", scope_path);
 
         /* 6. Figure out which controllers are supported */
         r = cg_mask_supported_subtree(m->cgroup_root, &m->cgroup_supported);
-        if (r < 0)
-                return log_error_errno(r, "Failed to determine supported controllers: %m");
+        if (r < 0) {
+                if (!pid1)
+                        log_warning_errno(r, "Failed to determine supported cgroup controllers, running with no controller support: %m");
+                else
+                        return log_error_errno(r, "Failed to determine supported controllers: %m");
+        }
 
         /* 7. Figure out which bpf-based pseudo-controllers are supported */
         CGroupMask mask;
         r = cg_bpf_mask_supported(&mask);
-        if (r < 0)
-                return log_error_errno(r, "Failed to determine supported bpf-based pseudo-controllers: %m");
-        m->cgroup_supported |= mask;
+        if (r < 0) {
+                if (!pid1)
+                        log_warning_errno(r, "Failed to determine supported bpf-based pseudo-controllers, ignoring: %m");
+                else
+                        return log_error_errno(r, "Failed to determine supported bpf-based pseudo-controllers: %m");
+        } else
+                m->cgroup_supported |= mask;
 
         /* 8. Log which controllers are supported */
         for (CGroupController c = 0; c < _CGROUP_CONTROLLER_MAX; c++)

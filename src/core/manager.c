@@ -2020,8 +2020,11 @@ static int manager_make_runtime_dir(Manager *m) {
                 return log_oom();
 
         r = mkdir_label(d, 0755);
-        if (r < 0 && r != -EEXIST)
-                return log_error_errno(r, "Failed to create directory '%s/': %m", d);
+        if (r < 0 && r != -EEXIST) {
+                if (getpid_cached() == 1)
+                        return log_error_errno(r, "Failed to create directory '%s/': %m", d);
+                log_warning_errno(r, "Failed to create directory '%s/', continuing with limited functionality: %m", d);
+        }
 
         return 0;
 }
