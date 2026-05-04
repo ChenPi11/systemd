@@ -2063,6 +2063,10 @@ static int unit_update_cgroup(
         if (!UNIT_HAS_CGROUP_CONTEXT(u))
                 return 0;
 
+        /* No cgroup support: silently succeed as a shim. */
+        if (isempty(u->manager->cgroup_root))
+                return 0;
+
         r = unit_get_cgroup_path_with_fallback(u, &cgroup);
         if (r < 0)
                 return log_unit_error_errno(u, r, "Failed to get cgroup path: %m");
@@ -2177,6 +2181,10 @@ int unit_attach_pids_to_cgroup(Unit *u, Set *pids, const char *suffix_path) {
                 return -EINVAL;
 
         if (set_isempty(pids))
+                return 0;
+
+        /* No cgroup support: silently succeed as a shim. */
+        if (isempty(u->manager->cgroup_root))
                 return 0;
 
         r = unit_realize_cgroup(u);
@@ -2363,6 +2371,10 @@ static bool unit_has_mask_enables_realized(
 
 void unit_add_to_cgroup_realize_queue(Unit *u) {
         assert(u);
+
+        /* No cgroup support: skip queueing, all cgroup ops are no-ops. */
+        if (isempty(u->manager->cgroup_root))
+                return;
 
         if (u->in_cgroup_realize_queue)
                 return;
@@ -2632,6 +2644,10 @@ int unit_realize_cgroup(Unit *u) {
         assert(u);
 
         if (!UNIT_HAS_CGROUP_CONTEXT(u))
+                return 0;
+
+        /* No cgroup support: silently succeed as a shim. */
+        if (isempty(u->manager->cgroup_root))
                 return 0;
 
         /* So, here's the deal: when realizing the cgroups for this unit, we need to first create all
@@ -3233,23 +3249,23 @@ static int cg_bpf_mask_supported(CGroupMask *ret) {
 
 int manager_setup_cgroup(Manager *m) {
         int r;
-        bool pid1;
 
         assert(m);
-
-        pid1 = getpid_cached() == 1;
 
         /* 1. Determine hierarchy */
         m->cgroup_root = mfree(m->cgroup_root);
         r = cg_pid_get_path(0, &m->cgroup_root);
         if (r < 0) {
-                if (!pid1) {
+                if (getpid_cached() != 1) {
                         /* When running as a non-PID1 system manager (e.g. on Android without root /
-                         * with cgroup v1 only), degrade gracefully rather than refusing to start. */
+                         * with cgroup v1 only), skip all cgroup setup and run with no cgroup support.
+                         * All cgroup operations are guarded on m->cgroup_root being non-empty so they
+                         * will silently become no-ops, and dbus/varlink APIs return empty shim values. */
                         log_warning_errno(r, "Cannot determine cgroup path, running with no cgroup support: %m");
                         m->cgroup_root = strdup("");
                         if (!m->cgroup_root)
                                 return -ENOMEM;
+                        return 0;
                 } else
                         return log_error_errno(r, "Cannot determine cgroup we are running in: %m");
         }
@@ -3318,31 +3334,20 @@ int manager_setup_cgroup(Manager *m) {
                 if (r < 0)
                         log_warning_errno(r, "Couldn't move remaining userspace processes, ignoring: %m");
 
-        } else if (MANAGER_IS_TEST_RUN(m) || !pid1) {
-                if (!MANAGER_IS_TEST_RUN(m))
-                        log_warning_errno(r, "Failed to create %s control group, running with degraded cgroup support: %m", scope_path);
-        } else
+        } else if (!MANAGER_IS_TEST_RUN(m))
                 return log_error_errno(r, "Failed to create %s control group: %m", scope_path);
 
         /* 6. Figure out which controllers are supported */
         r = cg_mask_supported_subtree(m->cgroup_root, &m->cgroup_supported);
-        if (r < 0) {
-                if (!pid1)
-                        log_warning_errno(r, "Failed to determine supported cgroup controllers, running with no controller support: %m");
-                else
-                        return log_error_errno(r, "Failed to determine supported controllers: %m");
-        }
+        if (r < 0)
+                return log_error_errno(r, "Failed to determine supported controllers: %m");
 
         /* 7. Figure out which bpf-based pseudo-controllers are supported */
         CGroupMask mask;
         r = cg_bpf_mask_supported(&mask);
-        if (r < 0) {
-                if (!pid1)
-                        log_warning_errno(r, "Failed to determine supported bpf-based pseudo-controllers, ignoring: %m");
-                else
-                        return log_error_errno(r, "Failed to determine supported bpf-based pseudo-controllers: %m");
-        } else
-                m->cgroup_supported |= mask;
+        if (r < 0)
+                return log_error_errno(r, "Failed to determine supported bpf-based pseudo-controllers: %m");
+        m->cgroup_supported |= mask;
 
         /* 8. Log which controllers are supported */
         for (CGroupController c = 0; c < _CGROUP_CONTROLLER_MAX; c++)
