@@ -498,9 +498,12 @@ static int manager_enable_special_signals(Manager *m) {
                 return 0;
 
         /* Enable that we get SIGINT on control-alt-del. In containers this will fail with EPERM (older) or
-         * EINVAL (newer), so ignore that. */
-        if (reboot(RB_DISABLE_CAD) < 0 && !IN_SET(errno, EPERM, EINVAL))
-                log_warning_errno(errno, "Failed to enable ctrl-alt-del handling, ignoring: %m");
+         * EINVAL (newer), so ignore that. Skip entirely when not running as PID 1 (e.g. Android non-root)
+         * where the reboot syscall may be blocked by seccomp and kill the process with SIGSYS. */
+        if (getpid_cached() == 1) {
+                if (reboot(RB_DISABLE_CAD) < 0 && !IN_SET(errno, EPERM, EINVAL))
+                        log_warning_errno(errno, "Failed to enable ctrl-alt-del handling, ignoring: %m");
+        }
 
         fd = open_terminal("/dev/tty0", O_RDWR|O_NOCTTY|O_CLOEXEC);
         if (fd < 0)
