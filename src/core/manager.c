@@ -498,7 +498,7 @@ static int manager_enable_special_signals(Manager *m) {
                 return 0;
 
         /* Enable that we get SIGINT on control-alt-del. In containers this will fail with EPERM (older) or
-         * EINVAL (newer), so ignore that. Skip entirely when not running as PID 1 (e.g. Android non-root)
+         * EINVAL (newer), so ignore that. Skip entirely when not running as PID 1 (e.g. Android as non-PID1)
          * where the reboot syscall may be blocked by seccomp and kill the process with SIGSYS. */
         if (getpid_cached() == 1) {
                 if (reboot(RB_DISABLE_CAD) < 0 && !IN_SET(errno, EPERM, EINVAL))
