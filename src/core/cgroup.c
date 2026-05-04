@@ -2180,11 +2180,11 @@ int unit_attach_pids_to_cgroup(Unit *u, Set *pids, const char *suffix_path) {
         if (!UNIT_HAS_CGROUP_CONTEXT(u))
                 return -EINVAL;
 
-        if (set_isempty(pids))
-                return 0;
-
         /* No cgroup support: silently succeed as a shim. */
         if (isempty(u->manager->cgroup_root))
+                return 0;
+
+        if (set_isempty(pids))
                 return 0;
 
         r = unit_realize_cgroup(u);
