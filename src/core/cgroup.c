@@ -3254,21 +3254,23 @@ int manager_setup_cgroup(Manager *m) {
 
         /* 1. Determine hierarchy */
         m->cgroup_root = mfree(m->cgroup_root);
-        r = cg_pid_get_path(0, &m->cgroup_root);
-        if (r < 0) {
-                if (getpid_cached() != 1) {
-                        /* When running as a non-PID1 system manager (e.g. on Android without root /
-                         * with cgroup v1 only), skip all cgroup setup and run with no cgroup support.
-                         * All cgroup operations are guarded on m->cgroup_root being non-empty so they
-                         * will silently become no-ops, and dbus/varlink APIs return empty shim values. */
-                        log_warning_errno(r, "Cannot determine cgroup path, running with no cgroup support: %m");
-                        m->cgroup_root = strdup("");
-                        if (!m->cgroup_root)
-                                return -ENOMEM;
-                        return 0;
-                } else
-                        return log_error_errno(r, "Cannot determine cgroup we are running in: %m");
+
+        /* When not running as PID 1 (e.g. on Android without root / with cgroup v1 only), skip all cgroup
+         * setup and run with no cgroup support. All cgroup write operations are guarded on m->cgroup_root
+         * being non-empty so they will silently become no-ops, and dbus/varlink APIs return empty shim
+         * values. We cannot reliably use the cgroup hierarchy in this case even if cg_pid_get_path()
+         * succeeds, because subsequent mkdir/attach calls will fail with EACCES. */
+        if (getpid_cached() != 1) {
+                log_debug("Running as non-PID1 system manager, disabling cgroup support.");
+                m->cgroup_root = strdup("");
+                if (!m->cgroup_root)
+                        return -ENOMEM;
+                return 0;
         }
+
+        r = cg_pid_get_path(0, &m->cgroup_root);
+        if (r < 0)
+                return log_error_errno(r, "Cannot determine cgroup we are running in: %m");
 
         /* Chop off the init scope, if we are already located in it */
         char *e = endswith(m->cgroup_root, "/" SPECIAL_INIT_SCOPE);
