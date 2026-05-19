@@ -6,7 +6,7 @@
 #include "userns-restrict-skel.h"
 #endif
 
-#include "bpf-dlopen.h"
+#include "bpf-util.h"
 #include "bpf-link.h"
 #include "fd-util.h"
 #include "log.h"
@@ -244,7 +244,7 @@ int userns_restrict_put_by_inode(
 
                         if (n_try == 0)
                                 return log_debug_errno(SYNTHETIC_ERRNO(EEXIST),
-                                                       "Stillcan't create inode entry in BPF map after 10 tries.");
+                                                       "Still cannot create inode entry in BPF map after 10 tries.");
 
                         r = sym_bpf_map_lookup_elem(outer_map_fd, &ino, &innermap_id);
                         if (r >= 0) {

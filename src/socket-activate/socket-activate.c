@@ -358,7 +358,7 @@ static int parse_argv(int argc, char *argv[], char ***remaining_args) {
         OptionParser opts = { argc, argv, OPTION_PARSER_STOP_AT_FIRST_NONOPTION };
         int r;
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_COMMON_HELP:
@@ -422,7 +422,7 @@ static int parse_argv(int argc, char *argv[], char ***remaining_args) {
                                         log_warning("File descriptor name \"%s\" is not valid.", esc);
                                 }
 
-                        /* Empty optargs means one empty name */
+                        /* Empty argument means one empty name */
                         r = strv_extend_strv(&arg_fdnames,
                                              strv_isempty(names) ? STRV_MAKE("") : names,
                                              false);

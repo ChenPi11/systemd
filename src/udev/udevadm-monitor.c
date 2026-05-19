@@ -109,7 +109,7 @@ static int help(void) {
 
         help_cmdline("monitor [OPTIONS]");
         help_abstract("Listen to kernel and udev events.");
-        help_section("Options:");
+        help_section("Options");
         r = table_print_or_warn(options);
         if (r < 0)
                 return r;
@@ -126,7 +126,7 @@ static int parse_argv(int argc, char *argv[]) {
 
         OptionParser opts = { argc, argv, .namespace = "udevadm-monitor" };
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_NAMESPACE("udevadm-monitor"): {}

@@ -23,13 +23,13 @@
 #include "log.h"
 #include "main-func.h"
 #include "options.h"
+#include "os-util.h"
 #include "parse-argument.h"
 #include "polkit-agent.h"
 #include "pretty-print.h"
 #include "runtime-scope.h"
 #include "string-util.h"
 #include "time-util.h"
-#include "utf8.h"
 #include "verbs.h"
 
 static bool arg_ask_password = true;
@@ -236,7 +236,7 @@ static int print_status_info(StatusInfo *i) {
                         return table_log_add_error(r);
         }
 
-        if (!isempty(i->os_fancy_name) && (emoji_enabled() || ascii_is_valid(i->os_fancy_name)) && colors_enabled()) {
+        if (use_fancy_name(i->os_fancy_name)) {
                 r = table_add_many(table,
                                    TABLE_FIELD, "Operating System",
                                    TABLE_STRING_WITH_ANSI, i->os_fancy_name,
@@ -545,7 +545,7 @@ static int get_hostname_based_on_flag(sd_bus *bus) {
         return get_one_name(bus, attr, NULL);
 }
 
-VERB(verb_show_status, "status", NULL, VERB_ANY, 1, VERB_DEFAULT, "Show current hostname settings");
+VERB_DEFAULT_NOARG(verb_show_status, "status", "Show current hostname settings");
 static int verb_show_status(int argc, char *argv[], uintptr_t _data, void *userdata) {
         sd_bus *bus = userdata;
         int r;
@@ -767,7 +767,7 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
 
         OptionParser opts = { argc, argv };
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
                 OPTION_COMMON_HELP:
                         return help();
@@ -833,7 +833,7 @@ static int run(int argc, char *argv[]) {
         if (r < 0)
                 return bus_log_connect_error(r, arg_transport, RUNTIME_SCOPE_SYSTEM);
 
-        return dispatch_verb_with_args(args, bus);
+        return dispatch_verb(args, bus);
 }
 
 DEFINE_MAIN_FUNCTION(run);

@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 #pragma once
 
-#include "memory-util.h"
 #include "shared-forward.h"
 
 /* Option namespace/group explanation:
@@ -80,6 +79,10 @@ typedef struct Option {
 #define OPTION_POSITIONAL OPTION_FULL(OPTION_POSITIONAL_ENTRY, /* sc= */ 0, "(positional)", /* mv= */ NULL, /* h= */ NULL)
 #define OPTION_HELP_VERBATIM(lc, h) OPTION_FULL(OPTION_HELP_ENTRY_VERBATIM, /* sc= */ 0, lc, /* mv= */ NULL, h)
 
+/* This can be used when custom error handling is needed. */
+#define OPTION_ERROR                                                    \
+        case INT_MIN ... -1
+
 #define OPTION_COMMON_HELP                                              \
         OPTION('h', "help", NULL, "Show this help")
 
@@ -124,12 +127,27 @@ typedef struct Option {
 #define OPTION_COMMON_MACHINE                                           \
         OPTION('M', "machine", "CONTAINER", "Operate on local container")
 
+#define OPTION_COMMON_SYSTEM                                            \
+        OPTION_LONG("system", NULL, "Operate in system mode")
+
+#define OPTION_COMMON_USER                                              \
+        OPTION_LONG("user", NULL, "Operate in per-user mode")
+
 #define OPTION_COMMON_JSON                                              \
         OPTION_LONG("json", "FORMAT", "Generate JSON output (pretty, short, or off)")
 
 #define OPTION_COMMON_LOWERCASE_J                                       \
         OPTION_SHORT('j', NULL,                                         \
                      "Equivalent to --json=pretty (on TTY) or --json=short (otherwise)")
+
+#define OPTION_COMMON_ENTRY_TOKEN                                       \
+        OPTION_LONG("entry-token", "TOKEN",                             \
+                    "Entry token to use for this installation "         \
+                    "(machine-id, os-id, os-image-id, auto, literal:…)")
+
+#define OPTION_COMMON_MAKE_ENTRY_DIRECTORY                              \
+        OPTION_LONG("make-entry-directory",                             \
+                    "BOOL|auto", "Create $BOOT/ENTRY-TOKEN/ directory")
 
 #define OPTION_COMMON_PRIVATE_KEY(purpose)                              \
         OPTION_LONG("private-key", "PATH|URI", purpose)
@@ -194,6 +212,9 @@ typedef struct OptionParser {
         char **argv;                  /* The argv array, possibly reordered. */
         OptionParserMode mode;
         const char *namespace;        /* The namespace, may be NULL. */
+        int log_level_shift;          /* The log level difference from the default of LOG_ERR.
+                                       * Allowed values are -3..4.
+                                       * Use 4 == LOG_DEBUG - LOG_ERR to log at debug level. */
 
         const Option *namespace_start, *namespace_end; /* The range of options that are part of our namespace. */
 
@@ -216,13 +237,15 @@ int option_parse(
                 const Option options_end[],
                 OptionParser *state);
 
-/* Iterate over options. */
-#define FOREACH_OPTION(c, state, on_error)                              \
-        for (int c; (c = option_parse(ALIGN_PTR(__start_SYSTEMD_OPTIONS), __stop_SYSTEMD_OPTIONS, state)) != 0; ) \
-                if (c < 0) {                                            \
-                        on_error;                                       \
-                        break;                                          \
-                } else
+/* Iterate over options. Don't forget to handle errors (negative c)! */
+#define FOREACH_OPTION(c, state)                                        \
+        for (int c; (c = option_parse(__start_SYSTEMD_OPTIONS, __stop_SYSTEMD_OPTIONS, state)) != 0; )
+
+#define FOREACH_OPTION_OR_RETURN(c, state)                              \
+        for (int c; (c = option_parse(__start_SYSTEMD_OPTIONS, __stop_SYSTEMD_OPTIONS, state)) != 0; ) \
+                if (c < 0)                                              \
+                        return c;                                       \
+                else
 
 /* Those helpers are used *during* option parsing and allow looking at or taking the next item in
  * the argv array, either an option or a positional parameter. */
@@ -244,7 +267,7 @@ int _option_parser_get_help_table_full(
                 const char *group,
                 Table **ret);
 #define option_parser_get_help_table_full(namespace, group, ret)        \
-        _option_parser_get_help_table_full(ALIGN_PTR(__start_SYSTEMD_OPTIONS), __stop_SYSTEMD_OPTIONS, namespace, group, ret)
+        _option_parser_get_help_table_full(__start_SYSTEMD_OPTIONS, __stop_SYSTEMD_OPTIONS, namespace, group, ret)
 #define option_parser_get_help_table_ns(ns, ret)                        \
         option_parser_get_help_table_full(ns, /* group= */ NULL, ret)
 #define option_parser_get_help_table_group(group, ret)                  \

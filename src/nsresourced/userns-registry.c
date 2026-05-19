@@ -239,6 +239,7 @@ static int userns_registry_load(int dir_fd, const char *fn, UserNamespaceInfo **
                 { "owner",     SD_JSON_VARIANT_UNSIGNED, sd_json_dispatch_uid_gid,  offsetof(UserNamespaceInfo, owner),        SD_JSON_MANDATORY },
                 { "name",      SD_JSON_VARIANT_STRING,   sd_json_dispatch_string,   offsetof(UserNamespaceInfo, name),         SD_JSON_MANDATORY },
                 { "userns",    SD_JSON_VARIANT_UNSIGNED, sd_json_dispatch_uint64,   offsetof(UserNamespaceInfo, userns_inode), SD_JSON_MANDATORY },
+                { "usernsId",  SD_JSON_VARIANT_UNSIGNED, sd_json_dispatch_uint64,   offsetof(UserNamespaceInfo, userns_id),    0                 },
                 { "size",      SD_JSON_VARIANT_UNSIGNED, sd_json_dispatch_uint32,   offsetof(UserNamespaceInfo, size),         0                 },
                 { "start",     SD_JSON_VARIANT_UNSIGNED, sd_json_dispatch_uid_gid,  offsetof(UserNamespaceInfo, start_uid),    0                 },
                 { "target",    SD_JSON_VARIANT_UNSIGNED, sd_json_dispatch_uid_gid,  offsetof(UserNamespaceInfo, target_uid),   0                 },
@@ -565,6 +566,7 @@ int userns_registry_store(int dir_fd, UserNamespaceInfo *info) {
                         SD_JSON_BUILD_PAIR_UNSIGNED("owner", info->owner),
                         SD_JSON_BUILD_PAIR_STRING("name", info->name),
                         SD_JSON_BUILD_PAIR_UNSIGNED("userns", info->userns_inode),
+                        SD_JSON_BUILD_PAIR_CONDITION(info->userns_id != 0, "usernsId", SD_JSON_BUILD_UNSIGNED(info->userns_id)),
                         SD_JSON_BUILD_PAIR_CONDITION(info->size > 0, "size", SD_JSON_BUILD_UNSIGNED(info->size)),
                         SD_JSON_BUILD_PAIR_CONDITION(uid_is_valid(info->start_uid), "start", SD_JSON_BUILD_UNSIGNED(info->start_uid)),
                         SD_JSON_BUILD_PAIR_CONDITION(uid_is_valid(info->target_uid), "target", SD_JSON_BUILD_UNSIGNED(info->target_uid)),
@@ -838,8 +840,10 @@ int userns_registry_remove(int dir_fd, UserNamespaceInfo *info) {
                         continue;
                 }
 
-                _cleanup_free_ char *delegate_uid_fn = NULL;
+                _cleanup_free_ char *delegate_uid_fn = NULL, *delegate_gid_fn = NULL;
                 if (asprintf(&delegate_uid_fn, "u" UID_FMT ".delegate", delegate->start_uid) < 0)
+                        return log_oom_debug();
+                if (asprintf(&delegate_gid_fn, "g" GID_FMT ".delegate", delegate->start_gid) < 0)
                         return log_oom_debug();
 
                 if (existing.n_ancestor_userns > 0) {
@@ -876,10 +880,18 @@ int userns_registry_remove(int dir_fd, UserNamespaceInfo *info) {
                                 return log_debug_errno(r, "Failed to format delegation JSON object: %m");
 
                         r = write_string_file_at(dir_fd, delegate_uid_fn, delegate_buf, WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC);
-                        if (r < 0)
+                        if (r < 0) {
                                 RET_GATHER(ret, log_debug_errno(r, "Failed to write restored delegation data to '%s' in registry: %m", delegate_uid_fn));
+                                continue;
+                        }
 
-                        /* GID link already points to the UID file, no need to update it */
+                        /* The atomic write above replaced the UID file with a new inode, so the
+                         * hardlink to the GID file is now broken. Re-create it to keep the two in
+                         * sync. */
+                        r = linkat_replace(dir_fd, delegate_uid_fn, dir_fd, delegate_gid_fn);
+                        if (r < 0)
+                                RET_GATHER(ret, log_debug_errno(r, "Failed to re-link '%s' to '%s' in registry: %m", delegate_uid_fn, delegate_gid_fn));
+
                         continue;
                 }
 
@@ -890,10 +902,6 @@ int userns_registry_remove(int dir_fd, UserNamespaceInfo *info) {
                 r = RET_NERRNO(unlinkat(dir_fd, delegate_uid_fn, 0));
                 if (r < 0)
                         RET_GATHER(ret, log_debug_errno(r, "Failed to remove %s: %m", delegate_uid_fn));
-
-                _cleanup_free_ char *delegate_gid_fn = NULL;
-                if (asprintf(&delegate_gid_fn, "g" GID_FMT ".delegate", delegate->start_gid) < 0)
-                        return log_oom_debug();
 
                 r = RET_NERRNO(unlinkat(dir_fd, delegate_gid_fn, 0));
                 if (r < 0)

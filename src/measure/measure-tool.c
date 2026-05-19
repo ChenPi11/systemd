@@ -139,7 +139,7 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
         OptionParser opts = { argc, argv };
         int r;
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_COMMON_HELP:
@@ -416,8 +416,7 @@ static int validate_stub(void) {
         return 0;
 }
 
-VERB(verb_status, "status", NULL, VERB_ANY, 1, VERB_DEFAULT,
-     "Show current PCR values");
+VERB_DEFAULT_NOARG(verb_status, "status", "Show current PCR values");
 static int verb_status(int argc, char *argv[], uintptr_t _data, void *userdata) {
         _cleanup_(sd_json_variant_unrefp) sd_json_variant *v = NULL;
         int r;
@@ -960,7 +959,7 @@ static int build_policy_digest(bool sign) {
                 if (arg_private_key_source_type == OPENSSL_KEY_SOURCE_FILE) {
                         r = parse_path_argument(arg_private_key, /* suppress_root= */ false, &arg_private_key);
                         if (r < 0)
-                                return log_error_errno(r, "Failed to parse private key path %s: %m", arg_private_key);
+                                return r;
                 }
 
                 r = openssl_load_private_key(
@@ -1127,7 +1126,7 @@ static int run(int argc, char *argv[]) {
         if (r < 0)
                 return r;
 
-        return dispatch_verb_with_args(args, NULL);
+        return dispatch_verb(args, NULL);
 }
 
 DEFINE_MAIN_FUNCTION(run);
