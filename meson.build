@@ -651,6 +651,28 @@ int getsgnam_r(const char *name, struct sgrp *result_buf, char *buffer, size_t b
                 )
                 conf.set10('HAVE_' + ident[0].to_upper(), have)
         endforeach
+
+        # spawn GNU extensions: pidfd_spawn() and posix_spawnattr_setcgroup_np() were added
+        # in glibc 2.39.  Stock Android bionic never provides these; some Termux variants may
+        # in the future.  Probe with the POSIX_SPAWN_SETCGROUP constant in scope so the link
+        # test matches the real call site.
+        _spawn_decls = '''
+#include <spawn.h>
+#ifndef POSIX_SPAWN_SETCGROUP
+#  define POSIX_SPAWN_SETCGROUP 0x100
+#endif
+'''
+        foreach ident : [
+                ['pidfd_spawn',                  _spawn_decls, 'pidfd_spawn(0, 0, 0, 0, 0, 0);'],
+                ['posix_spawnattr_setcgroup_np',  _spawn_decls, 'posix_spawnattr_setcgroup_np(0, 0);'],
+        ]
+                have = cc.links(
+                        ident[1] + 'int main(void) { ' + ident[2] + ' return 0; }',
+                        name : ident[0],
+                        args : _bionic_link_args,
+                )
+                conf.set10('HAVE_' + ident[0].to_upper(), have)
+        endforeach
 endif
 
 #####################################################################
