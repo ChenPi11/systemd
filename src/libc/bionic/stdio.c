@@ -11,11 +11,10 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
-#if !HAVE_RENAMEAT2
+/* renameat2() is never provided as a libc symbol on Android bionic; always use the raw syscall. */
 int missing_renameat2(int __oldfd, const char *__old, int __newfd, const char *__new, unsigned __flags) {
         return syscall(__NR_renameat2, __oldfd, __old, __newfd, __new, __flags);
 }
-#endif
 
 #define DEFINE_PUT(func)                                         \
         int func##_check_writable(int c, FILE *stream) {         \
