@@ -60,6 +60,7 @@ static inline int syncfs(int fd) {
  * Provide a shim that routes calls with AT_SYMLINK_NOFOLLOW through faccessat2 via direct
  * syscall, and falls back to faccessat without the flag on kernels that predate faccessat2
  * (graceful degradation — the check follows symlinks but avoids the hard EINVAL). */
+#include <errno.h>
 #include <sys/syscall.h>
 #include <fcntl.h>
 
