@@ -51,3 +51,55 @@ static inline int syncfs(int fd) {
         return (int) syscall(__NR_syncfs, fd);
 }
 #endif
+
+/* The Linux faccessat(2) syscall never supports AT_SYMLINK_NOFOLLOW (returns EINVAL).
+ * faccessat2(2) (Linux 5.8+, syscall 439 on most architectures) does support it.
+ * Android bionic wraps faccessat syscall directly without a fallback, so any call with
+ * AT_SYMLINK_NOFOLLOW always fails with EINVAL.
+ *
+ * Provide a shim that routes calls with AT_SYMLINK_NOFOLLOW through faccessat2 via direct
+ * syscall, and falls back to faccessat without the flag on kernels that predate faccessat2
+ * (graceful degradation — the check follows symlinks but avoids the hard EINVAL). */
+#include <sys/syscall.h>
+#include <fcntl.h>
+
+/* __NR_faccessat2 may not be defined in older NDK sysroots. Provide per-arch fallbacks. */
+#ifndef __NR_faccessat2
+#  if defined(__aarch64__) || defined(__arc__) || defined(__arm__)   || \
+      defined(__i386__)    || defined(__m68k__) || defined(__riscv)  || \
+      defined(__s390__)    || defined(__sh__)   || defined(__sparc__) || \
+      defined(__x86_64__)  || defined(__loongarch_lp64) || defined(__hppa__) || \
+      defined(__powerpc__)
+#    define __NR_faccessat2 439
+#  elif defined(__alpha__)
+#    define __NR_faccessat2 549
+#  elif defined(__ia64__)
+#    define __NR_faccessat2 1463
+#  elif defined(__mips__)
+#    include <asm/sgidefs.h>
+#    if _MIPS_SIM == _MIPS_SIM_ABI32
+#      define __NR_faccessat2 4439
+#    elif _MIPS_SIM == _MIPS_SIM_NABI32
+#      define __NR_faccessat2 6439
+#    else /* _MIPS_SIM_ABI64 */
+#      define __NR_faccessat2 5439
+#    endif
+#  endif
+#endif /* __NR_faccessat2 */
+
+static inline int _bionic_faccessat(int dirfd, const char *pathname, int mode, int flags) {
+        /* AT_SYMLINK_NOFOLLOW is rejected by the faccessat syscall; use faccessat2 instead. */
+        if (flags & AT_SYMLINK_NOFOLLOW) {
+#if defined(__NR_faccessat2)
+                int r = (int) syscall(__NR_faccessat2, dirfd, pathname, mode, flags);
+                if (r >= 0 || errno != ENOSYS)
+                        return r;
+                /* faccessat2 not available on this kernel; degrade by dropping AT_SYMLINK_NOFOLLOW.
+                 * The check will follow symlinks, but this is preferable to always returning EINVAL. */
+                flags &= ~AT_SYMLINK_NOFOLLOW;
+#endif
+        }
+        /* Use __NR_faccessat directly to avoid an infinite loop via the #define below. */
+        return (int) syscall(__NR_faccessat, dirfd, pathname, mode, flags);
+}
+#define faccessat _bionic_faccessat
