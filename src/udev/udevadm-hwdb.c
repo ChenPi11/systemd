@@ -25,7 +25,7 @@ static int help(void) {
 
         help_cmdline("hwdb [OPTIONS]");
         help_abstract("Update or query the hardware database.");
-        help_section("Options:");
+        help_section("Options");
         r = table_print_or_warn(options);
         if (r < 0)
                 return r;
@@ -42,7 +42,7 @@ static int parse_argv(int argc, char *argv[]) {
 
         OptionParser opts = { argc, argv, .namespace = "udevadm-hwdb" };
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_NAMESPACE("udevadm-hwdb"): {}

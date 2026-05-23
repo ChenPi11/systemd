@@ -241,7 +241,8 @@ static int help(void) {
                 "TPM2 Enrollment",
         };
 
-        _cleanup_(table_unref_many) Table *tables[ELEMENTSOF(groups) + 1] = {};
+        Table *tables[ELEMENTSOF(groups)] = {};
+        CLEANUP_ELEMENTS(tables, table_unref_array_clear);
 
         for (size_t i = 0; i < ELEMENTSOF(groups); i++) {
                 r = option_parser_get_help_table_group(groups[i], &tables[i]);
@@ -278,7 +279,7 @@ static int parse_argv(int argc, char *argv[]) {
         OptionParser opts = { argc, argv };
         int r;
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_COMMON_HELP:

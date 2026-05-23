@@ -430,17 +430,24 @@ static int partition_is_luks2_integrity(int part_fd, uint64_t offset, uint64_t s
         if (sz != sizeof(header))
                 return log_error_errno(SYNTHETIC_ERRNO(EIO), "Failed to read LUKS header.");
 
-        if (memcmp(header.luks_magic, LUKS2_MAGIC, sizeof(header.luks_magic)) != 0)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Partition's magic is not LUKS.");
+        if (memcmp(header.luks_magic, LUKS2_MAGIC, sizeof(header.luks_magic)) != 0) {
+                log_debug("Partition does not have a LUKS magic header, assuming no integrity.");
+                return 0;
+        }
 
-        if (be16toh(header.version) != 2)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Unsupported LUKS header version: %" PRIu16 ".", be16toh(header.version));
+        if (be16toh(header.version) != 2) {
+                log_debug("Partition is LUKS v%" PRIu16 ", not LUKS2, assuming no integrity.", be16toh(header.version));
+                return 0;
+        }
 
         if (be64toh(header.hdr_len) > size)
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "LUKS header length exceeds partition size.");
 
         if (be64toh(header.hdr_len) <= LUKS2_FIXED_HDR_SIZE || offset > UINT64_MAX - be64toh(header.hdr_len))
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Invalid LUKS header length: %" PRIu64 ".", be64toh(header.hdr_len));
+
+        if (be64toh(header.hdr_len) - LUKS2_FIXED_HDR_SIZE > 16U * 1024U * 1024U)
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "LUKS header JSON area too large: %" PRIu64 ".", be64toh(header.hdr_len));
 
         json_len = be64toh(header.hdr_len) - LUKS2_FIXED_HDR_SIZE;
         json = malloc(json_len + 1);
@@ -1274,7 +1281,7 @@ static int dissect_image(
                  * partition already existent. */
 
                 if (FLAGS_SET(flags, DISSECT_IMAGE_ADD_PARTITION_DEVICES)) {
-                        r = block_device_add_partition(fd, node, nr, (uint64_t) start * 512, (uint64_t) size * 512);
+                        r = block_device_add_partition(fd, nr, (uint64_t) start * 512, (uint64_t) size * 512);
                         if (r < 0) {
                                 if (r != -EBUSY)
                                         return log_debug_errno(r, "BLKPG_ADD_PARTITION failed: %m");
@@ -2294,7 +2301,7 @@ int partition_pick_mount_options(
         case PARTITION_XBOOTLDR:
                 flags |= MS_NOSUID|MS_NOEXEC|MS_NOSYMFOLLOW;
 
-                /* The ESP might contain a pre-boot random seed. Let's make this unaccessible to regular
+                /* The ESP might contain a pre-boot random seed. Let's make this inaccessible to regular
                  * userspace. ESP/XBOOTLDR is almost certainly VFAT, hence if we don't know assume it is. */
                 if (!fstype || fstype_can_fmask_dmask(fstype))
                         if (!strextend_with_separator(&options, ",", "fmask=0177,dmask=0077"))
@@ -3816,7 +3823,7 @@ int verity_settings_load(
                                 if (r < 0) {
                                         _cleanup_free_ char *p = NULL;
 
-                                        if (r != -ENOENT && !ERRNO_IS_XATTR_ABSENT(r))
+                                        if (!ERRNO_IS_XATTR_ABSENT(r))
                                                 return r;
 
                                         p = build_auxiliary_path(image, ".roothash");
@@ -3845,7 +3852,7 @@ int verity_settings_load(
                                 if (r < 0) {
                                         _cleanup_free_ char *p = NULL;
 
-                                        if (r != -ENOENT && !ERRNO_IS_XATTR_ABSENT(r))
+                                        if (!ERRNO_IS_XATTR_ABSENT(r))
                                                 return r;
 
                                         p = build_auxiliary_path(image, ".usrhash");

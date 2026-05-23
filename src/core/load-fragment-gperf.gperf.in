@@ -215,6 +215,7 @@
 {{type}}.StartupAllowedCPUs,                  config_parse_unit_cpu_set,                          0,                                  offsetof({{type}}, cgroup_context.startup_cpuset_cpus)
 {{type}}.AllowedMemoryNodes,                  config_parse_unit_cpu_set,                          0,                                  offsetof({{type}}, cgroup_context.cpuset_mems)
 {{type}}.StartupAllowedMemoryNodes,           config_parse_unit_cpu_set,                          0,                                  offsetof({{type}}, cgroup_context.startup_cpuset_mems)
+{{type}}.CPUSetPartition,                     config_parse_cpuset_partition,                      0,                                  offsetof({{type}}, cgroup_context.cpuset_partition)
 {{type}}.CPUAccounting,                       config_parse_warn_compat,                           DISABLED_LEGACY,                    0
 {{type}}.CPUWeight,                           config_parse_cg_cpu_weight,                         0,                                  offsetof({{type}}, cgroup_context.cpu_weight)
 {{type}}.StartupCPUWeight,                    config_parse_cg_cpu_weight,                         0,                                  offsetof({{type}}, cgroup_context.startup_cpu_weight)
@@ -271,6 +272,7 @@
 {{type}}.ManagedOOMMemoryPressureLimit,       config_parse_managed_oom_mem_pressure_limit,        0,                                  offsetof({{type}}, cgroup_context.moom_mem_pressure_limit)
 {{type}}.ManagedOOMMemoryPressureDurationSec, config_parse_managed_oom_mem_pressure_duration_sec, 0,                                  offsetof({{type}}, cgroup_context.moom_mem_pressure_duration_usec)
 {{type}}.ManagedOOMPreference,                config_parse_managed_oom_preference,                0,                                  offsetof({{type}}, cgroup_context.moom_preference)
+{{type}}.OOMRules,                            config_parse_managed_oom_rules,                     1,                                  offsetof({{type}}, cgroup_context.moom_rules)
 {{type}}.NetClass,                            config_parse_warn_compat,                           DISABLED_LEGACY,                    0
 {{type}}.BPFProgram,                          config_parse_bpf_foreign_program,                   0,                                  offsetof({{type}}, cgroup_context)
 {{type}}.SocketBindAllow,                     config_parse_cgroup_socket_bind,                    0,                                  offsetof({{type}}, cgroup_context.socket_bind_allow)

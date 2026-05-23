@@ -552,32 +552,35 @@ result=$(varlinkctl call "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
 echo "$result" | grep '"context"' >/dev/null
 
 # Streaming with notifyJobChanges: should get intermediate state updates and a final result
+# Note: use --slurp + any() rather than 'select() -e' because in jq 1.6 (shipped on
+# CentOS 9) -e checks only the last input record's output, so a select() that filters
+# out the trailing record makes jq exit non-zero even when earlier records match.
 defer_transient_cleanup varlink-transient-test3.service
 result=$(varlinkctl call --more "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
     '{"context":{"ID":"varlink-transient-test3.service","Service":{"Type":"oneshot","ExecStart":[{"path":"/bin/true"}]}},"notifyJobChanges":true}')
-printf '%s' "$result" | jq --seq -e 'select(.job.State == "waiting")' >/dev/null
-printf '%s' "$result" | jq --seq -e 'select(.job.Result == "done")' >/dev/null
+printf '%s' "$result" | jq --seq --slurp -e 'any(.[]; .job.State == "waiting")' >/dev/null
+printf '%s' "$result" | jq --seq --slurp -e 'any(.[]; .job.Result == "done")' >/dev/null
 
 # Fire-and-forget: --more without notify flags should return immediately with context+runtime
 defer_transient_cleanup varlink-transient-fireforget.service
 result=$(varlinkctl call --more "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
     '{"context":{"ID":"varlink-transient-fireforget.service","Service":{"Type":"oneshot","ExecStart":[{"path":"/bin/true"}]}}}')
-printf '%s' "$result" | jq --seq -e 'select(.context)' >/dev/null
-printf '%s' "$result" | jq --seq -e 'select(.runtime)' >/dev/null
+printf '%s' "$result" | jq --seq --slurp -e 'any(.[]; .context)' >/dev/null
+printf '%s' "$result" | jq --seq --slurp -e 'any(.[]; .runtime)' >/dev/null
 
 # Streaming with notifyUnitChanges: should get unit state change notifications
 defer_transient_cleanup varlink-transient-unitnotify.service
 result=$(varlinkctl call --more "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
     '{"context":{"ID":"varlink-transient-unitnotify.service","Service":{"Type":"oneshot","ExecStart":[{"path":"/bin/true"}]}},"notifyUnitChanges":true}')
-printf '%s' "$result" | jq --seq -e 'select(.runtime.ActiveState)' >/dev/null
+printf '%s' "$result" | jq --seq --slurp -e 'any(.[]; .runtime.ActiveState)' >/dev/null
 
 # Streaming with both notifyJobChanges and notifyUnitChanges
 defer_transient_cleanup varlink-transient-both.service
 result=$(varlinkctl call --more "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
     '{"context":{"ID":"varlink-transient-both.service","Service":{"Type":"oneshot","ExecStart":[{"path":"/bin/true"}]}},"notifyJobChanges":true,"notifyUnitChanges":true}')
-printf '%s' "$result" | jq --seq -e 'select(.job.State)' >/dev/null
-printf '%s' "$result" | jq --seq -e 'select(.runtime.ActiveState)' >/dev/null
-printf '%s' "$result" | jq --seq -e 'select(.job.Result == "done")' >/dev/null
+printf '%s' "$result" | jq --seq --slurp -e 'any(.[]; .job.State)' >/dev/null
+printf '%s' "$result" | jq --seq --slurp -e 'any(.[]; .runtime.ActiveState)' >/dev/null
+printf '%s' "$result" | jq --seq --slurp -e 'any(.[]; .job.Result == "done")' >/dev/null
 
 # prepare for the error case below: create a long-running service, then try to create it again while it's active
 defer_transient_cleanup varlink-transient-exists.service
@@ -589,7 +592,7 @@ timeout 10 bash -c 'until systemctl is-active varlink-transient-exists.service; 
 defer_transient_cleanup varlink-transient-multi.service
 result=$(varlinkctl call --more "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
     '{"context":{"ID":"varlink-transient-multi.service","Service":{"Type":"oneshot","ExecStart":[{"path":"/bin/true"},{"path":"/bin/true"}]}},"notifyJobChanges":true}')
-printf '%s' "$result" | jq --seq -e 'select(.job.Result == "done")' >/dev/null
+printf '%s' "$result" | jq --seq --slurp -e 'any(.[]; .job.Result == "done")' >/dev/null
 
 # Transient service with Description and RemainAfterExit
 defer_transient_cleanup varlink-transient-desc.service
@@ -618,6 +621,41 @@ result=$(varlinkctl call "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
 echo "$result" | jq -e '.context.Service.ExecStart[0].arguments == ["/bin/true"]'
 timeout 30 bash -c 'until systemctl is-active varlink-transient-noargs.service; do sleep 0.5; done'
 
+# Exec.WorkingDirectory and Exec.Environment
+defer_transient_cleanup varlink-transient-exec.service
+result=$(varlinkctl call "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
+    '{"context":{"ID":"varlink-transient-exec.service","Exec":{"WorkingDirectory":{"path":"/tmp","missingOK":false},"Environment":["FOO=bar","BAZ=qux"]},"Service":{"Type":"oneshot","RemainAfterExit":true,"ExecStart":[{"path":"/bin/true"}]}}}')
+echo "$result" | jq -e '.context.Exec.WorkingDirectory.path == "/tmp"'
+echo "$result" | jq -e '.context.Exec.Environment | index("FOO=bar") != null'
+echo "$result" | jq -e '.context.Exec.Environment | index("BAZ=qux") != null'
+timeout 30 bash -c 'until systemctl is-active varlink-transient-exec.service; do sleep 0.5; done'
+systemctl show -P WorkingDirectory varlink-transient-exec.service | grep '^/tmp$' >/dev/null
+systemctl show -P Environment varlink-transient-exec.service | grep 'FOO=bar' >/dev/null
+systemctl show -P Environment varlink-transient-exec.service | grep 'BAZ=qux' >/dev/null
+
+# WorkingDirectory with missingOK=true (path does not exist but unit still starts)
+defer_transient_cleanup varlink-transient-wd-missing.service
+varlinkctl call "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
+    '{"context":{"ID":"varlink-transient-wd-missing.service","Exec":{"WorkingDirectory":{"path":"/nonexistent/path","missingOK":true}},"Service":{"Type":"oneshot","RemainAfterExit":true,"ExecStart":[{"path":"/bin/true"}]}}}'
+timeout 30 bash -c 'until systemctl is-active varlink-transient-wd-missing.service; do sleep 0.5; done'
+
+# WorkingDirectory with home=true, missingOK omitted (defaults to false)
+defer_transient_cleanup varlink-transient-wd-home.service
+varlinkctl call "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
+    '{"context":{"ID":"varlink-transient-wd-home.service","Exec":{"WorkingDirectory":{"home":true}},"Service":{"Type":"oneshot","RemainAfterExit":true,"ExecStart":[{"path":"/bin/true"}]}}}'
+timeout 30 bash -c 'until systemctl is-active varlink-transient-wd-home.service; do sleep 0.5; done'
+systemctl show -P WorkingDirectory varlink-transient-wd-home.service | grep '^~$' >/dev/null
+
+# Exec.SetCredential: pass a credential and verify the running process can read it
+defer_transient_cleanup varlink-transient-cred.service
+CRED_VALUE_B64=$(printf 'secret-value' | base64 -w0)
+CRED_OUTPUT=$(mktemp)
+varlinkctl call "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
+    "{\"context\":{\"ID\":\"varlink-transient-cred.service\",\"Exec\":{\"SetCredential\":[{\"id\":\"mycred\",\"value\":\"${CRED_VALUE_B64}\"}]},\"Service\":{\"Type\":\"oneshot\",\"RemainAfterExit\":true,\"ExecStart\":[{\"path\":\"/bin/sh\",\"arguments\":[\"/bin/sh\",\"-c\",\"cat \$CREDENTIALS_DIRECTORY/mycred > ${CRED_OUTPUT}\"]}]}}}"
+timeout 30 bash -c "until systemctl is-active varlink-transient-cred.service; do sleep 0.5; done"
+grep '^secret-value$' "$CRED_OUTPUT" >/dev/null
+rm -f "$CRED_OUTPUT"
+
 # Error cases: verify specific varlink error types
 set +o pipefail
 varlinkctl call "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
@@ -631,6 +669,29 @@ varlinkctl call "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
 defer_transient_cleanup varlink-transient-badpath.service
 varlinkctl call "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
     '{"context":{"ID":"varlink-transient-badpath.service","Service":{"Type":"simple","ExecStart":[{"path":""}]}}}' |& grep "io.systemd.Unit.BadUnitSetting"
+# Relative WorkingDirectory path is rejected
+defer_transient_cleanup varlink-transient-bad-wd.service
+varlinkctl call "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
+    '{"context":{"ID":"varlink-transient-bad-wd.service","Exec":{"WorkingDirectory":{"path":"relative/path","missingOK":false}},"Service":{"Type":"oneshot","ExecStart":[{"path":"/bin/true"}]}}}' |& grep "io.systemd.Unit.BadUnitSetting"
+# Malformed environment entry (not KEY=VALUE)
+defer_transient_cleanup varlink-transient-bad-env.service
+varlinkctl call "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
+    '{"context":{"ID":"varlink-transient-bad-env.service","Exec":{"Environment":["not_an_env_var"]},"Service":{"Type":"oneshot","ExecStart":[{"path":"/bin/true"}]}}}' |& grep "io.systemd.Unit.BadUnitSetting"
+# Invalid credential ID
+defer_transient_cleanup varlink-transient-bad-cred-id.service
+varlinkctl call "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
+    '{"context":{"ID":"varlink-transient-bad-cred-id.service","Exec":{"SetCredential":[{"id":"bad/id","value":"YWJj"}]},"Service":{"Type":"oneshot","ExecStart":[{"path":"/bin/true"}]}}}' |& grep "io.systemd.Unit.BadUnitSetting"
+# Invalid base64 value for credential (rejected at JSON dispatch time as a parameter error)
+defer_transient_cleanup varlink-transient-bad-cred-value.service
+varlinkctl call "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
+    '{"context":{"ID":"varlink-transient-bad-cred-value.service","Exec":{"SetCredential":[{"id":"mycred","value":"!!!not_base64!!!"}]},"Service":{"Type":"oneshot","ExecStart":[{"path":"/bin/true"}]}}}' |& grep "Invalid argument"
+# Exec on a unit type without an exec context (.slice) is rejected
+varlinkctl call "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
+    '{"context":{"ID":"varlink-transient-exec.slice","Exec":{"WorkingDirectory":{"path":"/tmp","missingOK":false}}}}' |& grep "io.systemd.Unit.UnitTypeNotSupported"
+# Unknown field in Exec is rejected as PropertyNotSupported
+defer_transient_cleanup varlink-transient-unknown-exec.service
+varlinkctl call "$MANAGER_SOCKET" io.systemd.Unit.StartTransient \
+    '{"context":{"ID":"varlink-transient-unknown-exec.service","Exec":{"RootDirectory":"/tmp"},"Service":{"Type":"oneshot","ExecStart":[{"path":"/bin/true"}]}}}' |& grep "io.systemd.Unit.PropertyNotSupported"
 set -o pipefail
 
 transient_cleanup

@@ -45,7 +45,7 @@ static int help(void) {
 
         help_cmdline("[OPTIONS...] /dev/mtd[n]");
         help_abstract("Probe MTD devices.");
-        help_section("Options:");
+        help_section("Options");
 
         return table_print_or_warn(options);
 }
@@ -56,7 +56,7 @@ static int parse_argv(int argc, char *argv[]) {
 
         OptionParser opts = { argc, argv };
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_COMMON_HELP:

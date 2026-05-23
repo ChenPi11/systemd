@@ -68,12 +68,12 @@ static int help(void) {
         help_cmdline("[OPTIONS...] COMMAND");
         help_abstract("Set up iocost model and qos solutions for block devices.");
 
-        help_section("Commands:");
+        help_section("Commands");
         r = table_print_or_warn(verbs);
         if (r < 0)
                 return r;
 
-        help_section("Options:");
+        help_section("Options");
         return table_print_or_warn(options);
 }
 
@@ -86,7 +86,7 @@ static int parse_argv(int argc, char *argv[], char ***remaining_args) {
 
         OptionParser opts = { argc, argv };
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_COMMON_HELP:
@@ -308,7 +308,7 @@ static int run(int argc, char *argv[]) {
         if (r < 0)
                 return r;
 
-        return dispatch_verb_with_args(args, NULL);
+        return dispatch_verb(args, NULL);
 }
 
 DEFINE_MAIN_FUNCTION(run);

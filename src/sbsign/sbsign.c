@@ -96,7 +96,7 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
         OptionParser opts = { argc, argv };
         int r;
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_COMMON_HELP:
@@ -461,7 +461,7 @@ static int verb_sign(int argc, char *argv[], uintptr_t _data, void *userdata) {
                 if (arg_private_key_source_type == OPENSSL_KEY_SOURCE_FILE) {
                         r = parse_path_argument(arg_private_key, /* suppress_root= */ false, &arg_private_key);
                         if (r < 0)
-                                return log_error_errno(r, "Failed to parse private key path %s: %m", arg_private_key);
+                                return r;
                 }
 
                 r = openssl_load_private_key(
@@ -730,7 +730,7 @@ static int run(int argc, char *argv[]) {
         if (r <= 0)
                 return r;
 
-        return dispatch_verb_with_args(args, NULL);
+        return dispatch_verb(args, NULL);
 }
 
 DEFINE_MAIN_FUNCTION(run);

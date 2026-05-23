@@ -45,7 +45,7 @@ static int help(void) {
         help_cmdline("lock [OPTIONS...] COMMAND");
         help_cmdline("lock [OPTIONS...] --print");
         help_abstract("Lock a block device and run a command.");
-        help_section("Options:");
+        help_section("Options");
         r = table_print_or_warn(options);
         if (r < 0)
                 return r;
@@ -62,7 +62,7 @@ static int parse_argv(int argc, char *argv[]) {
 
         OptionParser opts = { argc, argv, OPTION_PARSER_STOP_AT_FIRST_NONOPTION, "udevadm-lock" };
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_NAMESPACE("udevadm-lock"): {}

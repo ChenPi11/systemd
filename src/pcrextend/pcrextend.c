@@ -84,7 +84,7 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
         OptionParser opts = { argc, argv };
         int r;
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_COMMON_HELP:
@@ -427,7 +427,9 @@ static int vl_server(void) {
         _cleanup_(sd_varlink_server_unrefp) sd_varlink_server *varlink_server = NULL;
         int r;
 
-        r = varlink_server_new(&varlink_server, SD_VARLINK_SERVER_ROOT_ONLY, /* userdata= */ NULL);
+        r = varlink_server_new(&varlink_server,
+                               SD_VARLINK_SERVER_ROOT_ONLY | SD_VARLINK_SERVER_MYSELF_ONLY,
+                               /* userdata= */ NULL);
         if (r < 0)
                 return log_error_errno(r, "Failed to allocate Varlink server: %m");
 

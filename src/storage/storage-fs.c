@@ -753,7 +753,7 @@ static int help(void) {
         if (r < 0)
                 return r;
 
-        help_section("Options:");
+        help_section("Options");
 
         r = table_print_or_warn(options);
         if (r < 0)
@@ -768,7 +768,7 @@ static int parse_argv(int argc, char *argv[]) {
         assert(argv);
 
         OptionParser opts = { argc, argv };
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_COMMON_HELP:
@@ -777,11 +777,11 @@ static int parse_argv(int argc, char *argv[]) {
                 OPTION_COMMON_VERSION:
                         return version();
 
-                OPTION_LONG("system", NULL, "Operate in system mode"):
+                OPTION_COMMON_SYSTEM:
                         arg_runtime_scope = RUNTIME_SCOPE_SYSTEM;
                         break;
 
-                OPTION_LONG("user", NULL, "Operate in user mode"):
+                OPTION_COMMON_USER:
                         arg_runtime_scope = RUNTIME_SCOPE_USER;
                         break;
                 }

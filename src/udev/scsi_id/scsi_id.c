@@ -216,7 +216,7 @@ static int help(void) {
 
         help_cmdline("[OPTION...] DEVICE");
         help_abstract("SCSI device identification.");
-        help_section("Options:");
+        help_section("Options");
 
         return table_print_or_warn(options);
 }
@@ -228,7 +228,7 @@ static int set_options(int argc, char **argv, char *maj_min_dev) {
         OptionParser opts = { argc, argv };
         int r;
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_COMMON_HELP:
@@ -319,7 +319,7 @@ static int per_dev_options(struct scsi_id_device *dev_scsi, int *good_bad, enum 
         /* We reuse the option parser, but only a subset of the options is supported here.
          * If any others are encountered, return an error. */
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 if (opts.opt->short_code == 'b')
                         *good_bad = 0;
                 else if (opts.opt->short_code == 'g')
@@ -328,10 +328,13 @@ static int per_dev_options(struct scsi_id_device *dev_scsi, int *good_bad, enum 
                         r = parse_page_code(opts.arg, page_code);
                         if (r < 0)
                                 return r;
-                } else
+                } else {
+                        _cleanup_free_ char *synopsis =
+                                option_get_synopsis(opts.opt, "/", /* show_metavar=*/ false);
                         return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
                                                "Option %s not supported in the config file.",
-                                               strnull(option_get_synopsis(opts.opt, "/", /* show_metavar=*/ false)));
+                                               strnull(synopsis));
+                }
 
         return 0;
 }

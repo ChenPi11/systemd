@@ -24,6 +24,22 @@
 #  define IPTOS_CLASS_CS7   0xe0
 #endif
 
+/* IPTOS_PREC_* are defined in glibc's <netinet/ip.h> (and <linux/ip.h>) but are absent from
+ * Android bionic's <netinet/ip.h>. They are aliases for IPTOS_CLASS_*, defined the same way
+ * as glibc does it. */
+#ifndef IPTOS_PREC_MASK
+#  define IPTOS_PREC_MASK            IPTOS_CLASS_MASK
+#  define IPTOS_PREC(tos)            IPTOS_CLASS(tos)
+#  define IPTOS_PREC_NETCONTROL      IPTOS_CLASS_CS7
+#  define IPTOS_PREC_INTERNETCONTROL IPTOS_CLASS_CS6
+#  define IPTOS_PREC_CRITIC_ECP      IPTOS_CLASS_CS5
+#  define IPTOS_PREC_FLASHOVERRIDE   IPTOS_CLASS_CS4
+#  define IPTOS_PREC_FLASH           IPTOS_CLASS_CS3
+#  define IPTOS_PREC_IMMEDIATE       IPTOS_CLASS_CS2
+#  define IPTOS_PREC_PRIORITY        IPTOS_CLASS_CS1
+#  define IPTOS_PREC_ROUTINE         IPTOS_CLASS_CS0
+#endif
+
 /* IPTOS_DSCP_* (DiffServ Codepoint) values are defined on glibc but not in Android bionic. */
 #ifndef IPTOS_DSCP_MASK
 #  define IPTOS_DSCP_MASK   0xfc
