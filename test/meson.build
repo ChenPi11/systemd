@@ -51,7 +51,7 @@ endif
 
 ############################################################
 
-if want_tests != 'false'
+if want_tests != 'false' and conf.get('ENABLE_SYSTEMCTL') == 1
         systemctl = executables_by_name.get('systemctl')
         systemd_id128 = executables_by_name.get('systemd-id128')
         test('test-systemctl-enable',
@@ -65,7 +65,7 @@ endif
 
 ############################################################
 
-if want_tests != 'false' and conf.get('HAVE_BLKID') == 1
+if want_tests != 'false' and conf.get('ENABLE_BOOTCTL') == 1 and conf.get('HAVE_BLKID') == 1
         exe = executables_by_name.get('bootctl')
         test('test-bootctl-json',
              files('test-bootctl-json.sh'),
