@@ -443,11 +443,11 @@ static bool oci_exclude_mount(const char *path) {
                         "/proc/sys/net",
                         "/proc/sysrq-trigger",
                         "/proc/timer_list",
-                        "/run",
+                        RUNSTATEDIR,
                         "/sys",
                         "/sys",
                         "/sys/fs/selinux",
-                        "/tmp"))
+                        SYSTEM_TMPDIR))
                 return true;
 
         /* Similar, skip the whole /sys/fs/cgroups subtree */

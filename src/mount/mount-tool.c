@@ -1228,7 +1228,7 @@ static int acquire_mount_where(sd_device *d) {
                 if (!filename_is_valid(escaped))
                         return 0;
 
-                arg_mount_where = path_join("/run/media/system", escaped);
+                arg_mount_where = path_join(RUNSTATEDIR "/media/system", escaped);
         } else
                 arg_mount_where = strdup(v);
 
@@ -1372,7 +1372,7 @@ static int discover_loop_backing_file(void) {
                                                "Escaped name %s is not a valid filename.",
                                                escaped);
 
-                arg_mount_where = path_join("/run/media/system", escaped);
+                arg_mount_where = path_join(RUNSTATEDIR "/media/system", escaped);
                 if (!arg_mount_where)
                         return log_oom();
 

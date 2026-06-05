@@ -1686,7 +1686,7 @@ static int start_virtiofsd(
         /* QEMU doesn't support submounts so don't announce them */
         _cleanup_strv_free_ char **argv = strv_new(
                         virtiofsd,
-                        "--shared-dir", source_uid == FOREIGN_UID_MIN ? "/run/systemd/mount-rootfs" : directory,
+                        "--shared-dir", source_uid == FOREIGN_UID_MIN ? RUNSTATEDIR "/systemd/mount-rootfs" : directory,
                         "--xattr",
                         "--fd", sockstr,
                         "--no-announce-submounts",
@@ -1759,7 +1759,7 @@ static int start_virtiofsd(
                         _exit(EXIT_FAILURE);
                 }
 
-                if (mapped_fd >= 0 && move_mount(mapped_fd, "", AT_FDCWD, "/run/systemd/mount-rootfs", MOVE_MOUNT_F_EMPTY_PATH) < 0) {
+                if (mapped_fd >= 0 && move_mount(mapped_fd, "", AT_FDCWD, RUNSTATEDIR "/systemd/mount-rootfs", MOVE_MOUNT_F_EMPTY_PATH) < 0) {
                         log_error_errno(errno, "Failed to move mount file descriptor to '/run/systemd/mount-rootfs': %m");
                         _exit(EXIT_FAILURE);
                 }
@@ -2572,7 +2572,7 @@ static int run_virtual_machine(int kvm_device_fd, int vhost_device_fd) {
                         arg_bind_user,
                         arg_bind_user_shell,
                         arg_bind_user_shell_copy,
-                        "/run/vmhost/home",
+                        RUNSTATEDIR "/vmhost/home",
                         arg_bind_user_groups,
                         &bind_user_context);
         if (r < 0)

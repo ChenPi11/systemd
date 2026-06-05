@@ -79,10 +79,10 @@ bool dns_server_address_valid(int family, const union in_addr_union *sa);
 DECLARE_STRING_TABLE_LOOKUP(dns_cache_mode, DnsCacheMode);
 
 /* A resolv.conf file containing the DNS server and domain data we learnt from uplink, i.e. the full uplink data */
-#define PRIVATE_UPLINK_RESOLV_CONF "/run/systemd/resolve/resolv.conf"
+#define PRIVATE_UPLINK_RESOLV_CONF RUNSTATEDIR "/systemd/resolve/resolv.conf"
 
 /* A resolv.conf file containing the domain data we learnt from uplink, but our own DNS server address. */
-#define PRIVATE_STUB_RESOLV_CONF "/run/systemd/resolve/stub-resolv.conf"
+#define PRIVATE_STUB_RESOLV_CONF RUNSTATEDIR "/systemd/resolve/stub-resolv.conf"
 
 /* A static resolv.conf file containing no domains, but only our own DNS server address */
 #define PRIVATE_STATIC_RESOLV_CONF LIBEXECDIR "/resolv.conf"

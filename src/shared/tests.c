@@ -38,7 +38,7 @@
 char* setup_fake_runtime_dir(void) {
         char *t;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/fake-xdg-runtime-XXXXXX", &t));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/fake-xdg-runtime-XXXXXX", &t));
         ASSERT_OK(setenv("XDG_RUNTIME_DIR", t, /* overwrite= */ true));
         return t;
 }

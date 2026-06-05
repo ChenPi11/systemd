@@ -1305,7 +1305,7 @@ static int tpm2_persist_handle(
         return 0;
 }
 
-#define TPM2_CREDIT_RANDOM_FLAG_PATH "/run/systemd/tpm-rng-credited"
+#define TPM2_CREDIT_RANDOM_FLAG_PATH RUNSTATEDIR "/systemd/tpm-rng-credited"
 
 static int tpm2_credit_random(Tpm2Context *c) {
         size_t rps, done = 0;
@@ -6704,7 +6704,7 @@ static const char* tpm2_userspace_event_type_table[_TPM2_USERSPACE_EVENT_TYPE_MA
 DEFINE_STRING_TABLE_LOOKUP(tpm2_userspace_event_type, Tpm2UserspaceEventType);
 
 const char* tpm2_userspace_log_path(void) {
-        return secure_getenv("SYSTEMD_MEASURE_LOG_USERSPACE") ?: "/run/log/systemd/tpm2-measure.log";
+        return secure_getenv("SYSTEMD_MEASURE_LOG_USERSPACE") ?: RUNSTATEDIR "/log/systemd/tpm2-measure.log";
 }
 
 const char* tpm2_firmware_log_path(void) {
@@ -7090,7 +7090,7 @@ int tpm2_nvpcr_extend_bytes(
         log_fd = tpm2_userspace_log_open();
 
         /* Check if this NvPCR is already anchored */
-        const char *anchor_fname = strjoina("/run/systemd/nvpcr/", name, ".anchor");
+        const char *anchor_fname = strjoina(RUNSTATEDIR "/systemd/nvpcr/", name, ".anchor");
         if (faccessat(AT_FDCWD, anchor_fname, F_OK, AT_SYMLINK_NOFOLLOW) < 0) {
                 if (errno != ENOENT)
                         return log_debug_errno(errno, "Failed to check if '%s' exists: %m", anchor_fname);
@@ -7388,7 +7388,7 @@ int tpm2_nvpcr_acquire_anchor_secret(struct iovec *ret, bool sync_secondary) {
          * boot, potentially. And one in the ESP/XBOOTLDR which will make it available in the initrd
          * already via system credentials. */
 
-        _cleanup_close_ int dfd = open_mkdir("/run/systemd/nvpcr", O_CLOEXEC, 0755);
+        _cleanup_close_ int dfd = open_mkdir(RUNSTATEDIR "/systemd/nvpcr", O_CLOEXEC, 0755);
         if (dfd < 0)
                 return log_error_errno(dfd, "Failed to open directory '/run/systemd/nvpcr': %m");
 
@@ -7601,7 +7601,7 @@ int tpm2_nvpcr_initialize(
         /* Open + lock the log file *before* we check for the *.anchor flag file. */
         _cleanup_close_ int log_fd = tpm2_userspace_log_open();
 
-        _cleanup_close_ int dfd = open_mkdir("/run/systemd/nvpcr", O_CLOEXEC, 0755);
+        _cleanup_close_ int dfd = open_mkdir(RUNSTATEDIR "/systemd/nvpcr", O_CLOEXEC, 0755);
         if (dfd < 0)
                 return log_debug_errno(dfd, "Failed to open directory '/run/systemd/nvpcr': %m");
 
@@ -7762,7 +7762,7 @@ int tpm2_nvpcr_read(
                 return r;
 
         /* Check if the NvPCR is already anchored */
-        const char *anchor_fname = strjoina("/run/systemd/nvpcr/", name, ".anchor");
+        const char *anchor_fname = strjoina(RUNSTATEDIR "/systemd/nvpcr/", name, ".anchor");
         r = access_nofollow(anchor_fname, F_OK);
         if (r < 0) {
                 if (r != -ENOENT)

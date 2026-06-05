@@ -229,7 +229,7 @@ static int path_is_runtime(const LookupPaths *lp, const char *path, bool check_p
          * explicit checks for the various runtime directories, as safety net. */
 
         rpath = skip_root(lp->root_dir, path);
-        if (rpath && path_startswith(rpath, "/run"))
+        if (rpath && path_startswith(rpath, RUNSTATEDIR))
                 return true;
 
         if (check_parent) {

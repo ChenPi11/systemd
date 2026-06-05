@@ -1631,7 +1631,7 @@ static int setup_network(void) {
         }
 
         _cleanup_close_ int network_dir_fd = -EBADF;
-        r = chase("/run/systemd/network",
+        r = chase(RUNSTATEDIR "/systemd/network",
                   /* root= */ NULL,
                   CHASE_MKDIR_0755|CHASE_MUST_BE_DIRECTORY,
                   /* ret_path= */ NULL,
@@ -1812,7 +1812,7 @@ static int setup_address_rrs(void) {
         if (r < 0)
                 return log_error_errno(r, "Failed to format JSON text: %m");
 
-        r = write_string_file("/run/systemd/resolve/static.d/imds-endpoint.rr", text, WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC|WRITE_STRING_FILE_MKDIR_0755);
+        r = write_string_file(RUNSTATEDIR "/systemd/resolve/static.d/imds-endpoint.rr", text, WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC|WRITE_STRING_FILE_MKDIR_0755);
         if (r < 0)
                 return log_error_errno(r, "Failed to write IMDS RR data: %m");
 

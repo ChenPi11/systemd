@@ -39,7 +39,7 @@
 static int udev_watch_clear_by_wd(sd_device *dev, int dirfd, int wd);
 
 static int device_new_from_watch_handle_at(sd_device **ret, int dirfd, int wd) {
-        char path_wd[STRLEN("/run/udev/watch/") + DECIMAL_STR_MAX(int)];
+        char path_wd[STRLEN(RUNSTATEDIR "/udev/watch/") + DECIMAL_STR_MAX(int)];
         _cleanup_free_ char *id = NULL;
         int r;
 
@@ -52,7 +52,7 @@ static int device_new_from_watch_handle_at(sd_device **ret, int dirfd, int wd) {
                 xsprintf(path_wd, "%d", wd);
                 r = readlinkat_malloc(dirfd, path_wd, &id);
         } else {
-                xsprintf(path_wd, "/run/udev/watch/%d", wd);
+                xsprintf(path_wd, RUNSTATEDIR "/udev/watch/%d", wd);
                 r = readlink_malloc(path_wd, &id);
         }
         if (r < 0)
@@ -64,7 +64,7 @@ static int device_new_from_watch_handle_at(sd_device **ret, int dirfd, int wd) {
 void udev_watch_dump(void) {
         int r;
 
-        _cleanup_closedir_ DIR *dir = opendir("/run/udev/watch/");
+        _cleanup_closedir_ DIR *dir = opendir(RUNSTATEDIR "/udev/watch/");
         if (!dir)
                 return (void) log_full_errno(errno == ENOENT ? LOG_DEBUG : LOG_WARNING, errno,
                                              "Failed to open old watches directory '/run/udev/watch/': %m");
@@ -317,7 +317,7 @@ static int on_inotify(sd_event_source *s, int fd, uint32_t revents, void *userda
 }
 
 static int udev_watch_restore(Manager *manager) {
-        _cleanup_(rm_rf_safep) const char *old = "/run/udev/watch.old/";
+        _cleanup_(rm_rf_safep) const char *old = RUNSTATEDIR "/udev/watch.old/";
         int r;
 
         /* Move any old watches directory out of the way, and then restore the watches. */
@@ -325,7 +325,7 @@ static int udev_watch_restore(Manager *manager) {
         assert(manager);
 
         rm_rf_safe(old);
-        if (rename("/run/udev/watch/", old) < 0) {
+        if (rename(RUNSTATEDIR "/udev/watch/", old) < 0) {
                 if (errno == ENOENT)
                         return 0;
 
@@ -429,9 +429,9 @@ static int udev_watch_clear_by_wd(sd_device *dev, int dirfd, int wd) {
 
         _cleanup_close_ int dirfd_close = -EBADF;
         if (dirfd < 0) {
-                dirfd_close = RET_NERRNO(open("/run/udev/watch/", O_CLOEXEC | O_DIRECTORY | O_NOFOLLOW | O_RDONLY));
+                dirfd_close = RET_NERRNO(open(RUNSTATEDIR "/udev/watch/", O_CLOEXEC | O_DIRECTORY | O_NOFOLLOW | O_RDONLY));
                 if (dirfd_close < 0)
-                        return log_device_debug_errno(dev, dirfd_close, "Failed to open %s: %m", "/run/udev/watch/");
+                        return log_device_debug_errno(dev, dirfd_close, "Failed to open %s: %m", RUNSTATEDIR "/udev/watch/");
 
                 dirfd = dirfd_close;
         }
@@ -561,7 +561,7 @@ int manager_add_watch(Manager *manager, sd_device *dev) {
         if (r < 0)
                 return log_device_debug_errno(dev, r, "Failed to get device ID: %m");
 
-        r = dirfd = open_mkdir("/run/udev/watch", O_CLOEXEC | O_RDONLY, 0755);
+        r = dirfd = open_mkdir(RUNSTATEDIR "/udev/watch", O_CLOEXEC | O_RDONLY, 0755);
         if (r < 0)
                 return log_device_debug_errno(dev, r, "Failed to create and open '/run/udev/watch/': %m");
 
@@ -607,11 +607,11 @@ int manager_remove_watch(Manager *manager, sd_device *dev) {
         assert(manager);
         assert(dev);
 
-        dirfd = RET_NERRNO(open("/run/udev/watch", O_CLOEXEC | O_DIRECTORY | O_NOFOLLOW | O_RDONLY));
+        dirfd = RET_NERRNO(open(RUNSTATEDIR "/udev/watch", O_CLOEXEC | O_DIRECTORY | O_NOFOLLOW | O_RDONLY));
         if (dirfd == -ENOENT)
                 return 0;
         if (dirfd < 0)
-                return log_device_debug_errno(dev, dirfd, "Failed to open %s: %m", "/run/udev/watch/");
+                return log_device_debug_errno(dev, dirfd, "Failed to open %s: %m", RUNSTATEDIR "/udev/watch/");
 
         /* First, clear symlinks. */
         r = udev_watch_clear(dev, dirfd, &wd);

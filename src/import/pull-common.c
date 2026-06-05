@@ -407,7 +407,7 @@ static int verify_gpg(
 
         _cleanup_close_pair_ int gpg_pipe[2] = EBADF_PAIR;
         _cleanup_(rm_rf_physical_and_freep) char *gpg_home = NULL;
-        char sig_file_path[] = "/tmp/sigXXXXXX";
+        char sig_file_path[] = SYSTEM_TMPDIR "/sigXXXXXX";
         _cleanup_(pidref_done_sigkill_wait) PidRef pidref = PIDREF_NULL;
         int r;
 
@@ -432,7 +432,7 @@ static int verify_gpg(
                 }
         }
 
-        r = mkdtemp_malloc("/tmp/gpghomeXXXXXX", &gpg_home);
+        r = mkdtemp_malloc(SYSTEM_TMPDIR "/gpghomeXXXXXX", &gpg_home);
         if (r < 0) {
                 log_error_errno(r, "Failed to create temporary home for gpg: %m");
                 goto finish;

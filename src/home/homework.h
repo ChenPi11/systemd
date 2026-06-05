@@ -89,4 +89,4 @@ int user_record_authenticate(UserRecord *h, UserRecord *secret, PasswordCache *c
 
 int home_sync_and_statfs(int root_fd, struct statfs *ret);
 
-#define HOME_RUNTIME_WORK_DIR "/run/systemd/user-home-mount"
+#define HOME_RUNTIME_WORK_DIR RUNSTATEDIR "/systemd/user-home-mount"

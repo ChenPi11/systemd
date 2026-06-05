@@ -1500,8 +1500,8 @@ static int os_release_status(void) {
 }
 
 static int setup_os_release(RuntimeScope scope) {
-        char os_release_dst[STRLEN("/run/user//systemd/propagate/.os-release-stage/os-release") + DECIMAL_STR_MAX(uid_t)] =
-                "/run/systemd/propagate/.os-release-stage/os-release";
+        char os_release_dst[STRLEN(RUNSTATEDIR "/user//systemd/propagate/.os-release-stage/os-release") + DECIMAL_STR_MAX(uid_t)] =
+                RUNSTATEDIR "/systemd/propagate/.os-release-stage/os-release";
         const char *os_release_src = "/etc/os-release";
         int r;
 
@@ -1515,7 +1515,7 @@ static int setup_os_release(RuntimeScope scope) {
         }
 
         if (scope == RUNTIME_SCOPE_USER)
-                xsprintf(os_release_dst, "/run/user/" UID_FMT "/systemd/propagate/.os-release-stage/os-release", geteuid());
+                xsprintf(os_release_dst, RUNSTATEDIR "/user/" UID_FMT "/systemd/propagate/.os-release-stage/os-release", geteuid());
 
         r = mkdir_parents_label(os_release_dst, 0755);
         if (r < 0)
@@ -1538,7 +1538,7 @@ static int write_container_id(void) {
                 return 0;
 
         WITH_UMASK(0022)
-                r = write_string_file("/run/systemd/container", c, WRITE_STRING_FILE_CREATE);
+                r = write_string_file(RUNSTATEDIR "/systemd/container", c, WRITE_STRING_FILE_CREATE);
         if (r < 0)
                 return log_warning_errno(r, "Failed to write /run/systemd/container, ignoring: %m");
 
@@ -2049,11 +2049,11 @@ static int do_reexecute(
 
         if (!switch_root_dir && objective == MANAGER_SOFT_REBOOT) {
                 /* If no switch root dir is specified, then check if /run/nextroot/ qualifies and use that */
-                r = path_is_os_tree("/run/nextroot");
+                r = path_is_os_tree(RUNSTATEDIR "/nextroot");
                 if (r < 0 && r != -ENOENT)
                         log_debug_errno(r, "Failed to determine if /run/nextroot/ is a valid OS tree, ignoring: %m");
                 else if (r > 0)
-                        switch_root_dir = "/run/nextroot";
+                        switch_root_dir = RUNSTATEDIR "/nextroot";
         }
 
         if (switch_root_dir) {
@@ -2161,11 +2161,11 @@ static int do_reexecute(
         /* Drop /run/systemd directory. Some of its content can be used as a flag indicating that systemd is
          * the init system but we might be replacing it with something different. If systemd is used again it
          * will recreate the directory and its content anyway. */
-        r = rm_rf("/run/systemd.pre-switch-root", REMOVE_ROOT|REMOVE_MISSING_OK);
+        r = rm_rf(RUNSTATEDIR "/systemd.pre-switch-root", REMOVE_ROOT|REMOVE_MISSING_OK);
         if (r < 0)
                 log_warning_errno(r, "Failed to prepare /run/systemd.pre-switch-root/, ignoring: %m");
 
-        r = RET_NERRNO(rename("/run/systemd", "/run/systemd.pre-switch-root"));
+        r = RET_NERRNO(rename(RUNSTATEDIR "/systemd", RUNSTATEDIR "/systemd.pre-switch-root"));
         if (r < 0)
                 log_warning_errno(r, "Failed to move /run/systemd/ to /run/systemd.pre-switch-root/, ignoring: %m");
 

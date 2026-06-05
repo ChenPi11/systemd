@@ -1105,7 +1105,7 @@ int mstack_apply(
 
         _cleanup_(rmdir_and_freep) char *t = NULL;
         if (!temp_mount_dir) {
-                r = mkdtemp_malloc("/tmp/mstack-temporary-XXXXXX", &t);
+                r = mkdtemp_malloc(SYSTEM_TMPDIR "/mstack-temporary-XXXXXX", &t);
                 if (r < 0)
                         return r;
 

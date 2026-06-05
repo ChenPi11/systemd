@@ -885,12 +885,12 @@ int vl_method_bind_mount(sd_varlink *link, sd_json_variant *parameters, sd_varli
         if (p.mkdir)
                 mount_flags |= MOUNT_IN_NAMESPACE_MAKE_FILE_OR_DIRECTORY;
 
-        const char *propagate_directory = strjoina("/run/systemd/nspawn/propagate/", machine->name);
+        const char *propagate_directory = strjoina(RUNSTATEDIR "/systemd/nspawn/propagate/", machine->name);
 
         r = bind_mount_in_namespace(
                         &machine->leader,
                         propagate_directory,
-                        "/run/host/incoming/",
+                        RUNSTATEDIR "/host/incoming/",
                         p.src,
                         dest,
                         mount_flags);

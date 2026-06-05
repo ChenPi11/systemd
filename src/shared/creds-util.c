@@ -1592,7 +1592,7 @@ int ipc_encrypt_credential(const char *name, usec_t timestamp, usec_t not_after,
         assert(input && iovec_is_valid(input));
         assert(ret);
 
-        r = sd_varlink_connect_address(&vl, "/run/systemd/io.systemd.Credentials");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/io.systemd.Credentials");
         if (r < 0)
                 return log_error_errno(r, "Failed to connect to io.systemd.Credentials: %m");
 
@@ -1652,7 +1652,7 @@ int ipc_decrypt_credential(const char *validate_name, usec_t validate_timestamp,
         assert(input && iovec_is_valid(input));
         assert(ret);
 
-        r = sd_varlink_connect_address(&vl, "/run/systemd/io.systemd.Credentials");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/io.systemd.Credentials");
         if (r < 0)
                 return log_error_errno(r, "Failed to connect to io.systemd.Credentials: %m");
 

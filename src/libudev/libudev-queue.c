@@ -64,7 +64,7 @@ static struct udev_queue* udev_queue_free(struct udev_queue *udev_queue) {
 }
 
 static int udev_queue_is_empty(void) {
-        return access("/run/udev/queue", F_OK) < 0 ?
+        return access(RUNSTATEDIR "/udev/queue", F_OK) < 0 ?
                 (errno == ENOENT ? true : -errno) : false;
 }
 
@@ -135,7 +135,7 @@ _public_ unsigned long long int udev_queue_get_udev_seqnum(struct udev_queue *ud
  * Returns: a flag indicating if udev is active.
  **/
 _public_ int udev_queue_get_udev_is_active(struct udev_queue *udev_queue) {
-        return access("/run/udev/control", F_OK) >= 0;
+        return access(RUNSTATEDIR "/udev/control", F_OK) >= 0;
 }
 
 /**
@@ -211,7 +211,7 @@ _public_ int udev_queue_get_fd(struct udev_queue *udev_queue) {
         if (fd < 0)
                 return -errno;
 
-        if (inotify_add_watch(fd, "/run/udev" , IN_DELETE) < 0)
+        if (inotify_add_watch(fd, RUNSTATEDIR "/udev" , IN_DELETE) < 0)
                 return -errno;
 
         return udev_queue->fd = TAKE_FD(fd);

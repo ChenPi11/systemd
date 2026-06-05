@@ -264,7 +264,7 @@ int pcrextend_verity_now(
                 return r;
 
         _cleanup_(sd_varlink_unrefp) sd_varlink *vl = NULL;
-        r = sd_varlink_connect_address(&vl, "/run/systemd/io.systemd.PCRExtend");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/io.systemd.PCRExtend");
         if (r < 0)
                 return r;
 
@@ -331,7 +331,7 @@ int pcrextend_imds_userdata_now(const struct iovec *data) {
                 return r;
 
         _cleanup_(sd_varlink_unrefp) sd_varlink *vl = NULL;
-        r = sd_varlink_connect_address(&vl, "/run/systemd/io.systemd.PCRExtend");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/io.systemd.PCRExtend");
         if (r < 0)
                 return r;
 

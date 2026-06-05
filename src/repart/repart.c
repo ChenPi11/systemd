@@ -6933,7 +6933,7 @@ static int partition_populate_filesystem(Context *context, Partition *p, const c
         if (r < 0)
                 return r;
         if (r == 0) {
-                static const char fs[] = "/run/systemd/mount-root";
+                static const char fs[] = RUNSTATEDIR "/systemd/mount-root";
                 /* This is a child process with its own mount namespace and propagation to host turned off */
 
                 r = mkdir_p(fs, 0700);
@@ -10534,7 +10534,7 @@ static int find_root(Context *context) {
         /* If the root mount has been replaced by some form of volatile file system (overlayfs), the
          * original root block device node is symlinked in /run/systemd/volatile-root. Let's read that
          * here. */
-        r = readlink_malloc("/run/systemd/volatile-root", &device);
+        r = readlink_malloc(RUNSTATEDIR "/systemd/volatile-root", &device);
         if (r == -ENOENT) { /* volatile-root not found */
                 /* Let's search for the root device. We look for two cases here: first in /, and then in /usr. The
                 * latter we check for cases where / is a tmpfs and only /usr is an actual persistent block device

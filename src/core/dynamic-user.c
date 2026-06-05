@@ -177,10 +177,10 @@ static int pick_uid(char **suggested_paths, const char *name, uid_t *ret_uid) {
         unsigned n_tries = 100, current_suggested = 0;
         int r;
 
-        (void) mkdir("/run/systemd/dynamic-uid", 0755);
+        (void) mkdir(RUNSTATEDIR "/systemd/dynamic-uid", 0755);
 
         for (;;) {
-                char lock_path[STRLEN("/run/systemd/dynamic-uid/") + DECIMAL_STR_MAX(uid_t) + 1];
+                char lock_path[STRLEN(RUNSTATEDIR "/systemd/dynamic-uid/") + DECIMAL_STR_MAX(uid_t) + 1];
                 _cleanup_close_ int lock_fd = -EBADF;
                 uid_t candidate;
                 ssize_t l;
@@ -230,7 +230,7 @@ static int pick_uid(char **suggested_paths, const char *name, uid_t *ret_uid) {
                 if (!uid_is_dynamic(candidate))
                         continue;
 
-                xsprintf(lock_path, "/run/systemd/dynamic-uid/" UID_FMT, candidate);
+                xsprintf(lock_path, RUNSTATEDIR "/systemd/dynamic-uid/" UID_FMT, candidate);
 
                 for (;;) {
                         lock_fd = open(lock_path, O_CREAT|O_RDWR|O_NOFOLLOW|O_CLOEXEC|O_NOCTTY, 0600);
@@ -321,12 +321,12 @@ static int dynamic_user_push(DynamicUser *d, uid_t uid, int lock_fd) {
 }
 
 static void unlink_uid_lock(int lock_fd, uid_t uid) {
-        char lock_path[STRLEN("/run/systemd/dynamic-uid/") + DECIMAL_STR_MAX(uid_t) + 1];
+        char lock_path[STRLEN(RUNSTATEDIR "/systemd/dynamic-uid/") + DECIMAL_STR_MAX(uid_t) + 1];
 
         if (lock_fd < 0)
                 return;
 
-        xsprintf(lock_path, "/run/systemd/dynamic-uid/" UID_FMT, uid);
+        xsprintf(lock_path, RUNSTATEDIR "/systemd/dynamic-uid/" UID_FMT, uid);
         (void) unlink(lock_path);
 }
 
@@ -651,7 +651,7 @@ void dynamic_user_vacuum(Manager *m, bool close_user) {
 }
 
 int dynamic_user_lookup_uid(Manager *m, uid_t uid, char **ret) {
-        char lock_path[STRLEN("/run/systemd/dynamic-uid/") + DECIMAL_STR_MAX(uid_t) + 1];
+        char lock_path[STRLEN(RUNSTATEDIR "/systemd/dynamic-uid/") + DECIMAL_STR_MAX(uid_t) + 1];
         _cleanup_free_ char *user = NULL;
         uid_t check_uid;
         int r;
@@ -663,7 +663,7 @@ int dynamic_user_lookup_uid(Manager *m, uid_t uid, char **ret) {
         if (!uid_is_dynamic(uid))
                 return -ESRCH;
 
-        xsprintf(lock_path, "/run/systemd/dynamic-uid/" UID_FMT, uid);
+        xsprintf(lock_path, RUNSTATEDIR "/systemd/dynamic-uid/" UID_FMT, uid);
         r = read_one_line_file(lock_path, &user);
         if (IN_SET(r, -ENOENT, 0))
                 return -ESRCH;

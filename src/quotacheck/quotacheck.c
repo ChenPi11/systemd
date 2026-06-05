@@ -83,7 +83,7 @@ static int run(int argc, char *argv[]) {
         if (arg_mode == QUOTA_CHECK_AUTO) {
                 /* This is created by systemd-fsck when fsck detected and corrected errors. In normal
                  * operations quotacheck is not needed. */
-                if (access("/run/systemd/quotacheck", F_OK) < 0) {
+                if (access(RUNSTATEDIR "/systemd/quotacheck", F_OK) < 0) {
                         if (errno != ENOENT)
                                 log_warning_errno(errno,
                                                   "Failed to check whether /run/systemd/quotacheck exists, ignoring: %m");

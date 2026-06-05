@@ -542,11 +542,11 @@ int bus_machine_method_bind_mount(sd_bus_message *message, void *userdata, sd_bu
         if (make_file_or_directory)
                 flags |= MOUNT_IN_NAMESPACE_MAKE_FILE_OR_DIRECTORY;
 
-        propagate_directory = strjoina("/run/systemd/nspawn/propagate/", m->name);
+        propagate_directory = strjoina(RUNSTATEDIR "/systemd/nspawn/propagate/", m->name);
         r = bind_mount_in_namespace(
                         &m->leader,
                         propagate_directory,
-                        "/run/host/incoming/",
+                        RUNSTATEDIR "/host/incoming/",
                         src, dest,
                         flags);
         if (r < 0)

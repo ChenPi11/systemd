@@ -702,19 +702,19 @@ static void cleanup_dirs_after_db_cleanup(DIR *dir, DIR *datadir) {
 static int cleanup_db(void) {
         _cleanup_closedir_ DIR *dir1 = NULL, *dir2 = NULL, *dir3 = NULL, *dir4 = NULL;
 
-        dir1 = opendir("/run/udev/data");
+        dir1 = opendir(RUNSTATEDIR "/udev/data");
         if (dir1)
                 cleanup_dir(dir1, S_ISVTX, 1);
 
-        dir2 = opendir("/run/udev/links");
+        dir2 = opendir(RUNSTATEDIR "/udev/links");
         if (dir2)
                 cleanup_dirs_after_db_cleanup(dir2, dir1);
 
-        dir3 = opendir("/run/udev/tags");
+        dir3 = opendir(RUNSTATEDIR "/udev/tags");
         if (dir3)
                 cleanup_dirs_after_db_cleanup(dir3, dir1);
 
-        dir4 = opendir("/run/udev/static_node-tags");
+        dir4 = opendir(RUNSTATEDIR "/udev/static_node-tags");
         if (dir4)
                 cleanup_dir(dir4, 0, 2);
 

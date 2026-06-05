@@ -102,7 +102,7 @@ FactoryResetMode factory_reset_mode(void) {
                 return FACTORY_RESET_UNSUPPORTED;
 
         /* First check if we already completed a factory reset in this boot */
-        if (access("/run/systemd/factory-reset-complete", F_OK) >= 0)
+        if (access(RUNSTATEDIR "/systemd/factory-reset-complete", F_OK) >= 0)
                 return FACTORY_RESET_COMPLETE;
         if (errno != ENOENT)
                 return log_debug_errno(errno, "Can't determine if /run/systemd/factory-reset-complete exists: %m");

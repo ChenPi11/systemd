@@ -1625,7 +1625,7 @@ int pidref_safe_fork_full(
                 assert(FLAGS_SET(flags, FORK_NEW_MOUNTNS));
 
                 /* Optionally, overmount new tmpfs instance on /tmp/. */
-                r = mount_nofollow("tmpfs", "/tmp", "tmpfs",
+                r = mount_nofollow("tmpfs", SYSTEM_TMPDIR, "tmpfs",
                                    MS_NOSUID|MS_NODEV,
                                    "mode=01777" TMPFS_LIMITS_RUN);
                 if (r < 0) {

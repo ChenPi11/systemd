@@ -443,7 +443,7 @@ static int manager_scan_registry(Manager *m, Set **registry_inodes) {
 static int manager_make_listen_socket(Manager *m) {
         static const union sockaddr_union sockaddr = {
                 .un.sun_family = AF_UNIX,
-                .un.sun_path = "/run/systemd/io.systemd.NamespaceResource",
+                .un.sun_path = RUNSTATEDIR "/systemd/io.systemd.NamespaceResource",
         };
         int r;
 
@@ -462,11 +462,11 @@ static int manager_make_listen_socket(Manager *m) {
                 if (bind(m->listen_fd, &sockaddr.sa, sockaddr_un_len(&sockaddr.un)) < 0)
                         return log_error_errno(errno, "Failed to bind socket: %m");
 
-        r = mkdir_p("/run/systemd/userdb", 0755);
+        r = mkdir_p(RUNSTATEDIR "/systemd/userdb", 0755);
         if (r < 0)
                 return log_error_errno(r, "Failed to create /run/systemd/userdb: %m");
 
-        r = symlink_idempotent("../io.systemd.NamespaceResource", "/run/systemd/userdb/io.systemd.NamespaceResource", /* make_relative= */ false);
+        r = symlink_idempotent("../io.systemd.NamespaceResource", RUNSTATEDIR "/systemd/userdb/io.systemd.NamespaceResource", /* make_relative= */ false);
         if (r < 0)
                 return log_error_errno(r, "Failed to symlink userdb socket: %m");
 

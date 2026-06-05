@@ -465,7 +465,7 @@ TEST(sd_device_enumerator_filter_subsystem) {
         /* The test test_sd_device_enumerator_filter_subsystem_trial() is quite racy. Let's run the function
          * several times after the udev queue becomes empty. */
 
-        if (!udev_available() || (access("/run/udev", F_OK) < 0 && errno == ENOENT)) {
+        if (!udev_available() || (access(RUNSTATEDIR "/udev", F_OK) < 0 && errno == ENOENT)) {
                 ASSERT_TRUE(test_sd_device_enumerator_filter_subsystem_trial_many());
                 return;
         }
@@ -476,7 +476,7 @@ TEST(sd_device_enumerator_filter_subsystem) {
 
         _cleanup_(sd_event_unrefp) sd_event *event = NULL;
         ASSERT_OK(sd_event_default(&event));
-        ASSERT_OK(sd_event_add_inotify(event, NULL, "/run/udev" , IN_DELETE, on_inotify, NULL));
+        ASSERT_OK(sd_event_add_inotify(event, NULL, RUNSTATEDIR "/udev" , IN_DELETE, on_inotify, NULL));
 
         if (udev_queue_is_empty() == 0) {
                 log_debug("udev queue is not empty, waiting for all queued events to be processed.");
@@ -770,7 +770,7 @@ TEST(sd_device_new_from_path) {
         _cleanup_(rm_rf_physical_and_freep) char *tmpdir = NULL;
         int r;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-sd-device.XXXXXXX", &tmpdir));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-sd-device.XXXXXXX", &tmpdir));
 
         ASSERT_OK(sd_device_enumerator_new(&e));
         ASSERT_OK(sd_device_enumerator_allow_uninitialized(e));
@@ -838,9 +838,9 @@ TEST(devname_from_devnum) {
         test_devname_from_devnum_one("/dev/urandom");
         test_devname_from_devnum_one("/dev/tty");
 
-        if (is_device_node("/run/systemd/inaccessible/blk") > 0) {
-                test_devname_from_devnum_one("/run/systemd/inaccessible/chr");
-                test_devname_from_devnum_one("/run/systemd/inaccessible/blk");
+        if (is_device_node(RUNSTATEDIR "/systemd/inaccessible/blk") > 0) {
+                test_devname_from_devnum_one(RUNSTATEDIR "/systemd/inaccessible/chr");
+                test_devname_from_devnum_one(RUNSTATEDIR "/systemd/inaccessible/blk");
         }
 }
 

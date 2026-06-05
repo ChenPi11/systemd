@@ -62,7 +62,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         client->state = DHCP_STATE_SELECTING;
 
         if (client_handle_offer_or_rapid_ack(client, (DHCPMessage*) data, size, NULL) >= 0) {
-                _cleanup_(unlink_tempfilep) char lease_file[] = "/tmp/fuzz-dhcp-client.XXXXXX";
+                _cleanup_(unlink_tempfilep) char lease_file[] = SYSTEM_TMPDIR "/fuzz-dhcp-client.XXXXXX";
                 _unused_ _cleanup_close_ int fd = ASSERT_OK(mkostemp_safe(lease_file));
 
                 ASSERT_OK(dhcp_lease_save(client->lease, lease_file));

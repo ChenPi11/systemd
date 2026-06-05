@@ -2587,7 +2587,7 @@ static int discover_key(const char *key_file, const char *volume, TokenType toke
                 return log_oom();
 
         /* If a key file is not explicitly specified, search for a key in a well defined search path, and load it. */
-        r = find_key_file(key_file, STRV_MAKE("/etc/cryptsetup-keys.d", "/run/cryptsetup-keys.d"), bindname, ret_key_data);
+        r = find_key_file(key_file, STRV_MAKE("/etc/cryptsetup-keys.d", RUNSTATEDIR "/cryptsetup-keys.d"), bindname, ret_key_data);
         if (r <= 0)
                 return r;
 

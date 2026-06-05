@@ -422,7 +422,7 @@ static int manager_dns_configuration_listen(Manager *m) {
 
         m->varlink_client = sd_varlink_unref(m->varlink_client);
 
-        r = sd_varlink_connect_address(&vl, "/run/systemd/resolve/io.systemd.Resolve.Monitor");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/resolve/io.systemd.Resolve.Monitor");
         if (r < 0)
                 return log_error_errno(r, "Failed to connect to io.systemd.Resolve.Monitor: %m");
 

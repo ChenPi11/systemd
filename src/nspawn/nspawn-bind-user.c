@@ -46,7 +46,7 @@ static int write_and_symlink(
         if (!f)
                 return log_oom();
 
-        p = path_join(root, "/run/host/userdb/", f);
+        p = path_join(root, RUNSTATEDIR "/host/userdb/", f);
         if (!p)
                 return log_oom();
 
@@ -81,7 +81,7 @@ static int write_membership(const char *root, const char *user, const char *grou
         if (!membership)
                 return log_oom();
 
-        _cleanup_free_ char *p = path_join("/run/host/userdb/", membership);
+        _cleanup_free_ char *p = path_join(RUNSTATEDIR "/host/userdb/", membership);
         if (!p)
                 return log_oom();
 
@@ -124,11 +124,11 @@ int bind_user_setup(const MachineBindUserContext *c, const char *root) {
         if (r < 0)
                 return r;
 
-        r = userns_mkdir(root, "/run/host/home", 0755, 0, 0);
+        r = userns_mkdir(root, RUNSTATEDIR "/host/home", 0755, 0, 0);
         if (r < 0)
                 return log_error_errno(r, "Failed to create /run/host/home: %m");
 
-        r = userns_mkdir(root, "/run/host/userdb", 0755, 0, 0);
+        r = userns_mkdir(root, RUNSTATEDIR "/host/userdb", 0755, 0, 0);
         if (r < 0)
                 return log_error_errno(r, "Failed to create /run/host/userdb: %m");
 

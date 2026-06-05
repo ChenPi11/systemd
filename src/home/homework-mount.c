@@ -83,9 +83,9 @@ int home_unshare_and_mkdir(void) {
         if (unshare(CLONE_NEWNS) < 0)
                 return log_error_errno(errno, "Couldn't unshare file system namespace: %m");
 
-        assert(path_startswith(HOME_RUNTIME_WORK_DIR, "/run"));
+        assert(path_startswith(HOME_RUNTIME_WORK_DIR, RUNSTATEDIR));
 
-        r = mount_nofollow_verbose(LOG_ERR, "/run", "/run", NULL, MS_SLAVE|MS_REC, NULL); /* Mark /run as MS_SLAVE in our new namespace */
+        r = mount_nofollow_verbose(LOG_ERR, RUNSTATEDIR, RUNSTATEDIR, NULL, MS_SLAVE|MS_REC, NULL); /* Mark /run as MS_SLAVE in our new namespace */
         if (r < 0)
                 return r;
 

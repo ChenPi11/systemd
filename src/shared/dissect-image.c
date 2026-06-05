@@ -4732,13 +4732,13 @@ int mount_image_privately_interactively(
         if (r < 0)
                 return log_error_errno(r, "Failed to detach mount namespace: %m");
 
-        r = mkdir_p("/run/systemd/mount-rootfs", 0555);
+        r = mkdir_p(RUNSTATEDIR "/systemd/mount-rootfs", 0555);
         if (r < 0)
                 return log_error_errno(r, "Failed to create mount point: %m");
 
         r = dissected_image_mount_and_warn(
                         dissected_image,
-                        "/run/systemd/mount-rootfs",
+                        RUNSTATEDIR "/systemd/mount-rootfs",
                         /* uid_shift= */ UID_INVALID,
                         /* uid_range= */ UID_INVALID,
                         /* userns_fd= */ -EBADF,
@@ -4755,7 +4755,7 @@ int mount_image_privately_interactively(
                 return log_error_errno(r, "Failed to relinquish DM and loopback block devices: %m");
 
         if (ret_directory) {
-                dir = strdup("/run/systemd/mount-rootfs");
+                dir = strdup(RUNSTATEDIR "/systemd/mount-rootfs");
                 if (!dir)
                         return log_oom();
         }
@@ -4763,7 +4763,7 @@ int mount_image_privately_interactively(
         if (ret_dir_fd) {
                 _cleanup_close_ int dir_fd = -EBADF;
 
-                dir_fd = open("/run/systemd/mount-rootfs", O_CLOEXEC|O_DIRECTORY);
+                dir_fd = open(RUNSTATEDIR "/systemd/mount-rootfs", O_CLOEXEC|O_DIRECTORY);
                 if (dir_fd < 0)
                         return log_error_errno(errno, "Failed to open mount point directory: %m");
 
@@ -5011,7 +5011,7 @@ int get_common_dissect_directory(char **ret) {
          * function runs in their own private mount namespace (with mount propagation off on /run/systemd/,
          * and thus can mount something here without affecting anyone else). */
 
-        t = strdup("/run/systemd/dissect-root");
+        t = strdup(RUNSTATEDIR "/systemd/dissect-root");
         if (!t)
                 return log_oom_debug();
 
@@ -5079,7 +5079,7 @@ int mountfsd_connect(sd_varlink **ret) {
         assert(ret);
 
         _cleanup_(sd_varlink_unrefp) sd_varlink *vl = NULL;
-        r = sd_varlink_connect_address(&vl, "/run/systemd/io.systemd.MountFileSystem");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/io.systemd.MountFileSystem");
         if (r < 0)
                 return log_debug_errno(r, "Failed to connect to mountfsd: %m");
 

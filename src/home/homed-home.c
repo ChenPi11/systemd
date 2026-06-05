@@ -377,7 +377,7 @@ int home_unlink_record(Home *h) {
         if (unlink(fn) < 0 && errno != ENOENT)
                 return -errno;
 
-        fn = strjoina("/run/systemd/home/", h->user_name, ".ref");
+        fn = strjoina(RUNSTATEDIR "/systemd/home/", h->user_name, ".ref");
         if (unlink(fn) < 0 && errno != ENOENT)
                 return -errno;
 
@@ -2783,12 +2783,12 @@ int home_create_fifo(Home *h, bool please_suspend) {
                 ss = &h->ref_event_source_dont_suspend;
         }
 
-        fn = strjoina("/run/systemd/home/", h->user_name, suffix);
+        fn = strjoina(RUNSTATEDIR "/systemd/home/", h->user_name, suffix);
 
         if (!*ss) {
                 _cleanup_close_ int ref_fd = -EBADF;
 
-                (void) mkdir("/run/systemd/home/", 0755);
+                (void) mkdir(RUNSTATEDIR "/systemd/home/", 0755);
                 if (mkfifo(fn, 0600) < 0 && errno != EEXIST)
                         return log_error_errno(errno, "Failed to create FIFO %s: %m", fn);
 

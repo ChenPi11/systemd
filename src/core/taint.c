@@ -50,7 +50,7 @@ char** taint_strv(void) {
         if (readlink_malloc("/usr/sbin", &usr_sbin) < 0 || !PATH_IN_SET(usr_sbin, "bin", "/usr/bin"))
                 stage[n++] = "unmerged-bin";
 
-        if (readlink_malloc("/var/run", &var_run) < 0 || !PATH_IN_SET(var_run, "../run", "/run"))
+        if (readlink_malloc("/var/run", &var_run) < 0 || !PATH_IN_SET(var_run, "../run", RUNSTATEDIR))
                 stage[n++] = "var-run-bad";
 
         if (clock_is_localtime(NULL) > 0)

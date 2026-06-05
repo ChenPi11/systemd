@@ -1637,7 +1637,7 @@ static int get_settings_path(const char *name, char **ret_path) {
         assert(name);
         assert(ret_path);
 
-        FOREACH_STRING(i, "/etc/systemd/nspawn", "/run/systemd/nspawn", "/var/lib/machines") {
+        FOREACH_STRING(i, "/etc/systemd/nspawn", RUNSTATEDIR "/systemd/nspawn", "/var/lib/machines") {
                 _cleanup_free_ char *path = NULL;
 
                 path = path_join(i, name);

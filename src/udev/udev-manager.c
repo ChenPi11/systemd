@@ -1276,7 +1276,7 @@ int manager_create_queue_file(Manager *manager) {
         if (manager->queue_file_created)
                 return 0;
 
-        r = touch("/run/udev/queue");
+        r = touch(RUNSTATEDIR "/udev/queue");
         if (r < 0)
                 return log_warning_errno(r, "Failed to touch /run/udev/queue: %m");
 
@@ -1297,7 +1297,7 @@ static int manager_unlink_queue_file(Manager *manager) {
                 return 0; /* We have triggered synthesized change events. */
 
         /* There are no queued events. Let's remove /run/udev/queue and clean up the idle processes. */
-        if (unlink("/run/udev/queue") < 0) {
+        if (unlink(RUNSTATEDIR "/udev/queue") < 0) {
                 if (errno != ENOENT)
                         return log_warning_errno(errno, "Failed to unlink /run/udev/queue: %m");
         } else

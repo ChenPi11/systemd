@@ -163,12 +163,12 @@ void hostname_update_source_hint(const char *hostname, HostnameSource source) {
          */
 
         if (source == HOSTNAME_DEFAULT) {
-                r = write_string_file("/run/systemd/default-hostname", hostname,
+                r = write_string_file(RUNSTATEDIR "/systemd/default-hostname", hostname,
                                       WRITE_STRING_FILE_CREATE | WRITE_STRING_FILE_ATOMIC);
                 if (r < 0)
                         log_warning_errno(r, "Failed to create \"/run/systemd/default-hostname\", ignoring: %m");
         } else
-                (void) unlink_or_warn("/run/systemd/default-hostname");
+                (void) unlink_or_warn(RUNSTATEDIR "/systemd/default-hostname");
 }
 
 int hostname_setup(bool really) {

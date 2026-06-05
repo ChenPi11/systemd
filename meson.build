@@ -120,6 +120,8 @@ sysconfdir = prefixdir / get_option('sysconfdir')
 includedir = prefixdir / get_option('includedir')
 datadir = prefixdir / get_option('datadir')
 localstatedir = '/' / get_option('localstatedir')
+runstatedir = '/' / get_option('runstatedir')
+tmpdir = get_option('tmpdir')
 
 libexecdir = prefixdir / 'lib/systemd'
 libexecdir_to_bin = '../../bin/'
@@ -265,6 +267,8 @@ conf.set_quoted('SSHCONFDIR',                                 sshconfdir)
 conf.set_quoted('SSHDCONFDIR',                                sshdconfdir)
 conf.set_quoted('SHELLPROFILEDIR',                            shellprofiledir)
 conf.set_quoted('SYSCONF_DIR',                                sysconfdir)
+conf.set_quoted('RUNSTATEDIR',                                runstatedir)
+conf.set_quoted('SYSTEM_TMPDIR',                              tmpdir)
 conf.set_quoted('SYSCTL_DIR',                                 sysctldir)
 conf.set_quoted('SYSTEMCTL_BINARY_PATH',                      bindir / 'systemctl')
 conf.set_quoted('SYSTEMD_BINARY_PATH',                        libexecdir / 'systemd')

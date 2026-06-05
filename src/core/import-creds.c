@@ -624,12 +624,12 @@ static int import_credentials_initrd(ImportCredentialsContext *c) {
         if (in_initrd())
                 return 0;
 
-        source_dir_fd = open("/run/credentials/@initrd", O_RDONLY|O_DIRECTORY|O_CLOEXEC|O_NOFOLLOW);
+        source_dir_fd = open(RUNSTATEDIR "/credentials/@initrd", O_RDONLY|O_DIRECTORY|O_CLOEXEC|O_NOFOLLOW);
         if (source_dir_fd < 0) {
                 if (errno == ENOENT)
                         log_debug_errno(errno, "No credentials passed from initrd.");
                 else
-                        log_warning_errno(errno, "Failed to open '%s', ignoring: %m", "/run/credentials/@initrd");
+                        log_warning_errno(errno, "Failed to open '%s', ignoring: %m", RUNSTATEDIR "/credentials/@initrd");
                 return 0;
         }
 
@@ -695,7 +695,7 @@ static int import_credentials_initrd(ImportCredentialsContext *c) {
 
         source_dir_fd = safe_close(source_dir_fd);
 
-        if (rmdir("/run/credentials/@initrd") < 0)
+        if (rmdir(RUNSTATEDIR "/credentials/@initrd") < 0)
                 log_warning_errno(errno, "Failed to remove /run/credentials/@initrd after import, ignoring: %m");
 
         return 0;

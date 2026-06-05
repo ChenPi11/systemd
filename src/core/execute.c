@@ -357,7 +357,7 @@ const char* exec_get_private_notify_socket_path(const ExecContext *context, cons
         if (!FLAGS_SET(params->flags, EXEC_APPLY_CHROOT))
                 return NULL;
 
-        return "/run/host/notify";
+        return RUNSTATEDIR "/host/notify";
 }
 
 int exec_log_level_max_with_exec_params(const ExecContext *context, const ExecParameters *params) {
@@ -796,7 +796,7 @@ int exec_context_destroy_mount_ns_dir(Unit *u) {
         if (!u || !MANAGER_IS_SYSTEM(u->manager))
                 return 0;
 
-        p = path_join("/run/systemd/propagate/", u->id);
+        p = path_join(RUNSTATEDIR "/systemd/propagate/", u->id);
         if (!p)
                 return -ENOMEM;
 
@@ -1651,7 +1651,7 @@ bool exec_context_get_effective_mount_apivfs(const ExecContext *c) {
 bool exec_context_get_effective_bind_log_sockets(const ExecContext *c) {
         assert(c);
 
-        /* If log namespace is specified, "/run/systemd/journal.namespace/" would be bind mounted to
+        /* If log namespace is specified, RUNSTATEDIR "/systemd/journal.namespace/" would be bind mounted to
          * "/run/systemd/journal/", which effectively means BindLogSockets=yes */
         if (c->log_namespace)
                 return true;
@@ -2434,9 +2434,9 @@ static int exec_shared_runtime_make(
         }
 
         if (c->private_tmp == PRIVATE_TMP_CONNECTED &&
-            !prefixed_path_strv_contains(c->inaccessible_paths, "/tmp")) {
+            !prefixed_path_strv_contains(c->inaccessible_paths, SYSTEM_TMPDIR)) {
 
-                r = setup_tmp_dir_one(id, "/tmp", &tmp_dir);
+                r = setup_tmp_dir_one(id, SYSTEM_TMPDIR, &tmp_dir);
                 if (r < 0)
                         return r;
         }

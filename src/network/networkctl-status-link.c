@@ -293,8 +293,8 @@ static int link_status_one(
         if (r == -ENOMEM)
                 return log_oom();
 
-        char lease_file[STRLEN("/run/systemd/netif/leases/") + DECIMAL_STR_MAX(int)];
-        xsprintf(lease_file, "/run/systemd/netif/leases/%i", info->ifindex);
+        char lease_file[STRLEN(RUNSTATEDIR "/systemd/netif/leases/") + DECIMAL_STR_MAX(int)];
+        xsprintf(lease_file, RUNSTATEDIR "/systemd/netif/leases/%i", info->ifindex);
 
         (void) dhcp_lease_load(&lease, lease_file);
 

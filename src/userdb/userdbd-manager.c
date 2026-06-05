@@ -284,7 +284,7 @@ static int start_workers(Manager *m, bool explicit_request) {
 static int manager_make_listen_socket(Manager *m) {
         static const union sockaddr_union sockaddr = {
                 .un.sun_family = AF_UNIX,
-                .un.sun_path = "/run/systemd/userdb/io.systemd.Multiplexer",
+                .un.sun_path = RUNSTATEDIR "/systemd/userdb/io.systemd.Multiplexer",
         };
         int r;
 
@@ -293,7 +293,7 @@ static int manager_make_listen_socket(Manager *m) {
         if (m->listen_fd >= 0)
                 return 0;
 
-        r = mkdir_p("/run/systemd/userdb", 0755);
+        r = mkdir_p(RUNSTATEDIR "/systemd/userdb", 0755);
         if (r < 0)
                 return log_error_errno(r, "Failed to create /run/systemd/userdb: %m");
 
@@ -308,8 +308,8 @@ static int manager_make_listen_socket(Manager *m) {
                         return log_error_errno(errno, "Failed to bind socket: %m");
 
         FOREACH_STRING(alias,
-                       "/run/systemd/userdb/io.systemd.NameServiceSwitch",
-                       "/run/systemd/userdb/io.systemd.DropIn") {
+                       RUNSTATEDIR "/systemd/userdb/io.systemd.NameServiceSwitch",
+                       RUNSTATEDIR "/systemd/userdb/io.systemd.DropIn") {
 
                 r = symlink_idempotent("io.systemd.Multiplexer", alias, /* make_relative= */ false);
                 if (r < 0)

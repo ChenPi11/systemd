@@ -3,7 +3,7 @@
 
 #include "logind-forward.h"
 
-#define SHUTDOWN_SCHEDULE_FILE "/run/systemd/shutdown/scheduled"
+#define SHUTDOWN_SCHEDULE_FILE RUNSTATEDIR "/systemd/shutdown/scheduled"
 
 int manager_have_multiple_sessions(Manager *m, uid_t uid);
 

@@ -154,7 +154,7 @@ static int switch_root_initramfs(void) {
          * efforts here. As the new root will be /run/initramfs/, it is not necessary to mount /run/
          * recursively. */
         return switch_root(
-                        /* new_root= */ "/run/initramfs",
+                        /* new_root= */ RUNSTATEDIR "/initramfs",
                         /* old_root_after= */ "/oldroot",
                         /* flags= */ SWITCH_ROOT_DONT_SYNC);
 }
@@ -457,7 +457,7 @@ int main(int argc, char *argv[]) {
 
         bool need_umount = !in_container, need_swapoff = !in_container, need_loop_detach = !in_container,
              need_dm_detach = !in_container, need_md_detach = !in_container,
-             can_exitrd = !in_container && !in_initrd() && access("/run/initramfs/shutdown", X_OK) >= 0;
+             can_exitrd = !in_container && !in_initrd() && access(RUNSTATEDIR "/initramfs/shutdown", X_OK) >= 0;
 
         /* Unmount all mountpoints, swaps, and loopback devices */
         for (bool last_try = false;;) {

@@ -2246,7 +2246,7 @@ static int method_do_shutdown_or_sleep(
         const HandleActionData *a = NULL;
 
         if (FLAGS_SET(flags, SD_LOGIND_SOFT_REBOOT) ||
-            (FLAGS_SET(flags, SD_LOGIND_SOFT_REBOOT_IF_NEXTROOT_SET_UP) && path_is_os_tree("/run/nextroot") > 0))
+            (FLAGS_SET(flags, SD_LOGIND_SOFT_REBOOT_IF_NEXTROOT_SET_UP) && path_is_os_tree(RUNSTATEDIR "/nextroot") > 0))
                 a = handle_action_lookup(HANDLE_SOFT_REBOOT);
         else if (FLAGS_SET(flags, SD_LOGIND_REBOOT_VIA_KEXEC) && kexec_loaded())
                 a = handle_action_lookup(HANDLE_KEXEC);
@@ -3066,7 +3066,7 @@ static int property_get_reboot_to_firmware_setup(
                 log_warning_errno(r, "Failed to parse $SYSTEMD_REBOOT_TO_FIRMWARE_SETUP: %m");
         else if (r > 0) {
                 /* Non-EFI case: let's see whether /run/systemd/reboot-to-firmware-setup exists. */
-                if (access("/run/systemd/reboot-to-firmware-setup", F_OK) < 0) {
+                if (access(RUNSTATEDIR "/systemd/reboot-to-firmware-setup", F_OK) < 0) {
                         if (errno != ENOENT)
                                 log_warning_errno(errno, "Failed to check whether /run/systemd/reboot-to-firmware-setup exists: %m");
 
@@ -3133,11 +3133,11 @@ static int method_set_reboot_to_firmware_setup(
                         return r;
         } else {
                 if (b) {
-                        r = touch("/run/systemd/reboot-to-firmware-setup");
+                        r = touch(RUNSTATEDIR "/systemd/reboot-to-firmware-setup");
                         if (r < 0)
                                 return r;
                 } else {
-                        if (unlink("/run/systemd/reboot-to-firmware-setup") < 0 && errno != ENOENT)
+                        if (unlink(RUNSTATEDIR "/systemd/reboot-to-firmware-setup") < 0 && errno != ENOENT)
                                 return -errno;
                 }
         }
@@ -3222,7 +3222,7 @@ static int property_get_reboot_to_boot_loader_menu(
 
                 /* Non-EFI case, let's process /run/systemd/reboot-to-boot-loader-menu. */
 
-                r = read_one_line_file("/run/systemd/reboot-to-boot-loader-menu", &v);
+                r = read_one_line_file(RUNSTATEDIR "/systemd/reboot-to-boot-loader-menu", &v);
                 if (r < 0) {
                         if (r != -ENOENT)
                                 log_warning_errno(r, "Failed to read /run/systemd/reboot-to-boot-loader-menu: %m");
@@ -3301,10 +3301,10 @@ static int method_set_reboot_to_boot_loader_menu(
                         return r;
         } else {
                 if (x == UINT64_MAX) {
-                        if (unlink("/run/systemd/reboot-to-boot-loader-menu") < 0 && errno != ENOENT)
+                        if (unlink(RUNSTATEDIR "/systemd/reboot-to-boot-loader-menu") < 0 && errno != ENOENT)
                                 return -errno;
                 } else {
-                        r = write_string_filef("/run/systemd/reboot-to-boot-loader-menu",
+                        r = write_string_filef(RUNSTATEDIR "/systemd/reboot-to-boot-loader-menu",
                                                WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC|WRITE_STRING_FILE_LABEL,
                                                "%" PRIu64, x); /* μs granularity */
                         if (r < 0)
@@ -3388,12 +3388,12 @@ static int property_get_reboot_to_boot_loader_entry(
 
                 /* Non-EFI case, let's process /run/systemd/reboot-to-boot-loader-entry. */
 
-                r = read_one_line_file("/run/systemd/reboot-to-boot-loader-entry", &v);
+                r = read_one_line_file(RUNSTATEDIR "/systemd/reboot-to-boot-loader-entry", &v);
                 if (r < 0) {
                         if (r != -ENOENT)
                                 log_warning_errno(r, "Failed to read /run/systemd/reboot-to-boot-loader-entry, ignoring: %m");
                 } else if (!efi_loader_entry_name_valid(v))
-                        log_warning("/run/systemd/reboot-to-boot-loader-entry is not valid, ignoring.");
+                        log_warning(RUNSTATEDIR "/systemd/reboot-to-boot-loader-entry is not valid, ignoring.");
                 else
                         x = v;
         }
@@ -3492,10 +3492,10 @@ static int method_set_reboot_to_boot_loader_entry(
                         return r;
         } else {
                 if (isempty(v)) {
-                        if (unlink("/run/systemd/reboot-to-boot-loader-entry") < 0 && errno != ENOENT)
+                        if (unlink(RUNSTATEDIR "/systemd/reboot-to-boot-loader-entry") < 0 && errno != ENOENT)
                                 return -errno;
                 } else {
-                        r = write_string_file("/run/systemd/reboot-boot-to-loader-entry", v, WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC|WRITE_STRING_FILE_LABEL);
+                        r = write_string_file(RUNSTATEDIR "/systemd/reboot-boot-to-loader-entry", v, WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC|WRITE_STRING_FILE_LABEL);
                         if (r < 0)
                                 return r;
                 }

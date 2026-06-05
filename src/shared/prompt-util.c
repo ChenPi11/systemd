@@ -355,7 +355,7 @@ int mute_console(sd_varlink **ret_link) {
          * connection is retained */
 
         _cleanup_(sd_varlink_flush_close_unrefp) sd_varlink *link = NULL;
-        r = sd_varlink_connect_address(&link, "/run/systemd/io.systemd.MuteConsole");
+        r = sd_varlink_connect_address(&link, RUNSTATEDIR "/systemd/io.systemd.MuteConsole");
         if (r < 0)
                 return log_debug_errno(r, "Failed to connect to console muting service: %m");
 

@@ -12,7 +12,7 @@
 #include "varlink-io.systemd.service.h"
 #include "varlink-util.h"
 
-#define UDEV_VARLINK_ADDRESS "/run/udev/io.systemd.Udev"
+#define UDEV_VARLINK_ADDRESS RUNSTATEDIR "/udev/io.systemd.Udev"
 
 static int vl_method_reload(sd_varlink *link, sd_json_variant *parameters, sd_varlink_method_flags_t flags, void *userdata) {
         int r;

@@ -675,7 +675,7 @@ int tmp_dir(const char **ret) {
         /* Similar to var_tmp_dir() above, but returns the location for "smaller" temporary files, which is usually
          * backed by an in-memory file system: /tmp. */
 
-        return tmp_dir_internal("/tmp", ret);
+        return tmp_dir_internal(SYSTEM_TMPDIR, ret);
 }
 
 int unlink_or_warn(const char *filename) {

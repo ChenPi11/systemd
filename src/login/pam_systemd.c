@@ -1117,7 +1117,7 @@ static int register_session(
         bool done = false;
         if (can_use_varlink(c)) {
 
-                r = sd_varlink_connect_address(&vl, "/run/systemd/io.systemd.Login");
+                r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/io.systemd.Login");
                 if (r < 0)
                         pam_debug_syslog_errno(pamh, debug, r, "Failed to connect to logind via Varlink, falling back to D-Bus: %m");
                 else {
@@ -1871,7 +1871,7 @@ _public_ PAM_EXTERN int pam_sm_close_session(
                 _cleanup_(sd_varlink_unrefp) sd_varlink *vl = NULL;
                 bool done = false;
 
-                r = sd_varlink_connect_address(&vl, "/run/systemd/io.systemd.Login");
+                r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/io.systemd.Login");
                 if (r < 0)
                         pam_debug_syslog_errno(pamh, debug, r, "Failed to connect to logind via Varlink, falling back to D-Bus: %m");
                 else {

@@ -581,7 +581,7 @@ static int manager_receive_response(sd_event_source *source, int fd, uint32_t re
                 (void) manager_save_time_and_rearm(m, dts.realtime);
 
                 /* If touch fails, there isn't much we can do. Maybe it'll work next time. */
-                r = touch("/run/systemd/timesync/synchronized");
+                r = touch(RUNSTATEDIR "/systemd/timesync/synchronized");
                 if (r < 0)
                         log_debug_errno(r, "Failed to touch /run/systemd/timesync/synchronized, ignoring: %m");
         }
@@ -1151,7 +1151,7 @@ int manager_new(Manager **ret) {
                 log_debug_errno(r, "Failed to enable watchdog handling, ignoring: %m");
 
         /* Load previous synchronization state */
-        r = access("/run/systemd/timesync/synchronized", F_OK);
+        r = access(RUNSTATEDIR "/systemd/timesync/synchronized", F_OK);
         if (r < 0 && errno != ENOENT)
                 log_debug_errno(errno, "Failed to determine whether /run/systemd/timesync/synchronized exists, ignoring: %m");
         m->synchronized = r >= 0;

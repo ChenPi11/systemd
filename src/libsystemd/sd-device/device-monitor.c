@@ -156,7 +156,7 @@ int device_monitor_new_full(sd_device_monitor **ret, MonitorNetlinkGroup group, 
         assert_return(ret, -EINVAL);
 
         if (group == MONITOR_GROUP_UDEV &&
-            access("/run/udev/control", F_OK) < 0 &&
+            access(RUNSTATEDIR "/udev/control", F_OK) < 0 &&
             dev_is_devtmpfs() <= 0) {
 
                 /*

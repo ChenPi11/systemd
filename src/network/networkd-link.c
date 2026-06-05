@@ -2749,10 +2749,10 @@ static int link_new(Manager *manager, sd_netlink_message *message, Link **ret) {
 
         if (!manager->test_mode) {
                 /* Do not update state files when running in test mode. */
-                if (asprintf(&state_file, "/run/systemd/netif/links/%d", ifindex) < 0)
+                if (asprintf(&state_file, RUNSTATEDIR "/systemd/netif/links/%d", ifindex) < 0)
                         return log_oom_debug();
 
-                if (asprintf(&lease_file, "/run/systemd/netif/leases/%d", ifindex) < 0)
+                if (asprintf(&lease_file, RUNSTATEDIR "/systemd/netif/leases/%d", ifindex) < 0)
                         return log_oom_debug();
         }
 

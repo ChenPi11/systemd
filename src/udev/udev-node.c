@@ -366,14 +366,14 @@ static int stack_directory_open_and_lock(
         if (r < 0)
                 return log_device_debug_errno(dev, r, "Failed to build stack directory name for '%s': %m", slink);
 
-        FOREACH_STRING(s, "/run/udev/links/", "/run/udev/links.lock/") {
+        FOREACH_STRING(s, RUNSTATEDIR "/udev/links/", RUNSTATEDIR "/udev/links.lock/") {
                 r = mkdir_p(s, 0755);
                 if (r < 0)
                         return log_device_debug_errno(dev, r, "Failed to create '%s': %m", s);
         }
 
         /* 1. Take a lock for the stack directory. */
-        lockname = path_join("/run/udev/links.lock/", name);
+        lockname = path_join(RUNSTATEDIR "/udev/links.lock/", name);
         if (!lockname)
                 return -ENOMEM;
 
@@ -383,7 +383,7 @@ static int stack_directory_open_and_lock(
 
         /* 2. Create and open the stack directory. Do not create the stack directory before taking a lock,
          * otherwise the directory may be removed by another worker. */
-        dirpath = path_join("/run/udev/links/", name);
+        dirpath = path_join(RUNSTATEDIR "/udev/links/", name);
         if (!dirpath)
                 return -ENOMEM;
 
@@ -810,7 +810,7 @@ int static_node_apply_permissions(
         STRV_FOREACH(t, tags) {
                 _cleanup_free_ char *p = NULL;
 
-                p = path_join("/run/udev/static_node-tags/", *t, unescaped_filename);
+                p = path_join(RUNSTATEDIR "/udev/static_node-tags/", *t, unescaped_filename);
                 if (!p)
                         return log_oom();
 

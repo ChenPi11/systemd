@@ -65,7 +65,7 @@ int update_reboot_parameter_and_warn(const char *parameter, bool keep) {
                 if (keep)
                         return 0;
 
-                if (unlink("/run/systemd/reboot-param") < 0) {
+                if (unlink(RUNSTATEDIR "/systemd/reboot-param") < 0) {
                         if (errno == ENOENT)
                                 return 0;
 
@@ -79,7 +79,7 @@ int update_reboot_parameter_and_warn(const char *parameter, bool keep) {
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Invalid reboot parameter '%s'.", parameter);
 
         WITH_UMASK(0022) {
-                r = write_string_file("/run/systemd/reboot-param", parameter,
+                r = write_string_file(RUNSTATEDIR "/systemd/reboot-param", parameter,
                                       WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC);
                 if (r < 0)
                         return log_warning_errno(r, "Failed to write reboot parameter file: %m");
@@ -93,7 +93,7 @@ int read_reboot_parameter(char **parameter) {
 
         assert(parameter);
 
-        r = read_one_line_file("/run/systemd/reboot-param", parameter);
+        r = read_one_line_file(RUNSTATEDIR "/systemd/reboot-param", parameter);
         if (r < 0 && r != -ENOENT)
                 return log_debug_errno(r, "Failed to read /run/systemd/reboot-param: %m");
 
@@ -113,7 +113,7 @@ int reboot_with_parameter(RebootFlags flags) {
         if (detect_container() == 0) {
                 _cleanup_free_ char *parameter = NULL;
 
-                r = read_one_line_file("/run/systemd/reboot-param", &parameter);
+                r = read_one_line_file(RUNSTATEDIR "/systemd/reboot-param", &parameter);
                 if (r < 0 && r != -ENOENT)
                         log_full_errno(flags & REBOOT_LOG ? LOG_WARNING : LOG_DEBUG, r,
                                        "Failed to read reboot parameter file, ignoring: %m");
@@ -502,7 +502,7 @@ int create_shutdown_run_nologin_or_warn(void) {
          * 13 years later we stopped managing /etc/nologin, leaving it for the administrator to manage.
          */
 
-        r = write_string_file("/run/nologin",
+        r = write_string_file(RUNSTATEDIR "/nologin",
                               "System is going down. Unprivileged users are not permitted to log in anymore. "
                               "For technical details, see pam_nologin(8).",
                               WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC|WRITE_STRING_FILE_LABEL);

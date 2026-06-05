@@ -770,7 +770,7 @@ int resource_resolve_path(
                                                "Block device is not allowed when using --root= mode.");
 
                 struct stat orig_root_stats;
-                r = RET_NERRNO(stat("/run/systemd/volatile-root", &orig_root_stats));
+                r = RET_NERRNO(stat(RUNSTATEDIR "/systemd/volatile-root", &orig_root_stats));
                 if (r < 0) {
                         if (r != -ENOENT)
                                 return log_error_errno(r, "Failed to stat /run/systemd/volatile-root: %m");
@@ -782,7 +782,7 @@ int resource_resolve_path(
                         if (r < 0)
                                 return log_error_errno(r, "Failed to determine block device of file system: %m");
                 } else if (!S_ISBLK(orig_root_stats.st_mode)) /* symlink was present but not block device */
-                        return log_error_errno(SYNTHETIC_ERRNO(ENOTBLK), "/run/systemd/volatile-root is not linked to a block device.");
+                        return log_error_errno(SYNTHETIC_ERRNO(ENOTBLK), RUNSTATEDIR "/systemd/volatile-root is not linked to a block device.");
                 else /* symlink was present and a block device */
                         d = orig_root_stats.st_rdev;
 

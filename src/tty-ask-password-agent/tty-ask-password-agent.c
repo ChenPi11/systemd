@@ -113,7 +113,7 @@ static bool wall_tty_match(const char *path, bool is_local, void *userdata) {
          * the block will automatically go away if the process dies. */
 
         _cleanup_free_ char *p = NULL;
-        if (asprintf(&p, "/run/systemd/ask-password-block/" DEVNUM_FORMAT_STR, DEVNUM_FORMAT_VAL(st.st_rdev)) < 0) {
+        if (asprintf(&p, RUNSTATEDIR "/systemd/ask-password-block/" DEVNUM_FORMAT_STR, DEVNUM_FORMAT_VAL(st.st_rdev)) < 0) {
                 log_oom_debug();
                 return true;
         }
@@ -298,7 +298,7 @@ static int wall_tty_block(void) {
         if (r < 0)
                 return log_error_errno(r, "Failed to get controlling TTY: %m");
 
-        if (asprintf(&p, "/run/systemd/ask-password-block/%u:%u", major(devnr), minor(devnr)) < 0)
+        if (asprintf(&p, RUNSTATEDIR "/systemd/ask-password-block/%u:%u", major(devnr), minor(devnr)) < 0)
                 return log_oom();
 
         (void) mkdir_parents_label(p, 0700);
@@ -367,7 +367,7 @@ static int process_and_watch_password_files(bool watch) {
 
         tty_block_fd = wall_tty_block();
 
-        (void) mkdir_p_label("/run/systemd/ask-password", 0755);
+        (void) mkdir_p_label(RUNSTATEDIR "/systemd/ask-password", 0755);
 
         r = acquire_user_ask_password_directory(&user_ask_password_directory);
         if (r < 0)
@@ -390,7 +390,7 @@ static int process_and_watch_password_files(bool watch) {
                 if (notify < 0)
                         return log_error_errno(errno, "Failed to allocate directory watch: %m");
 
-                r = inotify_add_watch_and_warn(notify, "/run/systemd/ask-password", IN_CLOSE_WRITE|IN_MOVED_TO|IN_ONLYDIR);
+                r = inotify_add_watch_and_warn(notify, RUNSTATEDIR "/systemd/ask-password", IN_CLOSE_WRITE|IN_MOVED_TO|IN_ONLYDIR);
                 if (r < 0)
                         return r;
 
@@ -409,7 +409,7 @@ static int process_and_watch_password_files(bool watch) {
         for (;;) {
                 usec_t timeout = USEC_INFINITY;
 
-                r = process_password_files("/run/systemd/ask-password");
+                r = process_password_files(RUNSTATEDIR "/systemd/ask-password");
                 if (user_ask_password_directory)
                         RET_GATHER(r, process_password_files(user_ask_password_directory));
                 if (r == -ECANCELED)

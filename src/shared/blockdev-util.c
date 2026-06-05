@@ -882,7 +882,7 @@ int blockdev_get_root(int level, dev_t *ret) {
          *
          * If the root mount has been replaced by some form of volatile file system (overlayfs), the original
          * root block device node is symlinked in /run/systemd/volatile-root. Let's read that here. */
-        r = readlink_malloc("/run/systemd/volatile-root", &p);
+        r = readlink_malloc(RUNSTATEDIR "/systemd/volatile-root", &p);
         if (r == -ENOENT) { /* volatile-root not found */
                 r = get_block_device_harder("/", &devno);
                 if (r == -EUCLEAN)

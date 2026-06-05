@@ -1171,7 +1171,7 @@ static int verb_show_statistics(int argc, char *argv[], uintptr_t _data, void *u
 
         (void) polkit_agent_open_if_enabled(BUS_TRANSPORT_LOCAL, arg_ask_password);
 
-        r = sd_varlink_connect_address(&vl, "/run/systemd/resolve/io.systemd.Resolve.Monitor");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/resolve/io.systemd.Resolve.Monitor");
         if (r < 0)
                 return log_error_errno(r, "Failed to connect to query monitoring service /run/systemd/resolve/io.systemd.Resolve.Monitor: %m");
 
@@ -1331,7 +1331,7 @@ static int verb_reset_statistics(int argc, char *argv[], uintptr_t _data, void *
 
         (void) polkit_agent_open_if_enabled(BUS_TRANSPORT_LOCAL, arg_ask_password);
 
-        r = sd_varlink_connect_address(&vl, "/run/systemd/resolve/io.systemd.Resolve.Monitor");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/resolve/io.systemd.Resolve.Monitor");
         if (r < 0)
                 return log_error_errno(r, "Failed to connect to query monitoring service /run/systemd/resolve/io.systemd.Resolve.Monitor: %m");
 
@@ -1561,7 +1561,7 @@ static int varlink_dump_dns_configuration(sd_json_variant **ret) {
 
         assert(ret);
 
-        r = sd_varlink_connect_address(&vl, "/run/systemd/resolve/io.systemd.Resolve");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/resolve/io.systemd.Resolve");
         if (r < 0)
                 return log_error_errno(r, "Failed to connect to service /run/systemd/resolve/io.systemd.Resolve: %m");
 
@@ -2761,7 +2761,7 @@ static int verb_monitor(int argc, char *argv[], uintptr_t _data, void *userdata)
         if (r < 0)
                 return log_error_errno(r, "Failed to enable exit on SIGINT/SIGTERM: %m");
 
-        r = sd_varlink_connect_address(&vl, "/run/systemd/resolve/io.systemd.Resolve.Monitor");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/resolve/io.systemd.Resolve.Monitor");
         if (r < 0)
                 return log_error_errno(r, "Failed to connect to query monitoring service /run/systemd/resolve/io.systemd.Resolve.Monitor: %m");
 
@@ -2927,7 +2927,7 @@ static int verb_show_cache(int argc, char *argv[], uintptr_t _data, void *userda
 
         (void) polkit_agent_open_if_enabled(BUS_TRANSPORT_LOCAL, arg_ask_password);
 
-        r = sd_varlink_connect_address(&vl, "/run/systemd/resolve/io.systemd.Resolve.Monitor");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/resolve/io.systemd.Resolve.Monitor");
         if (r < 0)
                 return log_error_errno(r, "Failed to connect to query monitoring service /run/systemd/resolve/io.systemd.Resolve.Monitor: %m");
 
@@ -3103,7 +3103,7 @@ static int verb_show_server_state(int argc, char *argv[], uintptr_t _data, void 
 
         (void) polkit_agent_open_if_enabled(BUS_TRANSPORT_LOCAL, arg_ask_password);
 
-        r = sd_varlink_connect_address(&vl, "/run/systemd/resolve/io.systemd.Resolve.Monitor");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/resolve/io.systemd.Resolve.Monitor");
         if (r < 0)
                 return log_error_errno(r, "Failed to connect to query monitoring service /run/systemd/resolve/io.systemd.Resolve.Monitor: %m");
 

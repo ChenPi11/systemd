@@ -85,7 +85,7 @@ int make_inaccessible_nodes(
         int r;
 
         if (!parent_dir)
-                parent_dir = "/run/systemd";
+                parent_dir = RUNSTATEDIR "/systemd";
 
         BLOCK_WITH_UMASK(0000);
 

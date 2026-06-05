@@ -30,8 +30,8 @@ int get_encrypted_credentials_dir(const char **ret);
 int open_credentials_dir(void);
 
 /* Where creds have been passed to the system */
-#define SYSTEM_CREDENTIALS_DIRECTORY "/run/credentials/@system"
-#define ENCRYPTED_SYSTEM_CREDENTIALS_DIRECTORY "/run/credentials/@encrypted"
+#define SYSTEM_CREDENTIALS_DIRECTORY RUNSTATEDIR "/credentials/@system"
+#define ENCRYPTED_SYSTEM_CREDENTIALS_DIRECTORY RUNSTATEDIR "/credentials/@encrypted"
 
 /* Where system creds have been passed */
 int get_system_credentials_dir(const char **ret);

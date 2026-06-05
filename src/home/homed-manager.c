@@ -536,7 +536,7 @@ static int search_quota(uid_t uid, const char *exclude_quota_path) {
          * comprehensive, but should cover most cases. Note that in an ideal world every user would be
          * registered in NSS and avoid our own UID range, but for all other cases, it's a good idea to be
          * paranoid and check quota if we can. */
-        FOREACH_STRING(where, get_home_root(), "/tmp/", "/var/", "/var/mail/", "/var/tmp/", "/var/spool/") {
+        FOREACH_STRING(where, get_home_root(), SYSTEM_TMPDIR "/", "/var/", "/var/mail/", "/var/tmp/", "/var/spool/") {
                 struct dqblk req;
                 struct stat st;
 
@@ -1091,12 +1091,12 @@ static int manager_bind_varlink(Manager *m) {
          * use a different varlink socket name */
         suffix = getenv("SYSTEMD_HOME_DEBUG_SUFFIX");
         if (suffix) {
-                p = strjoin("/run/systemd/userdb/io.systemd.Home.", suffix);
+                p = strjoin(RUNSTATEDIR "/systemd/userdb/io.systemd.Home.", suffix);
                 if (!p)
                         return log_oom();
                 socket_path = p;
         } else
-                socket_path = "/run/systemd/userdb/io.systemd.Home";
+                socket_path = RUNSTATEDIR "/systemd/userdb/io.systemd.Home";
 
         r = sd_varlink_server_listen_address(m->varlink_server, socket_path, 0666 | SD_VARLINK_SERVER_MODE_MKDIR_0755);
         if (r < 0)

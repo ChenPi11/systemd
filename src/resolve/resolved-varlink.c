@@ -1471,7 +1471,7 @@ static int varlink_monitor_server_init(Manager *m) {
         if (r < 0)
                 return log_error_errno(r, "Failed to get varlink listen fd: %m");
         if (r == 0) {
-                r = sd_varlink_server_listen_address(server, "/run/systemd/resolve/io.systemd.Resolve.Monitor", 0666);
+                r = sd_varlink_server_listen_address(server, RUNSTATEDIR "/systemd/resolve/io.systemd.Resolve.Monitor", 0666);
                 if (r < 0)
                         return log_error_errno(r, "Failed to bind to varlink socket '/run/systemd/resolve/io.systemd.Resolve.Monitor': %m");
         }
@@ -1527,7 +1527,7 @@ static int varlink_main_server_init(Manager *m) {
         if (r < 0)
                 return log_error_errno(r, "Failed to get varlink listen fd: %m");
         if (r == 0) {
-                r = sd_varlink_server_listen_address(s, "/run/systemd/resolve/io.systemd.Resolve", 0666);
+                r = sd_varlink_server_listen_address(s, RUNSTATEDIR "/systemd/resolve/io.systemd.Resolve", 0666);
                 if (r < 0)
                         return log_error_errno(r, "Failed to bind to varlink socket '/run/systemd/resolve/io.systemd.Resolve': %m");
         }

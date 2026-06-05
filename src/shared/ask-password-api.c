@@ -91,7 +91,7 @@ static int get_ask_password_directory_for_flags(AskPasswordFlags flags, char **r
         if (FLAGS_SET(flags, ASK_PASSWORD_USER))
                 return acquire_user_ask_password_directory(ret);
 
-        return strdup_to_full(ret, "/run/systemd/ask-password/"); /* Returns 1, indicating there's a suitable directory */
+        return strdup_to_full(ret, RUNSTATEDIR "/systemd/ask-password/"); /* Returns 1, indicating there's a suitable directory */
 }
 
 static int touch_ask_password_directory(AskPasswordFlags flags) {

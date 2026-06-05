@@ -52,7 +52,7 @@ static int connect_to_resolved(sd_varlink **ret) {
 
         assert(ret);
 
-        r = sd_varlink_connect_address(&link, "/run/systemd/resolve/io.systemd.Resolve");
+        r = sd_varlink_connect_address(&link, RUNSTATEDIR "/systemd/resolve/io.systemd.Resolve");
         if (r < 0)
                 return r;
 

@@ -24,7 +24,7 @@ static int network_get_string(const char *field, char **ret) {
 
         assert_return(ret, -EINVAL);
 
-        r = parse_env_file(NULL, "/run/systemd/netif/state", field, &s);
+        r = parse_env_file(NULL, RUNSTATEDIR "/systemd/netif/state", field, &s);
         if (r < 0)
                 return r;
         if (isempty(s))
@@ -65,7 +65,7 @@ static int network_get_strv(const char *key, char ***ret) {
 
         assert_return(ret, -EINVAL);
 
-        r = parse_env_file(NULL, "/run/systemd/netif/state", key, &s);
+        r = parse_env_file(NULL, RUNSTATEDIR "/systemd/netif/state", key, &s);
         if (r < 0)
                 return r;
         if (isempty(s))
@@ -99,14 +99,14 @@ int sd_network_get_route_domains(char ***ret) {
 }
 
 static int network_link_get_string(int ifindex, const char *field, char **ret) {
-        char path[STRLEN("/run/systemd/netif/links/") + DECIMAL_STR_MAX(ifindex)];
+        char path[STRLEN(RUNSTATEDIR "/systemd/netif/links/") + DECIMAL_STR_MAX(ifindex)];
         _cleanup_free_ char *s = NULL;
         int r;
 
         assert_return(ifindex > 0, -EINVAL);
         assert_return(ret, -EINVAL);
 
-        xsprintf(path, "/run/systemd/netif/links/%i", ifindex);
+        xsprintf(path, RUNSTATEDIR "/systemd/netif/links/%i", ifindex);
 
         r = parse_env_file(NULL, path, field, &s);
         if (r < 0)
@@ -333,12 +333,12 @@ int sd_network_link_get_carrier_bound_by(int ifindex, int **ret) {
 }
 
 int sd_network_link_get_stat(int ifindex, struct stat *ret) {
-        char path[STRLEN("/run/systemd/netif/links/") + DECIMAL_STR_MAX(ifindex)];
+        char path[STRLEN(RUNSTATEDIR "/systemd/netif/links/") + DECIMAL_STR_MAX(ifindex)];
         struct stat st;
 
         assert_return(ifindex > 0, -EINVAL);
 
-        xsprintf(path, "/run/systemd/netif/links/%i", ifindex);
+        xsprintf(path, RUNSTATEDIR "/systemd/netif/links/%i", ifindex);
 
         if (stat(path, &st) < 0)
                 return -errno;
@@ -360,19 +360,19 @@ static sd_network_monitor* FD_TO_MONITOR(int fd) {
 static int monitor_add_inotify_watch(int fd) {
         int wd;
 
-        wd = inotify_add_watch(fd, "/run/systemd/netif/links/", IN_MOVED_TO|IN_DELETE);
+        wd = inotify_add_watch(fd, RUNSTATEDIR "/systemd/netif/links/", IN_MOVED_TO|IN_DELETE);
         if (wd >= 0)
                 return wd;
         else if (errno != ENOENT)
                 return -errno;
 
-        wd = inotify_add_watch(fd, "/run/systemd/netif/", IN_CREATE|IN_ISDIR);
+        wd = inotify_add_watch(fd, RUNSTATEDIR "/systemd/netif/", IN_CREATE|IN_ISDIR);
         if (wd >= 0)
                 return wd;
         else if (errno != ENOENT)
                 return -errno;
 
-        wd = inotify_add_watch(fd, "/run/systemd/", IN_CREATE|IN_ISDIR);
+        wd = inotify_add_watch(fd, RUNSTATEDIR "/systemd/", IN_CREATE|IN_ISDIR);
         if (wd < 0)
                 return -errno;
 

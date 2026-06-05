@@ -924,7 +924,7 @@ static int run(const char *dest, const char *dest_early, const char *dest_late) 
         assert_se(arg_dest = dest);
 
         arg_crypttab = getenv("SYSTEMD_CRYPTTAB") ?: "/etc/crypttab";
-        arg_runtime_directory = getenv("RUNTIME_DIRECTORY") ?: "/run/systemd/cryptsetup";
+        arg_runtime_directory = getenv("RUNTIME_DIRECTORY") ?: RUNSTATEDIR "/systemd/cryptsetup";
 
         arg_disks = hashmap_new(&crypt_device_hash_ops);
         if (!arg_disks)

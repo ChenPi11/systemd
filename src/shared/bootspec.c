@@ -1584,8 +1584,8 @@ int boot_config_load_auto(
          * want to. */
 
         if (!override_esp_path && !override_xbootldr_path) {
-                if (access("/run/boot-loader-entries/", F_OK) >= 0)
-                        return boot_config_load(config, "/run/boot-loader-entries/", NULL);
+                if (access(RUNSTATEDIR "/boot-loader-entries/", F_OK) >= 0)
+                        return boot_config_load(config, RUNSTATEDIR "/boot-loader-entries/", NULL);
 
                 if (errno != ENOENT)
                         return log_error_errno(errno,

@@ -1854,7 +1854,7 @@ void manager_cleanup_saved_user(Manager *m) {
          * anymore. These files are created to persist settings pushed in by the user via the bus, so that resolved can
          * be restarted without losing this data. */
 
-        d = opendir("/run/systemd/resolve/netif/");
+        d = opendir(RUNSTATEDIR "/systemd/resolve/netif/");
         if (!d) {
                 if (errno == ENOENT)
                         return;

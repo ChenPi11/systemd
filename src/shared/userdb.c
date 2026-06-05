@@ -551,7 +551,7 @@ static int userdb_start_query(
         if ((flags & (USERDB_AVOID_MULTIPLEXER|USERDB_EXCLUDE_DYNAMIC_USER|USERDB_EXCLUDE_NSS|USERDB_EXCLUDE_DROPIN|USERDB_DONT_SYNTHESIZE_INTRINSIC|USERDB_DONT_SYNTHESIZE_FOREIGN)) == 0 &&
             !strv_contains(except, "io.systemd.Multiplexer") &&
             (!only || strv_contains(only, "io.systemd.Multiplexer"))) {
-                r = userdb_connect(iterator, "/run/systemd/userdb/io.systemd.Multiplexer", method, more, query);
+                r = userdb_connect(iterator, RUNSTATEDIR "/systemd/userdb/io.systemd.Multiplexer", method, more, query);
                 if (r >= 0) {
                         iterator->nss_covered = true; /* The multiplexer does NSS */
                         iterator->dropin_covered = true; /* It also handles drop-in stuff */
@@ -559,7 +559,7 @@ static int userdb_start_query(
                 }
         }
 
-        d = opendir("/run/systemd/userdb/");
+        d = opendir(RUNSTATEDIR "/systemd/userdb/");
         if (!d) {
                 if (errno == ENOENT)
                         return -ESRCH;
@@ -597,7 +597,7 @@ static int userdb_start_query(
                 if (only && !strv_contains(only, de->d_name))
                         continue;
 
-                p = path_join("/run/systemd/userdb/", de->d_name);
+                p = path_join(RUNSTATEDIR "/systemd/userdb/", de->d_name);
                 if (!p)
                         return -ENOMEM;
 

@@ -24,8 +24,8 @@ int varlink_connect_journal(sd_varlink **ret) {
         assert(ret);
 
         address = arg_namespace ?
-                  strjoina("/run/systemd/journal.", arg_namespace, "/io.systemd.journal") :
-                  "/run/systemd/journal/io.systemd.journal";
+                  strjoina(RUNSTATEDIR "/systemd/journal.", arg_namespace, "/io.systemd.journal") :
+                  RUNSTATEDIR "/systemd/journal/io.systemd.journal";
 
         r = sd_varlink_connect_address(&vl, address);
         if (r < 0)
@@ -49,7 +49,7 @@ int action_flush_to_var(void) {
                                        "--flush is not supported in conjunction with %s.",
                                        arg_machine ? "--machine=" : "--namespace=");
 
-        if (access("/run/systemd/journal/flushed", F_OK) >= 0)
+        if (access(RUNSTATEDIR "/systemd/journal/flushed", F_OK) >= 0)
                 return 0; /* Already flushed, no need to contact journald */
         if (errno != ENOENT)
                 return log_error_errno(errno, "Unable to check for existence of /run/systemd/journal/flushed: %m");

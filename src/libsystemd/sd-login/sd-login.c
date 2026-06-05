@@ -442,7 +442,7 @@ static int file_of_uid(uid_t uid, char **ret) {
         assert_return(uid_is_valid(uid), -EINVAL);
         assert(ret);
 
-        if (asprintf(ret, "/run/systemd/users/" UID_FMT, uid) < 0)
+        if (asprintf(ret, RUNSTATEDIR "/systemd/users/" UID_FMT, uid) < 0)
                 return -ENOMEM;
 
         return 0;
@@ -522,7 +522,7 @@ static int file_of_seat(const char *seat, char **ret) {
                 if (!filename_is_valid(seat))
                         return -EINVAL;
 
-                p = path_join("/run/systemd/seats", seat);
+                p = path_join(RUNSTATEDIR "/systemd/seats", seat);
         } else {
                 _cleanup_free_ char *buf = NULL;
 
@@ -530,7 +530,7 @@ static int file_of_seat(const char *seat, char **ret) {
                 if (r < 0)
                         return r;
 
-                p = path_join("/run/systemd/seats", buf);
+                p = path_join(RUNSTATEDIR "/systemd/seats", buf);
         }
         if (!p)
                 return -ENOMEM;
@@ -622,7 +622,7 @@ static int file_of_session(const char *session, char **ret) {
                 if (!session_id_valid(session))
                         return -EINVAL;
 
-                p = path_join("/run/systemd/sessions", session);
+                p = path_join(RUNSTATEDIR "/systemd/sessions", session);
         } else {
                 _cleanup_free_ char *buf = NULL;
 
@@ -630,7 +630,7 @@ static int file_of_session(const char *session, char **ret) {
                 if (r < 0)
                         return r;
 
-                p = path_join("/run/systemd/sessions", buf);
+                p = path_join(RUNSTATEDIR "/systemd/sessions", buf);
         }
         if (!p)
                 return -ENOMEM;
@@ -988,7 +988,7 @@ _public_ int sd_seat_can_graphical(const char *seat) {
 _public_ int sd_get_seats(char ***ret_seats) {
         int r;
 
-        r = get_files_in_directory("/run/systemd/seats/", ret_seats);
+        r = get_files_in_directory(RUNSTATEDIR "/systemd/seats/", ret_seats);
         if (r == -ENOENT) {
                 if (ret_seats)
                         *ret_seats = NULL;
@@ -1000,7 +1000,7 @@ _public_ int sd_get_seats(char ***ret_seats) {
 _public_ int sd_get_sessions(char ***ret_sessions) {
         int r;
 
-        r = get_files_in_directory("/run/systemd/sessions/", ret_sessions);
+        r = get_files_in_directory(RUNSTATEDIR "/systemd/sessions/", ret_sessions);
         if (r == -ENOENT) {
                 if (ret_sessions)
                         *ret_sessions = NULL;
@@ -1014,7 +1014,7 @@ _public_ int sd_get_uids(uid_t **ret_users) {
         _cleanup_free_ uid_t *l = NULL;
         size_t n = 0;
 
-        d = opendir("/run/systemd/users/");
+        d = opendir(RUNSTATEDIR "/systemd/users/");
         if (!d) {
                 if (errno == ENOENT) {
                      if (ret_users)
@@ -1057,7 +1057,7 @@ _public_ int sd_get_machine_names(char ***ret_machines) {
         char **a, **b;
         int r;
 
-        r = get_files_in_directory("/run/systemd/machines/", &l);
+        r = get_files_in_directory(RUNSTATEDIR "/systemd/machines/", &l);
         if (r == -ENOENT) {
                 if (ret_machines)
                         *ret_machines = NULL;
@@ -1101,7 +1101,7 @@ _public_ int sd_machine_get_class(const char *machine, char **ret_clazz) {
                 if (!hostname_is_valid(machine, 0))
                         return -EINVAL;
 
-                _cleanup_free_ char *p = path_join("/run/systemd/machines/", machine);
+                _cleanup_free_ char *p = path_join(RUNSTATEDIR "/systemd/machines/", machine);
                 if (!p)
                         return -ENOMEM;
 
@@ -1126,7 +1126,7 @@ _public_ int sd_machine_get_ifindices(const char *machine, int **ret_ifindices) 
 
         assert_return(hostname_is_valid(machine, 0), -EINVAL);
 
-        p = path_join("/run/systemd/machines/", machine);
+        p = path_join(RUNSTATEDIR "/systemd/machines/", machine);
         if (!p)
                 return -ENOMEM;
 
@@ -1193,10 +1193,10 @@ _public_ int sd_login_monitor_new(const char *category, sd_login_monitor **ret) 
                 const char *name;
                 const char *path;
         } categories[] = {
-                { "seat",     "/run/systemd/seats/"    },
-                { "session",  "/run/systemd/sessions/" },
-                { "uid",      "/run/systemd/users/"    },
-                { "machine",  "/run/systemd/machines/" },
+                { "seat",     RUNSTATEDIR "/systemd/seats/"    },
+                { "session",  RUNSTATEDIR "/systemd/sessions/" },
+                { "uid",      RUNSTATEDIR "/systemd/users/"    },
+                { "machine",  RUNSTATEDIR "/systemd/machines/" },
         };
 
         bool good = false;

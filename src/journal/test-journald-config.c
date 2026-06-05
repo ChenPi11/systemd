@@ -80,11 +80,11 @@ TEST(config_forward_to_socket) {
         addr = (SocketAddress) {
                 .sockaddr.un = (struct sockaddr_un) {
                         .sun_family = AF_UNIX,
-                        .sun_path = "/run/host/journal/socket",
+                        .sun_path = RUNSTATEDIR "/host/journal/socket",
                 },
-                .size = offsetof(struct sockaddr_un, sun_path) + strlen("/run/host/journal/socket") + 1,
+                .size = offsetof(struct sockaddr_un, sun_path) + strlen(RUNSTATEDIR "/host/journal/socket") + 1,
         };
-        forward_to_socket_parse_check("/run/host/journal/socket", &addr);
+        forward_to_socket_parse_check(RUNSTATEDIR "/host/journal/socket", &addr);
 
         addr.size -= 1;
         memcpy(addr.sockaddr.un.sun_path, "\0run/host/journal/socket", sizeof("\0run/host/journal/socket"));

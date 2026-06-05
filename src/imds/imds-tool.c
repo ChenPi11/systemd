@@ -443,7 +443,7 @@ static int import_credential_one(CredentialData *d) {
 
         log_debug("Importing credential '%s' from IMDS.", d->name);
 
-        const char *dir = "/run/credstore";
+        const char *dir = RUNSTATEDIR "/credstore";
         struct iovec *v, _v;
         if (d->text) {
                 _v = IOVEC_MAKE_STRING(d->text);
@@ -451,7 +451,7 @@ static int import_credential_one(CredentialData *d) {
         } else if (iovec_is_set(&d->data))
                 v = &d->data;
         else if (iovec_is_set(&d->encrypted)) {
-                dir = "/run/credstore.encrypted";
+                dir = RUNSTATEDIR "/credstore.encrypted";
                 v = &d->encrypted;
         } else
                 assert_not_reached();
@@ -615,7 +615,7 @@ static int import_imds_public_addresses(sd_varlink *link) {
         if (r < 0)
                 return log_error_errno(r, "Failed to format JSON text: %m");
 
-        r = write_string_file("/run/systemd/resolve/static.d/imds-public.rr", text, WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC|WRITE_STRING_FILE_MKDIR_0755);
+        r = write_string_file(RUNSTATEDIR "/systemd/resolve/static.d/imds-public.rr", text, WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC|WRITE_STRING_FILE_MKDIR_0755);
         if (r < 0)
                 return log_error_errno(r, "Failed to write IMDS RR data: %m");
 
@@ -637,7 +637,7 @@ static int import_imds_ssh_key(sd_varlink *link) {
                 return 0;
         }
 
-        r = write_credential("/run/credstore", "ssh.authorized_keys.root", &data);
+        r = write_credential(RUNSTATEDIR "/credstore", "ssh.authorized_keys.root", &data);
         if (r <= 0)
                 return r;
 
@@ -659,7 +659,7 @@ static int import_imds_hostname(sd_varlink *link) {
                 return 0;
         }
 
-        r = write_credential("/run/credstore", "firstboot.hostname", &data);
+        r = write_credential(RUNSTATEDIR "/credstore", "firstboot.hostname", &data);
         if (r <= 0)
                 return r;
 
@@ -795,7 +795,7 @@ static int action_import(sd_varlink *link) {
                 return RET_GATHER(ret, r);
         if (r == 0) {
                 log_info("No IMDS data available, not importing credentials.");
-                (void) remove_userdata("/run/systemd/imds/userdata");
+                (void) remove_userdata(RUNSTATEDIR "/systemd/imds/userdata");
                 return ret;
         }
 
@@ -805,7 +805,7 @@ static int action_import(sd_varlink *link) {
         /* Keep a pristine copy of the userdata we actually applied. (Note that this data is typically also
          * kept as cached item on systemd-imdsd, but that one is possibly subject to cache invalidation,
          * while this one is supposed to pin the data actually in effect.) */
-        (void) save_userdata(&data, "/run/systemd/imds/userdata");
+        (void) save_userdata(&data, RUNSTATEDIR "/systemd/imds/userdata");
 
         /* Ensure no inner NUL byte */
         if (memchr(data.iov_base, 0, data.iov_len)) {
@@ -830,7 +830,7 @@ static int run(int argc, char* argv[]) {
                 return r;
 
         _cleanup_(sd_varlink_unrefp) sd_varlink *link = NULL;
-        r = sd_varlink_connect_address(&link, "/run/systemd/io.systemd.InstanceMetadata");
+        r = sd_varlink_connect_address(&link, RUNSTATEDIR "/systemd/io.systemd.InstanceMetadata");
         if (r < 0) {
                 if (r != -ENOENT && !ERRNO_IS_NEG_DISCONNECT(r))
                         return log_error_errno(r, "Failed to connect to systemd-imdsd: %m");

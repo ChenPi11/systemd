@@ -19,7 +19,7 @@ int varlink_connect_networkd(sd_varlink **ret_varlink) {
         uint64_t id;
         int r;
 
-        r = sd_varlink_connect_address(&vl, "/run/systemd/netif/io.systemd.Network");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/netif/io.systemd.Network");
         if (r < 0)
                 return log_error_errno(r, "Failed to connect to network service /run/systemd/netif/io.systemd.Network: %m");
 
@@ -81,7 +81,7 @@ int reload_udevd(void) {
         _cleanup_(sd_varlink_flush_close_unrefp) sd_varlink *vl = NULL;
         int r;
 
-        r = sd_varlink_connect_address(&vl, "/run/udev/io.systemd.Udev");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/udev/io.systemd.Udev");
         if (r == -ENOENT) {
                 log_debug("systemd-udevd is not running, skipping reload.");
                 return 0;
@@ -99,7 +99,7 @@ bool networkd_is_running(void) {
         int r;
 
         if (cached < 0) {
-                r = access("/run/systemd/netif/state", F_OK);
+                r = access(RUNSTATEDIR "/systemd/netif/state", F_OK);
                 if (r < 0) {
                         if (errno != ENOENT)
                                 log_debug_errno(errno,

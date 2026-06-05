@@ -778,7 +778,7 @@ enum {
 };
 
 static bool confirm_spawn_disabled(void) {
-        return access("/run/systemd/confirm_spawn_disabled", F_OK) >= 0;
+        return access(RUNSTATEDIR "/systemd/confirm_spawn_disabled", F_OK) >= 0;
 }
 
 static int ask_for_confirmation(const ExecContext *context, const ExecParameters *params, const char *cmdline) {
@@ -3533,8 +3533,8 @@ static int compile_symlinks(
         if (setup_os_release_symlink) {
                 r = strv_extend_many(
                                 &symlinks,
-                                "/run/host/.os-release-stage/os-release",
-                                "/run/host/os-release");
+                                RUNSTATEDIR "/host/.os-release-stage/os-release",
+                                RUNSTATEDIR "/host/os-release");
                 if (r < 0)
                         return r;
         }
@@ -3933,14 +3933,14 @@ static int apply_mount_namespace(
                         if (streq_ptr(runtime->shared->tmp_dir, RUN_SYSTEMD_EMPTY))
                                 tmp_dir = runtime->shared->tmp_dir;
                         else if (runtime->shared->tmp_dir)
-                                tmp_dir = strjoina(runtime->shared->tmp_dir, "/tmp");
+                                tmp_dir = strjoina(runtime->shared->tmp_dir, SYSTEM_TMPDIR);
                 }
 
                 if (context->private_var_tmp == PRIVATE_TMP_CONNECTED && runtime->shared) {
                         if (streq_ptr(runtime->shared->var_tmp_dir, RUN_SYSTEMD_EMPTY))
                                 var_tmp_dir = runtime->shared->var_tmp_dir;
                         else if (runtime->shared->var_tmp_dir)
-                                var_tmp_dir = strjoina(runtime->shared->var_tmp_dir, "/tmp");
+                                var_tmp_dir = strjoina(runtime->shared->var_tmp_dir, SYSTEM_TMPDIR);
                 }
         }
 
@@ -3959,35 +3959,35 @@ static int apply_mount_namespace(
 
         if (params->runtime_scope == RUNTIME_SCOPE_SYSTEM) {
                 if (!mount_new_api_supported()) {
-                        propagate_dir = path_join("/run/systemd/propagate/", params->unit_id);
+                        propagate_dir = path_join(RUNSTATEDIR "/systemd/propagate/", params->unit_id);
                         if (!propagate_dir)
                                 return -ENOMEM;
 
-                        incoming_dir = strdup("/run/systemd/incoming");
+                        incoming_dir = strdup(RUNSTATEDIR "/systemd/incoming");
                         if (!incoming_dir)
                                 return -ENOMEM;
                 }
 
-                private_namespace_dir = strdup("/run/systemd");
+                private_namespace_dir = strdup(RUNSTATEDIR "/systemd");
                 if (!private_namespace_dir)
                         return -ENOMEM;
 
                 /* If running under a different root filesystem, propagate the host's os-release. We make a
                  * copy rather than just bind mounting it, so that it can be updated on soft-reboot. */
                 if (setup_os_release_symlink) {
-                        host_os_release_stage = strdup("/run/systemd/propagate/.os-release-stage");
+                        host_os_release_stage = strdup(RUNSTATEDIR "/systemd/propagate/.os-release-stage");
                         if (!host_os_release_stage)
                                 return -ENOMEM;
                 }
         } else {
                 assert(params->runtime_scope == RUNTIME_SCOPE_USER);
 
-                if (asprintf(&private_namespace_dir, "/run/user/" UID_FMT "/systemd", geteuid()) < 0)
+                if (asprintf(&private_namespace_dir, RUNSTATEDIR "/user/" UID_FMT "/systemd", geteuid()) < 0)
                         return -ENOMEM;
 
                 if (setup_os_release_symlink &&
                     asprintf(&host_os_release_stage,
-                             "/run/user/" UID_FMT "/systemd/propagate/.os-release-stage",
+                             RUNSTATEDIR "/user/" UID_FMT "/systemd/propagate/.os-release-stage",
                              geteuid()) < 0)
                         return -ENOMEM;
         }

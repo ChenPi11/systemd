@@ -28,7 +28,7 @@ int userns_registry_open_fd(void) {
         int fd;
 
         fd = chase_and_open(
-                        "/run/systemd/nsresource/registry",
+                        RUNSTATEDIR "/systemd/nsresource/registry",
                         /* root= */ NULL,
                         CHASE_MKDIR_0755,
                         O_CLOEXEC|O_DIRECTORY|O_CREAT,

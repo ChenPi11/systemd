@@ -261,7 +261,7 @@ int manager_startup(Manager *m) {
         else {
                 static const union sockaddr_union sockaddr = {
                         .un.sun_family = AF_UNIX,
-                        .un.sun_path = "/run/systemd/io.systemd.MountFileSystem",
+                        .un.sun_path = RUNSTATEDIR "/systemd/io.systemd.MountFileSystem",
                 };
 
                 m->listen_fd = socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC, 0);

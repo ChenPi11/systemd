@@ -213,7 +213,7 @@ static int setup_inotify(sd_event *event) {
         if (!arg_settle)
                 return 0;
 
-        r = sd_event_add_inotify(event, &s, "/run/udev" , IN_CREATE | IN_DELETE, on_inotify, NULL);
+        r = sd_event_add_inotify(event, &s, RUNSTATEDIR "/udev" , IN_CREATE | IN_DELETE, on_inotify, NULL);
         if (r < 0)
                 return r;
 

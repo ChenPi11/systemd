@@ -365,7 +365,7 @@ static int run(int argc, char *argv[]) {
          * for the existence of /run/systemd/machines/ to determine whether machined is available, so please always
          * make sure this check stays in. */
         if (scope == RUNTIME_SCOPE_SYSTEM)
-                (void) mkdir_label("/run/systemd/machines", 0755);
+                (void) mkdir_label(RUNSTATEDIR "/systemd/machines", 0755);
 
         r = manager_new(scope, &m);
         if (r < 0)

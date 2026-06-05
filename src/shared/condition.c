@@ -867,7 +867,7 @@ static bool in_first_boot(void) {
                         return (first_boot = r);
         }
 
-        r = RET_NERRNO(access("/run/systemd/first-boot", F_OK));
+        r = RET_NERRNO(access(RUNSTATEDIR "/systemd/first-boot", F_OK));
         if (r < 0 && r != -ENOENT)
                 log_debug_errno(r, "Failed to check if /run/systemd/first-boot exists, assuming no: %m");
         return r >= 0;

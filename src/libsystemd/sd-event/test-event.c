@@ -491,7 +491,7 @@ static void test_inotify_one(unsigned n_create_events) {
 
         ASSERT_OK(sd_event_default(&e));
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-inotify-XXXXXX", &p));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-inotify-XXXXXX", &p));
         context.path = p;
 
         ASSERT_OK(sd_event_add_inotify(e, &a, p, IN_CREATE|IN_ONLYDIR, inotify_handler, &context));
@@ -743,7 +743,7 @@ static int inotify_self_destroy_handler(sd_event_source *s, const struct inotify
 TEST(inotify_self_destroy) {
         _cleanup_(sd_event_source_unrefp) sd_event_source *s = NULL;
         _cleanup_(sd_event_unrefp) sd_event *e = NULL;
-        char path[] = "/tmp/inotifyXXXXXX";
+        char path[] = SYSTEM_TMPDIR "/inotifyXXXXXX";
         _cleanup_close_ int fd = -EBADF;
 
         /* Tests that destroying an inotify event source from its own handler is safe */
@@ -785,8 +785,8 @@ TEST(inotify_process_buffered_data) {
 
         ASSERT_OK(sd_event_default(&e));
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-inotify-XXXXXX", &p));
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-inotify-XXXXXX", &q));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-inotify-XXXXXX", &p));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-inotify-XXXXXX", &q));
 
         struct inotify_process_buffered_data_context context = {
                 .path = { p, q },
@@ -822,7 +822,7 @@ TEST(inotify_issue_38265) {
 
         /* For issue #38265. */
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-inotify-XXXXXX", &t));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-inotify-XXXXXX", &t));
 
         ASSERT_OK(sd_event_default(&e));
 

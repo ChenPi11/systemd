@@ -12,9 +12,9 @@ void close_journal_fd(void);
         ({                                                                              \
                 const char *_ns = (log_namespace), *_ret;                               \
                 if (!_ns)                                                               \
-                        _ret = "/run/systemd/journal/stdout";                           \
+                        _ret = RUNSTATEDIR "/systemd/journal/stdout";                           \
                 else if (log_namespace_name_valid(_ns))                                 \
-                        _ret = strjoina("/run/systemd/journal.", _ns, "/stdout");       \
+                        _ret = strjoina(RUNSTATEDIR "/systemd/journal.", _ns, "/stdout");       \
                 else                                                                    \
                         _ret = NULL;                                                    \
                 _ret;                                                                   \

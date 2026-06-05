@@ -55,7 +55,7 @@ int seat_new(Manager *m, const char *id, Seat **ret) {
         *s = (Seat) {
                 .manager = m,
                 .id = strdup(id),
-                .state_file = path_join("/run/systemd/seats/", id),
+                .state_file = path_join(RUNSTATEDIR "/systemd/seats/", id),
         };
         if (!s->id || !s->state_file)
                 return -ENOMEM;
@@ -101,7 +101,7 @@ int seat_save(Seat *s) {
         if (!s->started)
                 return 0;
 
-        r = mkdir_safe_label("/run/systemd/seats", 0755, 0, 0, MKDIR_WARN_MODE);
+        r = mkdir_safe_label(RUNSTATEDIR "/systemd/seats", 0755, 0, 0, MKDIR_WARN_MODE);
         if (r < 0)
                 return log_error_errno(r, "Failed to create /run/systemd/seats/: %m");
 
@@ -341,7 +341,7 @@ static int static_node_acl(Seat *s) {
                         return log_oom();
         }
 
-        _cleanup_closedir_ DIR *dir = opendir("/run/udev/static_node-tags/uaccess/");
+        _cleanup_closedir_ DIR *dir = opendir(RUNSTATEDIR "/udev/static_node-tags/uaccess/");
         if (!dir) {
                 if (errno == ENOENT)
                         return 0;

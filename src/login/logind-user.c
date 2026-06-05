@@ -65,10 +65,10 @@ int user_new(Manager *m, UserRecord *ur, User **ret) {
                 .gc_mode = USER_GC_BY_ANY,
         };
 
-        if (asprintf(&u->state_file, "/run/systemd/users/" UID_FMT, ur->uid) < 0)
+        if (asprintf(&u->state_file, RUNSTATEDIR "/systemd/users/" UID_FMT, ur->uid) < 0)
                 return -ENOMEM;
 
-        if (asprintf(&u->runtime_path, "/run/user/" UID_FMT, ur->uid) < 0)
+        if (asprintf(&u->runtime_path, RUNSTATEDIR "/user/" UID_FMT, ur->uid) < 0)
                 return -ENOMEM;
 
         xsprintf(lu, UID_FMT, ur->uid);
@@ -149,7 +149,7 @@ static int user_save_internal(User *u) {
         assert(u);
         assert(u->state_file);
 
-        r = mkdir_safe_label("/run/systemd/users", 0755, 0, 0, MKDIR_WARN_MODE);
+        r = mkdir_safe_label(RUNSTATEDIR "/systemd/users", 0755, 0, 0, MKDIR_WARN_MODE);
         if (r < 0)
                 return log_error_errno(r, "Failed to create /run/systemd/users/: %m");
 

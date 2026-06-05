@@ -1835,7 +1835,7 @@ static int event_log_load_components(EventLog *el) {
 
         dirs = arg_components ?:
                 STRV_MAKE("/etc/pcrlock.d",
-                          "/run/pcrlock.d",
+                          RUNSTATEDIR "/pcrlock.d",
                           "/var/lib/pcrlock.d",
                           "/usr/local/lib/pcrlock.d",
                           "/usr/lib/pcrlock.d");
@@ -3915,13 +3915,13 @@ static int make_policy(bool force, RecoveryPinMode recovery_pin_mode) {
         if (r < 0)
                 return log_error_errno(r, "Failed to format new configuration to JSON: %m");
 
-        const char *path = arg_policy_path ?: (in_initrd() ? "/run/systemd/pcrlock.json" : "/var/lib/systemd/pcrlock.json");
+        const char *path = arg_policy_path ?: (in_initrd() ? RUNSTATEDIR "/systemd/pcrlock.json" : "/var/lib/systemd/pcrlock.json");
         r = write_string_file(path, text, WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC|WRITE_STRING_FILE_SYNC|WRITE_STRING_FILE_MKDIR_0755|WRITE_STRING_FILE_LABEL);
         if (r < 0)
                 return log_error_errno(r, "Failed to write new configuration to '%s': %m", path);
 
         if (!arg_policy_path && !in_initrd()) {
-                r = remove_policy_file("/run/systemd/pcrlock.json");
+                r = remove_policy_file(RUNSTATEDIR "/systemd/pcrlock.json");
                 if (r < 0)
                         return r;
         }
@@ -4022,7 +4022,7 @@ static int remove_policy(void) {
                 RET_GATHER(ret, remove_policy_file(arg_policy_path));
         else {
                 RET_GATHER(ret, remove_policy_file("/var/lib/systemd/pcrlock.json"));
-                RET_GATHER(ret, remove_policy_file("/run/systemd/pcrlock.json"));
+                RET_GATHER(ret, remove_policy_file(RUNSTATEDIR "/systemd/pcrlock.json"));
         }
 
         _cleanup_free_ char *boot_policy_file = NULL;
