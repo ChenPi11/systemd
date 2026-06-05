@@ -559,6 +559,9 @@ option('ukify', type : 'feature', deprecated : { 'true' : 'enabled', 'false' : '
        description : 'install ukify')
 option('analyze', type: 'boolean', value: true,
        description : 'install systemd-analyze')
+option('disabled-standalone-programs', type : 'array', value : [],
+       choices : ['bootctl', 'busctl', 'journalctl', 'systemctl', 'systemd-delta', 'systemd-mount', 'systemd-run'],
+       description : 'standalone public programs to skip building (systemd-analyze is controlled by -Danalyze=false)')
 
 option('bpf-compiler', type : 'combo', choices : ['clang', 'gcc'],
        description : 'compiler used to build BPF programs')

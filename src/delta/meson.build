@@ -4,6 +4,7 @@ executables += [
         executable_template + {
                 'name' : 'systemd-delta',
                 'public' : true,
+                'conditions' : ['ENABLE_SYSTEMD_DELTA'],
                 'sources' : files('delta.c'),
         },
 ]
