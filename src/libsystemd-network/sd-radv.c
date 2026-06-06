@@ -58,7 +58,7 @@ int sd_radv_attach_event(sd_radv *ra, sd_event *event, int64_t priority) {
         else {
                 r = sd_event_default(&ra->event);
                 if (r < 0)
-                        return 0;
+                        return r;
         }
 
         ra->event_priority = priority;
@@ -223,6 +223,12 @@ static int radv_recv(sd_event_source *s, int fd, uint32_t revents, void *userdat
         r = icmp6_packet_receive(fd, &packet);
         if (r < 0) {
                 log_radv_errno(ra, r, "Failed to receive ICMPv6 packet, ignoring: %m");
+                return 0;
+        }
+
+        if (packet->ifindex != ra->ifindex) {
+                log_radv(ra, "Received an ICMPv6 packet on interface %i, expected %i, ignoring.",
+                         packet->ifindex, ra->ifindex);
                 return 0;
         }
 

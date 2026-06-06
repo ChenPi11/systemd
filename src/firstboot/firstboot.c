@@ -8,6 +8,7 @@
 #include "sd-varlink.h"
 
 #include "alloc-util.h"
+#include "ansi-color.h"
 #include "ask-password-api.h"
 #include "build.h"
 #include "bus-error.h"
@@ -26,6 +27,7 @@
 #include "format-table.h"
 #include "fs-util.h"
 #include "glyph-util.h"
+#include "help-util.h"
 #include "hostname-util.h"
 #include "image-policy.h"
 #include "kbd-util.h"
@@ -44,7 +46,6 @@
 #include "password-quality-util.h"
 #include "path-util.h"
 #include "plymouth-util.h"
-#include "pretty-print.h"
 #include "proc-cmdline.h"
 #include "prompt-util.h"
 #include "runtime-scope.h"
@@ -54,7 +55,7 @@
 #include "strv.h"
 #include "terminal-util.h"
 #include "time-util.h"
-#include "tmpfile-util-label.h"
+#include "tmpfile-util.h"
 #include "user-util.h"
 #include "vconsole-util.h"
 
@@ -66,6 +67,7 @@ static char *arg_keymap = NULL;
 static char *arg_timezone = NULL;
 static char *arg_hostname = NULL;
 static sd_id128_t arg_machine_id = {};
+static char **arg_machine_tags = NULL;
 static char *arg_root_password = NULL;
 static char *arg_root_shell = NULL;
 static char *arg_kernel_cmdline = NULL;
@@ -97,14 +99,16 @@ STATIC_DESTRUCTOR_REGISTER(arg_locale_messages, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_keymap, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_timezone, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_hostname, freep);
+STATIC_DESTRUCTOR_REGISTER(arg_machine_tags, strv_freep);
 STATIC_DESTRUCTOR_REGISTER(arg_root_password, erase_and_freep);
 STATIC_DESTRUCTOR_REGISTER(arg_root_shell, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_kernel_cmdline, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_image_policy, image_policy_freep);
 
+static bool welcome_done = false;
+
 static void print_welcome(int rfd, sd_varlink **mute_console_link) {
         _cleanup_free_ char *pretty_name = NULL, *os_name = NULL, *ansi_color = NULL, *fancy_name = NULL;
-        static bool done = false;
         const char *pn, *ac;
         int r;
 
@@ -121,7 +125,7 @@ static void print_welcome(int rfd, sd_varlink **mute_console_link) {
         if (!arg_welcome)
                 return;
 
-        if (done) {
+        if (welcome_done) {
                 putchar('\n'); /* Add some breathing room between multiple prompts */
                 return;
         }
@@ -157,7 +161,7 @@ static void print_welcome(int rfd, sd_varlink **mute_console_link) {
         }
         printf("Please configure the system!\n\n");
 
-        done = true;
+        welcome_done = true;
 }
 
 static int should_configure(int dir_fd, const char *filename) {
@@ -293,8 +297,12 @@ static int prompt_locale(int rfd, sd_varlink **mute_console_link) {
         } else {
                 print_welcome(rfd, mute_console_link);
 
+                _cleanup_free_ char *prefill = NULL;
+                (void) locale_lang_from_efi(&prefill, LOCALE_REQUIRE_INSTALLED|LOCALE_SUPPRESS_EN_US);
+
                 r = prompt_loop("Please enter the new system locale name or number",
                                 GLYPH_WORLD,
+                                prefill,
                                 locales,
                                 /* accepted= */ NULL,
                                 /* ellipsize_percentage= */ 60,
@@ -312,6 +320,7 @@ static int prompt_locale(int rfd, sd_varlink **mute_console_link) {
 
                 r = prompt_loop("Please enter the new system message locale name or number",
                                 GLYPH_WORLD,
+                                /* prefill= */ NULL,
                                 locales,
                                 /* accepted= */ NULL,
                                 /* ellipsize_percentage= */ 60,
@@ -454,9 +463,13 @@ static int prompt_keymap(int rfd, sd_varlink **mute_console_link) {
 
         print_welcome(rfd, mute_console_link);
 
+        _cleanup_free_ char *prefill = NULL;
+        (void) vconsole_keymap_from_efi(&prefill);
+
         return prompt_loop(
                         "Please enter the new keymap name or number",
                         GLYPH_KEYBOARD,
+                        prefill,
                         kmaps,
                         /* accepted= */ NULL,
                         /* ellipsize_percentage= */ 60,
@@ -573,6 +586,7 @@ static int prompt_timezone(int rfd, sd_varlink **mute_console_link) {
         return prompt_loop(
                         "Please enter the new timezone name or number",
                         GLYPH_CLOCK,
+                        /* prefill= */ NULL,
                         zones,
                         /* accepted= */ NULL,
                         /* ellipsize_percentage= */ 30,
@@ -680,6 +694,7 @@ static int prompt_hostname(int rfd, sd_varlink **mute_console_link) {
 
         r = prompt_loop("Please enter the new hostname",
                         GLYPH_LABEL,
+                        /* prefill= */ NULL,
                         /* menu= */ NULL,
                         /* accepted= */ NULL,
                         /* ellipsize_percentage= */ 100,
@@ -762,6 +777,71 @@ static int process_machine_id(int rfd) {
                 return log_error_errno(r, "Failed to write /etc/machine-id: %m");
 
         log_info("/etc/machine-id written.");
+        return 0;
+}
+
+static int process_machine_tags(int rfd) {
+        int r;
+
+        assert(rfd >= 0);
+
+        _cleanup_free_ char *f = NULL;
+        _cleanup_close_ int pfd = chase_and_open_parent_at(
+                        /* root_fd= */ rfd,
+                        /* dir_fd= */ rfd,
+                        "/etc/machine-info",
+                        CHASE_MKDIR_0755|CHASE_WARN|CHASE_NOFOLLOW,
+                        &f);
+        if (pfd < 0)
+                return log_error_errno(pfd, "Failed to chase /etc/machine-info parent: %m");
+
+        r = should_configure(pfd, f);
+        if (r == 0)
+                log_debug("Found /etc/machine-info, assuming machine tags have been configured.");
+        if (r <= 0)
+                return r;
+
+        if (!arg_machine_tags) {
+                _cleanup_free_ char *tags = NULL;
+                r = read_credential("firstboot.machine-tags", (void**) &tags, /* ret_size= */ NULL);
+                if (r < 0)
+                        log_debug_errno(r, "Failed to read credential firstboot.machine-tags, ignoring: %m");
+                else {
+                        _cleanup_strv_free_ char **l = NULL;
+                        r = machine_tags_from_string(tags, /* graceful= */ false, &l);
+                        if (r < 0)
+                                log_warning_errno(r, "Failed to parse machine tags '%s', ignoring credential: %m", tags);
+                        else {
+                                strv_free_and_replace(arg_machine_tags, l);
+                                log_debug("Acquired machine tags list from credentials.");
+                        }
+                }
+        }
+
+        /* NB: We do not prompt for machine tags, at least not for now */
+
+        if (!arg_machine_tags) {
+                log_debug("Initialization of machine tags was not requested, skipping.");
+                return 0;
+        }
+
+        _cleanup_free_ char *j = strv_join(arg_machine_tags, ":");
+        if (!j)
+                return log_oom();
+
+        _cleanup_free_ char *c = strjoin("TAGS=\"", j, "\"\n");
+        if (!c)
+                return log_oom();
+
+        r = write_string_file_at(
+                        pfd,
+                        "machine-info",
+                        c,
+                        WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_SYNC|WRITE_STRING_FILE_ATOMIC|WRITE_STRING_FILE_LABEL);
+        if (r < 0)
+                return log_error_errno(r, "Failed to write /etc/machine-info: %m");
+
+        log_info("/etc/machine-info written.");
         return 0;
 }
 
@@ -888,6 +968,7 @@ static int prompt_root_shell(int rfd, sd_varlink **mute_console_link) {
         return prompt_loop(
                         "Please enter the new root shell",
                         GLYPH_SHELL,
+                        /* prefill= */ NULL,
                         /* menu= */ NULL,
                         /* accepted= */ NULL,
                         /* ellipsize_percentage= */ 0,
@@ -1240,29 +1321,22 @@ static int process_reset(int rfd) {
 }
 
 static int help(void) {
-        _cleanup_free_ char *link = NULL;
         _cleanup_(table_unrefp) Table *options = NULL;
         int r;
-
-        r = terminal_urlify_man("systemd-firstboot", "1", &link);
-        if (r < 0)
-                return log_oom();
 
         r = option_parser_get_help_table(&options);
         if (r < 0)
                 return r;
 
-        printf("%s [OPTIONS...]\n\n"
-               "%sConfigures basic settings of the system.%s\n\n",
-               program_invocation_short_name,
-               ansi_highlight(),
-               ansi_normal());
+        help_cmdline("[OPTIONS...]");
+        help_abstract("Configures basic settings of the system.");
+        help_section("Options");
 
         r = table_print_or_warn(options);
         if (r < 0)
                 return r;
 
-        printf("\nSee the %s for details.\n", link);
+        help_man_page_reference("systemd-firstboot", "1");
         return 0;
 }
 
@@ -1355,6 +1429,16 @@ static int parse_argv(int argc, char *argv[]) {
                         if (r < 0)
                                 return log_error_errno(r, "Failed to parse machine id %s.", opts.arg);
                         break;
+
+                OPTION_LONG("machine-tags", "TAG[:…]", "Set machine tags"): {
+                        _cleanup_strv_free_ char **tags = NULL;
+                        r = machine_tags_from_string(opts.arg, /* graceful= */ false, &tags);
+                        if (r < 0)
+                                return log_error_errno(r, "Failed to parse machine tags '%s': %m", opts.arg);
+
+                        strv_free_and_replace(arg_machine_tags, tags);
+                        break;
+                }
 
                 OPTION_LONG("root-password", "PASSWORD", "Set root password from plaintext password"):
                         r = free_and_strdup_warn(&arg_root_password, opts.arg);
@@ -1556,6 +1640,15 @@ static int reload_vconsole(sd_bus **bus) {
         return 0;
 }
 
+static void end_marker(void) {
+
+        if (!welcome_done)
+                return;
+
+        printf("\n%sExiting first boot settings tool.%s\n\n", ansi_grey(), ansi_normal());
+        fflush(stdout);
+}
+
 static int run(int argc, char *argv[]) {
         _cleanup_(sd_bus_flush_close_unrefp) sd_bus *bus = NULL;
         _cleanup_(loop_device_unrefp) LoopDevice *loop_device = NULL;
@@ -1621,6 +1714,7 @@ static int run(int argc, char *argv[]) {
         }
 
         LOG_SET_PREFIX(arg_image ?: arg_root);
+        DEFER_VOID_CALL(end_marker);
         DEFER_VOID_CALL(chrome_hide);
 
         /* We check these conditions here instead of in parse_argv() so that we can take the root directory
@@ -1673,6 +1767,10 @@ static int run(int argc, char *argv[]) {
                 return r;
 
         r = process_machine_id(rfd);
+        if (r < 0)
+                return r;
+
+        r = process_machine_tags(rfd);
         if (r < 0)
                 return r;
 

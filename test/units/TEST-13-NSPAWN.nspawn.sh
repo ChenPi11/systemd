@@ -405,11 +405,17 @@ testcase_check_default_inaccessible_paths() {
     # Taken from src/nspawn/nspawn-mount.c:mount_all()
     inaccessible_paths=(
         "/proc/kallsyms"
-        "/proc/kcore"
         "/proc/keys"
         "/proc/sysrq-trigger"
         "/proc/timer_list"
     )
+
+    # /proc/kcore may not exist on some kernels, e.g. Alpine/postmarketOS.
+    if [[ -e /proc/kcore ]]; then
+        inaccessible_paths+=(
+            "/proc/kcore"
+        )
+    fi
 
     root="$(mktemp -d /var/lib/machines/TEST-13-NSPAWN.default_inaccessible_paths.XXX)"
     container="$(basename "$root")"
@@ -1185,6 +1191,21 @@ matrix_run_one() {
                        ip a | grep -v -E '^1: lo.*UP'
     ip netns del nspawn_test
 
+    # test --network-namespace-path works when combined with --private-users=pick
+    ip netns add nspawn_test
+    ip netns exec nspawn_test ip link add foo type dummy
+
+    if [[ "$IS_USERNS_SUPPORTED" == "yes" && "$api_vfs_writable" == "no" ]]; then
+        SYSTEMD_NSPAWN_USE_CGNS="$use_cgns" SYSTEMD_NSPAWN_API_VFS_WRITABLE="$api_vfs_writable" \
+            systemd-nspawn --register=no \
+                           --directory="$root" \
+                           --private-users=pick \
+                           --network-namespace-path=/run/netns/nspawn_test \
+                           ip link show dev foo
+    fi
+
+    ip netns del nspawn_test
+
     rm -fr "$root"
 
     return 0
@@ -1571,6 +1592,7 @@ testcase_boot_param_split() {
     # Replace the init binary with a stub that records the argv and environment nspawn passes to it,
     # so we can verify that kernel-cmdline-style KEY=VALUE arguments are split between PID 1's
     # environment and argv the same way the kernel splits them.
+    mkdir -p "$root/usr/lib/systemd"
     cat >"$root/usr/lib/systemd/systemd" <<'EOF'
 #!/bin/bash
 set -e

@@ -23,7 +23,7 @@
 #include "libmount-util.h"
 #include "log.h"
 #include "manager.h"
-#include "mkdir-label.h"
+#include "mkdir.h"
 #include "mount-util.h"
 #include "mount.h"
 #include "mount-setup.h"
@@ -2408,7 +2408,7 @@ static int mount_test_startable(Unit *u) {
 }
 
 static bool mount_supported(void) {
-        return dlopen_libmount(LOG_DEBUG) >= 0;
+        return DLOPEN_LIBMOUNT(LOG_DEBUG, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED) >= 0;
 }
 
 static int mount_subsystem_ratelimited(Manager *m) {

@@ -128,27 +128,71 @@ SPDX-License-Identifier: LGPL-2.1-or-later
 
 ## Features
 
+- nspawn: optionally provide a /dev/tpm0 + /dev/tpmrm0 that is backed by swtpm,
+  much like we do in vmspawn. let's us minimize differences between
+  environments systemd runs in.
+
+- nspawn/vmspawn: add a concept how we can hand into the payload some proof
+  that it is runnin on a certain host, which it can then include in the report,
+  and which allows us to put together a map about which node runs as payload of
+  which other note. in particular useful for transient nodes, as it gives them
+  a better location
+
+- add a small varlink service that wraps the raw sftp logic (without ssh) after a
+  varlink protocol upgrade, which enables varlink clients to do file transfers,
+  which is in particular useful when accessing a system via http varlink proxy
+
+- add a small varlink service that allocates a pty and then does ptyfwd stuff
+  after a protocol upgrade on the incoming connection. Then spawn a shell/getty
+  on it. This enables varlink clients to acquire a fully featured ssh-like
+  interactive tty/shell via varlink, which is again useful via http varlink
+  proxy.
+
+- add something like podman's conmon as a native systemd subsystem:
+  i.e. allocate ptys, that can be bound to stdio/console of containers and VMs,
+  that maintain a bit of a scrollback buffer, and one can reconnect to
+  later. fun idea: might even make /dev/tty1 and friends accessible via
+  /dev/vcsa1 under the same protocol. this subsystem should potentially be the
+  same as the varlink ssh-like thing listed above.
+
+- maybe introduce a new ansi sequence that allows propagate SIGWINCH
+  inline. Idea would be: to enable inline notification of window sizes client
+  sends a new, to be defined ANSI sequence with its current assumption of
+  terminal size. Server compares it with current state. If the same it sends
+  nothing immediately, but does send exactly one update if it changes, and
+  disables the logic. If not the same sends correction immediately, and
+  disables the logic. Client has to reissue sequence immediately after getting
+  notification to get live updates. Benefit of all of this: better terminal
+  experience if we just forward terminal bytes through a serial link/stream
+  connection, as terminal sizes will be properly propagated. Write a UAPI spec
+  for all this. ptyfwd could translate turn upstream SIGWINCH into upstream
+  sequences of this type, so that every step of the way we get the right
+  behaviour.
+
+- now that the kernel supports xattrs on sockets: mark varlink entrypoint
+  sockets, server side of varlink sockets, and client sides of valrink sockets
+  with distinct xattrs to make them recognizable (similar maybe for our other
+  protocols, such as syslog, journal native entry point). For entrypoints might
+  require new .socket unit setting.
+
+- implement "varlinkctl trace" or so, that watches socket traffic on a group of
+  processes (select by pid, select by cgroup, select by all machine), and shows
+  traffic of all sockets marked via the new varlink socket xattrs. Use BPF for
+  all of that of course.
+
+- systemd-report: implement signing via callout varlink dir
+
+- add tooling for generating dictionary-based hostnames
+
 - do not pull dbus daemon/broker anymore, instead lazy activate it. Given how
   the Varlinkifcation has progressed various non-desktop usescase might not
   need D-Bus running at all anymore.
-
-- Reuse the LoaderKeyboardLayout EFI variable/find_vconsole_keymap_for_bcp47()
-  to pre-select kbd layout in systemd-firstboot. (Right now it's only used in
-  vconsole-setup as fallback).
-
-- Start using the PlatformLang EFI variable to pre-select language in
-  systemd-firstboot. (At least HP laptops seem to make good use of/configure
-  the value)
 
 - format-table: introduce the concept of a "title" for a table, which remains
   closely associated with the table. in most cases where want to output
   multiple tables from the same tool we want to separate things with a title,
   hence we might as well associate the title with the table itself, and
   streamline a few things.
-
-- report: add filtering by metric prefix, so that we reports don't have to
-  include everything, and we have a way to have "small" and "big" reports, that
-  have different number of fields.
 
 - allow metrics to indicate which values mean
   "nothing"/"invalid"/"zero"/"please-suppress". Then use that to reduce noise
@@ -166,8 +210,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
 
 - sysupdate: add concept for enabling/disabling specific components explicitly,
   just like features.
-
-- machine-info: add a TAGS concept that can be used to categorize a machine
 
 - udev: add a MACHINE_TAGS field, that augments /etc/machine-info configured
   tags.
@@ -187,13 +229,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
 
 - pcrextend: we should measure something when we enter developer mode, by some
   definition of developer mode.
-
-- /etc/machine-info should have a concept of a "role" that we can put a machine
-  into, which can be consumed by sysupdate and similar. A role should be
-  something we can set once (i.e. the initial setting should be protected by
-  polkit and be somewhat loosely access control, and later settings should use a
-  different/tougher polkit authorization, so that people can implement a
-  no-way-back mechanism)
 
 - firstboot: optionally accept credentials at firstboot without authentication
 
@@ -796,11 +831,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
 - sysext: make systemd-{sys,conf}ext-sysroot.service work in the split `/var`
   configuration.
 
-- introduce a concept of /etc/machine-info "TAGS=" field that allows tagging
-  machines with zero, one or more roles, states or other forms of
-  categorization. Then, add a way of using this in sysupdate to automatically
-  enable certain transfers, one for each role.
-
 - sd-varlink: add fully async modes of the protocol upgrade stuff
 
 - repart: maybe remove iso9660/eltorito superblock from disk when booting via
@@ -908,7 +938,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
   possibly up to 100ms supposedly)
 
 - **EFI:**
-  - honor language efi variables for default language selection (if there are any?)
   - honor timezone efi variables for default timezone selection (if there are any?)
 
 - enable LockMLOCK to take a percentage value relative to physical memory
@@ -1234,12 +1263,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
 
 - in pid1: include ExecStart= cmdlines (and other Exec*= cmdlines) in polkit
   request, so that policies can match against command lines.
-
-- in sd-boot and sd-stub measure the SMBIOS vendor strings to some PCR (at
-  least some subset of them that look like systemd stuff), because apparently
-  some firmware does not, but systemd honours it. avoid duplicate measurement
-  by sd-boot and sd-stub by adding LoaderFeatures/StubFeatures flag for this,
-  so that sd-stub can avoid it if sd-boot already did it.
 
 - in sd-id128: also parse UUIDs in RFC4122 URN syntax (i.e. chop off urn:uuid: prefix)
 
@@ -1766,10 +1789,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
 - maybe: in PID1, when we detect we run in an initrd, make superblock read-only
   early on, but provide opt-out via kernel cmdline.
 
-- measure all log-in attempts into a new nvpcr
-
-- measure credentials picked up from SMBIOS to some suitable PCR
-
 - measure GPT and LUKS headers somewhere when we use them (i.e. in
   systemd-gpt-auto-generator/systemd-repart and in systemd-cryptsetup?)
 
@@ -1932,8 +1951,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
   and use it for validating DDIs and credentials. Maybe upload it to the kernel
   keyring, so that the kernel does this validation for us for verity and kernel
   modules
-
-- on first login of a user, measure its identity to some nvpcr
 
 - on shutdown: move utmp, wall, audit logic all into PID 1 (or logind?)
 
@@ -3033,8 +3050,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
 - when mounting disk images: if IMAGE_ID/IMAGE_VERSION is set in os-release
   data in the image, make sure the image filename actually matches this, so
   that images cannot be misused.
-
-- when no locale is configured, default to UEFI's PlatformLang variable
 
 - when switching root from initrd to host, set the machine_id env var so that
   if the host has no machine ID set yet we continue to use the random one the

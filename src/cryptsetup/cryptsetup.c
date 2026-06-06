@@ -538,7 +538,7 @@ static int parse_one_option(const char *option) {
 #if HAVE_OPENSSL
                 _cleanup_strv_free_ char **l = NULL;
 
-                r = dlopen_libcrypto(LOG_ERR);
+                r = DLOPEN_LIBCRYPTO(LOG_ERR, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
                 if (r < 0)
                         return r;
 
@@ -1815,6 +1815,7 @@ static int attach_luks_or_plain_or_bitlk_by_pkcs11(
         _cleanup_(sd_event_unrefp) sd_event *event = NULL;
         _cleanup_free_ void *discovered_key = NULL;
         struct iovec discovered_key_data = {};
+        Pkcs11RsaPadding rsa_padding = PKCS11_RSA_PADDING_PKCS1V15;
         int keyslot = arg_key_slot, r;
         const char *uri = NULL;
         bool use_libcryptsetup_plugin = use_token_plugins();
@@ -1825,7 +1826,7 @@ static int attach_luks_or_plain_or_bitlk_by_pkcs11(
 
         if (arg_pkcs11_uri_auto) {
                 if (!use_libcryptsetup_plugin) {
-                        r = find_pkcs11_auto_data(cd, &discovered_uri, &discovered_key, &discovered_key_size, &keyslot);
+                        r = find_pkcs11_auto_data(cd, &discovered_uri, &discovered_key, &discovered_key_size, &rsa_padding, &keyslot);
                         if (IN_SET(r, -ENOTUNIQ, -ENXIO))
                                 return log_debug_errno(SYNTHETIC_ERRNO(EAGAIN),
                                                        "Automatic PKCS#11 metadata discovery was not possible because missing or not unique, falling back to traditional unlocking.");
@@ -1861,6 +1862,7 @@ static int attach_luks_or_plain_or_bitlk_by_pkcs11(
                                         name,
                                         friendly,
                                         uri,
+                                        rsa_padding,
                                         key_file, arg_keyfile_size, arg_keyfile_offset,
                                         key_data,
                                         until,
@@ -2637,6 +2639,9 @@ static int verb_attach(int argc, char *argv[], uintptr_t _data, void *userdata) 
         /* A delicious drop of snake oil */
         (void) safe_mlockall(MCL_CURRENT|MCL_FUTURE|MCL_ONFAULT);
 
+        /* Only erase key files explicitly configured on the command line, never the ones we
+         * auto-discover in /etc/cryptsetup-keys.d/ and /run/cryptsetup-keys.d/: those are shared
+         * resources not owned by an individual volume. (key_file is NULL when auto-discovery is used.) */
         if (key_file && arg_keyfile_erase)
                 destroy_key_file = key_file; /* let's get this baby erased when we leave */
 
@@ -2879,7 +2884,7 @@ static int run(int argc, char *argv[]) {
         if (r <= 0)
                 return r;
 
-        r = dlopen_cryptsetup(LOG_ERR);
+        r = DLOPEN_CRYPTSETUP(LOG_ERR, SD_ELF_NOTE_DLOPEN_PRIORITY_REQUIRED);
         if (r < 0)
                 return r;
 
