@@ -53,7 +53,7 @@ static int run(int argc, char *argv[]) {
                         return log_error_errno(r, "Cannot resolve user name %s: %m", user);
 
                 /* As we're root, we can create the directory where resolv.conf will live */
-                r = mkdir_safe_label("/run/systemd/resolve", 0755, uid, gid, MKDIR_WARN_MODE);
+                r = mkdir_safe_label(RUNSTATEDIR "/systemd/resolve", 0755, uid, gid, MKDIR_WARN_MODE);
                 if (r < 0)
                         return log_error_errno(r, "Could not create runtime directory: %m");
 

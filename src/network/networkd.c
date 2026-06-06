@@ -53,7 +53,7 @@ static int run(int argc, char *argv[]) {
                 /* Create runtime directory. This is not necessary when networkd is
                  * started with "RuntimeDirectory=systemd/netif", or after
                  * systemd-tmpfiles-setup.service. */
-                r = mkdir_safe_label("/run/systemd/netif", 0755, uid, gid, MKDIR_WARN_MODE);
+                r = mkdir_safe_label(RUNSTATEDIR "/systemd/netif", 0755, uid, gid, MKDIR_WARN_MODE);
                 if (r < 0)
                         log_warning_errno(r, "Could not create runtime directory: %m");
 
@@ -71,9 +71,9 @@ static int run(int argc, char *argv[]) {
         /* Always create the directories people can create inotify watches in. It is necessary to create the
          * following subdirectories after drop_privileges() to make them owned by systemd-network. */
         FOREACH_STRING(p,
-                       "/run/systemd/netif/dhcp-server-lease/",
-                       "/run/systemd/netif/leases/",
-                       "/run/systemd/netif/links/") {
+                       RUNSTATEDIR "/systemd/netif/dhcp-server-lease/",
+                       RUNSTATEDIR "/systemd/netif/leases/",
+                       RUNSTATEDIR "/systemd/netif/links/") {
                 r = mkdir_safe_label(p, 0755, UID_INVALID, GID_INVALID, MKDIR_WARN_MODE);
                 if (r < 0)
                         log_warning_errno(r, "Could not create directory '%s': %m", p);

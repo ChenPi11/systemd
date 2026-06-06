@@ -63,7 +63,7 @@ int nsresource_connect(sd_varlink **ret) {
         assert(ret);
 
         _cleanup_(sd_varlink_unrefp) sd_varlink *vl = NULL;
-        r = sd_varlink_connect_address(&vl, "/run/systemd/io.systemd.NamespaceResource");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/io.systemd.NamespaceResource");
         if (r < 0)
                 return log_debug_errno(r, "Failed to connect to namespace resource manager: %m");
 

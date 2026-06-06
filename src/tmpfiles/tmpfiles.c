@@ -3741,7 +3741,7 @@ static int patch_var_run(const char *fname, unsigned line, char **path) {
                          * and not about /var/run itself either. */
                 return 0;
 
-        n = path_join("/run", k);
+        n = path_join(RUNSTATEDIR, k);
         if (!n)
                 return log_oom();
 
@@ -4446,7 +4446,7 @@ static int exclude_default_prefixes(void) {
                         &arg_exclude_prefixes,
                         "/dev",
                         "/proc",
-                        "/run",
+                        RUNSTATEDIR,
                         "/sys");
         if (r < 0)
                 return log_oom();

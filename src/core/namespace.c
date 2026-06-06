@@ -132,9 +132,9 @@ typedef struct MountList {
 } MountList;
 
 static const BindMount bind_log_sockets_table[] = {
-        { (char*) "/run/systemd/journal/socket",  (char*) "/run/systemd/journal/socket",  .read_only = true, .nosuid = true, .noexec = true, .nodev = true, .ignore_enoent = true },
-        { (char*) "/run/systemd/journal/stdout",  (char*) "/run/systemd/journal/stdout",  .read_only = true, .nosuid = true, .noexec = true, .nodev = true, .ignore_enoent = true },
-        { (char*) "/run/systemd/journal/dev-log", (char*) "/run/systemd/journal/dev-log", .read_only = true, .nosuid = true, .noexec = true, .nodev = true, .ignore_enoent = true },
+        { (char*) RUNSTATEDIR "/systemd/journal/socket",  (char*) RUNSTATEDIR "/systemd/journal/socket",  .read_only = true, .nosuid = true, .noexec = true, .nodev = true, .ignore_enoent = true },
+        { (char*) RUNSTATEDIR "/systemd/journal/stdout",  (char*) RUNSTATEDIR "/systemd/journal/stdout",  .read_only = true, .nosuid = true, .noexec = true, .nodev = true, .ignore_enoent = true },
+        { (char*) RUNSTATEDIR "/systemd/journal/dev-log", (char*) RUNSTATEDIR "/systemd/journal/dev-log", .read_only = true, .nosuid = true, .noexec = true, .nodev = true, .ignore_enoent = true },
 };
 
 /* If MountAPIVFS= is used, let's mount /proc/, /dev/, /sys/, and /run/, but only as a fallback if the user
@@ -144,7 +144,7 @@ static const MountEntry apivfs_table[] = {
         { "/proc",               MOUNT_PROCFS,       false },
         { "/dev",                MOUNT_BIND_DEV,     false },
         { "/sys",                MOUNT_BIND_SYSFS,   false },
-        { "/run",                MOUNT_RUN,          false, .options_const = "mode=0755" TMPFS_LIMITS_RUN, .flags = MS_NOSUID|MS_NODEV|MS_STRICTATIME },
+        { RUNSTATEDIR,                MOUNT_RUN,          false, .options_const = "mode=0755" TMPFS_LIMITS_RUN, .flags = MS_NOSUID|MS_NODEV|MS_STRICTATIME },
 };
 
 /* ProtectKernelTunables= option and the related filesystem APIs */
@@ -198,21 +198,21 @@ static const MountEntry protect_kernel_logs_dev_table[] = {
  */
 static const MountEntry protect_home_read_only_table[] = {
         { "/home",               MOUNT_READ_ONLY,     true  },
-        { "/run/user",           MOUNT_READ_ONLY,     true  },
+        { RUNSTATEDIR "/user",           MOUNT_READ_ONLY,     true  },
         { "/root",               MOUNT_READ_ONLY,     true  },
 };
 
 /* ProtectHome=tmpfs */
 static const MountEntry protect_home_tmpfs_table[] = {
         { "/home",               MOUNT_TMPFS,        true, .read_only = true, .options_const = "mode=0755" TMPFS_LIMITS_EMPTY_OR_ALMOST, .flags = MS_NODEV|MS_STRICTATIME },
-        { "/run/user",           MOUNT_TMPFS,        true, .read_only = true, .options_const = "mode=0755" TMPFS_LIMITS_EMPTY_OR_ALMOST, .flags = MS_NODEV|MS_STRICTATIME },
+        { RUNSTATEDIR "/user",           MOUNT_TMPFS,        true, .read_only = true, .options_const = "mode=0755" TMPFS_LIMITS_EMPTY_OR_ALMOST, .flags = MS_NODEV|MS_STRICTATIME },
         { "/root",               MOUNT_TMPFS,        true, .read_only = true, .options_const = "mode=0700" TMPFS_LIMITS_EMPTY_OR_ALMOST, .flags = MS_NODEV|MS_STRICTATIME },
 };
 
 /* ProtectHome=yes */
 static const MountEntry protect_home_yes_table[] = {
         { "/home",               MOUNT_INACCESSIBLE, true  },
-        { "/run/user",           MOUNT_INACCESSIBLE, true  },
+        { RUNSTATEDIR "/user",           MOUNT_INACCESSIBLE, true  },
         { "/root",               MOUNT_INACCESSIBLE, true  },
 };
 
@@ -258,7 +258,7 @@ static const MountEntry protect_system_strict_table[] = {
         { "/sys",                MOUNT_READ_WRITE_IMPLICIT, false },      /* ProtectKernelTunables= */
         { "/dev",                MOUNT_READ_WRITE_IMPLICIT, false },      /* PrivateDevices= */
         { "/home",               MOUNT_READ_WRITE_IMPLICIT, true  },      /* ProtectHome= */
-        { "/run/user",           MOUNT_READ_WRITE_IMPLICIT, true  },      /* ProtectHome= */
+        { RUNSTATEDIR "/user",           MOUNT_READ_WRITE_IMPLICIT, true  },      /* ProtectHome= */
         { "/root",               MOUNT_READ_WRITE_IMPLICIT, true  },      /* ProtectHome= */
 };
 
@@ -800,7 +800,7 @@ static int append_private_tmp(MountList *ml, const NamespaceParameters *p) {
         assert(p->private_var_tmp >= 0 && p->private_var_tmp < _PRIVATE_TMP_MAX);
 
         if (p->private_tmp != PRIVATE_TMP_DISCONNECTED || p->private_var_tmp != PRIVATE_TMP_DISCONNECTED) {
-                r = append_private_tmp_one(ml, p->private_tmp, "/tmp/", p->tmp_dir);
+                r = append_private_tmp_one(ml, p->private_tmp, SYSTEM_TMPDIR "/", p->tmp_dir);
                 if (r < 0)
                         return r;
 
@@ -839,7 +839,7 @@ static int append_private_tmp(MountList *ml, const NamespaceParameters *p) {
                 return log_oom_debug();
         *me = (MountEntry) {
                 .source_malloc = TAKE_PTR(tmp_dir),
-                .path_const = "/tmp/",
+                .path_const = SYSTEM_TMPDIR "/",
                 .mode = MOUNT_BIND,
                 .source_dir_mode = 01777,
                 .create_source_dir = true,
@@ -1281,9 +1281,9 @@ static char* settle_runtime_dir(RuntimeScope scope) {
         char *runtime_dir;
 
         if (scope != RUNTIME_SCOPE_USER)
-                return strdup("/run/");
+                return strdup(RUNSTATEDIR "/");
 
-        if (asprintf(&runtime_dir, "/run/user/" UID_FMT, geteuid()) < 0)
+        if (asprintf(&runtime_dir, RUNSTATEDIR "/user/" UID_FMT, geteuid()) < 0)
                 return NULL;
 
         return runtime_dir;
@@ -1375,7 +1375,7 @@ static int mount_private_dev(const MountEntry *m, const NamespaceParameters *p) 
          * but shouldn't matter, as either way the user would get ENOENT when accessing /dev/log */
         if (!pinned_resource_is_set(p->rootfs) || p->bind_log_sockets) {
                 const char *devlog = strjoina(temporary_mount, "/dev/log");
-                if (symlink("/run/systemd/journal/dev-log", devlog) < 0)
+                if (symlink(RUNSTATEDIR "/systemd/journal/dev-log", devlog) < 0)
                         log_debug_errno(errno,
                                         "Failed to create symlink '%s' to /run/systemd/journal/dev-log, ignoring: %m",
                                         devlog);
@@ -2762,7 +2762,7 @@ int setup_namespace(const NamespaceParameters *p, char **reterr_path) {
                 /* /run/systemd should have been created by PID 1 early on already, but in some cases, like
                  * when running tests (test-execute), it might not have been created yet so let's make sure
                  * we create it if it doesn't already exist. */
-                (void) mkdir_p_label("/run/systemd", 0755);
+                (void) mkdir_p_label(RUNSTATEDIR "/systemd", 0755);
 
                 /* Always create the mount namespace in a temporary directory, instead of operating directly
                  * in the root. The temporary directory prevents any mounts from being potentially obscured
@@ -2770,7 +2770,7 @@ int setup_namespace(const NamespaceParameters *p, char **reterr_path) {
                  * safe, since they all live in their own namespaces after all, and hence won't see each
                  * other. (Note: this directory is also created by PID 1 early on, we create it here for
                  * similar reasons as /run/systemd/ first.) */
-                root = "/run/systemd/mount-rootfs";
+                root = RUNSTATEDIR "/systemd/mount-rootfs";
                 (void) mkdir_label(root, 0555);
 
                 require_prefix = true;
@@ -2962,7 +2962,7 @@ int setup_namespace(const NamespaceParameters *p, char **reterr_path) {
                 };
 
                 if (p->runtime_scope == RUNTIME_SCOPE_SYSTEM)
-                        me->path_const = "/run/credentials";
+                        me->path_const = RUNSTATEDIR "/credentials";
                 else {
                         r = path_extract_directory(p->creds_path, &me->path_malloc);
                         if (r < 0)
@@ -2991,7 +2991,7 @@ int setup_namespace(const NamespaceParameters *p, char **reterr_path) {
                         return log_oom_debug();
 
                 *me = (MountEntry) {
-                        .path_const = "/run/credentials",
+                        .path_const = RUNSTATEDIR "/credentials",
                         .mode = MOUNT_INACCESSIBLE,
                         .ignore = true,
                 };
@@ -3000,7 +3000,7 @@ int setup_namespace(const NamespaceParameters *p, char **reterr_path) {
         if (p->log_namespace) {
                 _cleanup_free_ char *q = NULL;
 
-                q = strjoin("/run/systemd/journal.", p->log_namespace);
+                q = strjoin(RUNSTATEDIR "/systemd/journal.", p->log_namespace);
                 if (!q)
                         return log_oom_debug();
 
@@ -3009,7 +3009,7 @@ int setup_namespace(const NamespaceParameters *p, char **reterr_path) {
                         return log_oom_debug();
 
                 *me = (MountEntry) {
-                        .path_const = "/run/systemd/journal",
+                        .path_const = RUNSTATEDIR "/systemd/journal",
                         .mode = MOUNT_BIND_RECURSIVE,
                         .read_only = true,
                         .source_malloc = TAKE_PTR(q),
@@ -3054,7 +3054,7 @@ int setup_namespace(const NamespaceParameters *p, char **reterr_path) {
                         return log_oom_debug();
 
                 *me = (MountEntry) {
-                        .path_const = "/run/host/.os-release-stage/",
+                        .path_const = RUNSTATEDIR "/host/.os-release-stage/",
                         .source_const = p->host_os_release_stage,
                         .mode = MOUNT_BIND,
                         .read_only = true,
@@ -3962,7 +3962,7 @@ int refresh_extensions_in_namespace(
                 const NamespaceParameters *p) {
 
         _cleanup_close_ int mntns_fd = -EBADF, root_fd = -EBADF, pidns_fd = -EBADF;
-        const char *overlay_prefix = "/run/systemd/mount-rootfs";
+        const char *overlay_prefix = RUNSTATEDIR "/systemd/mount-rootfs";
         _cleanup_(mount_list_done) MountList ml = {};
         _cleanup_free_ char *extension_dir = NULL;
         _cleanup_strv_free_ char **hierarchies = NULL;

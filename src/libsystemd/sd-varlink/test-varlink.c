@@ -352,7 +352,7 @@ TEST(chat) {
         pthread_t t;
         const char *sp;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/varlink-test-XXXXXX", &tmpdir));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/varlink-test-XXXXXX", &tmpdir));
         sp = strjoina(tmpdir, "/socket");
 
         ASSERT_OK(sd_event_default(&e));
@@ -837,7 +837,7 @@ TEST(upgrade) {
         pthread_t t;
         const char *sp;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/varlink-test-XXXXXX", &tmpdir));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/varlink-test-XXXXXX", &tmpdir));
         sp = strjoina(tmpdir, "/socket");
 
         ASSERT_OK(sd_event_new(&e));
@@ -921,7 +921,7 @@ TEST(upgrade_pipelining) {
         pthread_t t;
         const char *sp;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/varlink-test-XXXXXX", &tmpdir));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/varlink-test-XXXXXX", &tmpdir));
         sp = strjoina(tmpdir, "/socket");
 
         ASSERT_OK(sd_event_new(&e));
@@ -983,7 +983,7 @@ TEST(execute_directory) {
         ExecDirServer servers[ELEMENTSOF(names)] = {};
         size_t reply_count = 0;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/varlink-execdir-XXXXXX", &tmpdir));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/varlink-execdir-XXXXXX", &tmpdir));
 
         for (size_t i = 0; i < ELEMENTSOF(names); i++) {
                 ExecDirServer *eds = servers + i;

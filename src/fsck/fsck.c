@@ -253,7 +253,7 @@ static int fsck_progress_socket(void) {
         if (fd < 0)
                 return log_warning_errno(errno, "socket(): %m");
 
-        r = connect_unix_path(fd, AT_FDCWD, "/run/systemd/fsck.progress");
+        r = connect_unix_path(fd, AT_FDCWD, RUNSTATEDIR "/systemd/fsck.progress");
         if (r < 0)
                 return log_full_errno(IN_SET(r, -ECONNREFUSED, -ENOENT) ? LOG_DEBUG : LOG_WARNING,
                                       r, "Failed to connect to progress socket, ignoring: %m");
@@ -285,7 +285,7 @@ static int run(int argc, char *argv[]) {
 
         parse_credentials();
 
-        bool show_progress = access("/run/systemd/show-status", F_OK) >= 0;
+        bool show_progress = access(RUNSTATEDIR "/systemd/show-status", F_OK) >= 0;
 
         if (arg_mode == FSCK_SKIP)
                 return 0;
@@ -444,7 +444,7 @@ static int run(int argc, char *argv[]) {
         }
 
         if (exit_status & FSCK_ERROR_CORRECTED)
-                (void) touch("/run/systemd/quotacheck");
+                (void) touch(RUNSTATEDIR "/systemd/quotacheck");
 
         return !!(exit_status & (FSCK_SYSTEM_SHOULD_REBOOT | FSCK_ERRORS_LEFT_UNCORRECTED));
 }

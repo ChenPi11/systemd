@@ -156,7 +156,7 @@ static bool manager_is_confirm_spawn_disabled(Manager *m) {
         if (!m->confirm_spawn)
                 return true;
 
-        return access("/run/systemd/confirm_spawn_disabled", F_OK) >= 0;
+        return access(RUNSTATEDIR "/systemd/confirm_spawn_disabled", F_OK) >= 0;
 }
 
 static void manager_watch_jobs_in_progress(Manager *m) {
@@ -278,7 +278,7 @@ static void manager_print_jobs_in_progress(Manager *m) {
 static int have_ask_password(void) {
         _cleanup_closedir_ DIR *dir = NULL;
 
-        dir = opendir("/run/systemd/ask-password");
+        dir = opendir(RUNSTATEDIR "/systemd/ask-password");
         if (!dir) {
                 if (errno == ENOENT)
                         return false;
@@ -333,8 +333,8 @@ static int manager_check_ask_password(Manager *m) {
                 if (inotify_fd < 0)
                         return log_error_errno(errno, "Failed to create inotify object: %m");
 
-                (void) mkdir_label("/run/systemd/ask-password", 0755);
-                r = inotify_add_watch_and_warn(inotify_fd, "/run/systemd/ask-password", IN_CLOSE_WRITE|IN_DELETE|IN_MOVED_TO|IN_ONLYDIR);
+                (void) mkdir_label(RUNSTATEDIR "/systemd/ask-password", 0755);
+                r = inotify_add_watch_and_warn(inotify_fd, RUNSTATEDIR "/systemd/ask-password", IN_CLOSE_WRITE|IN_DELETE|IN_MOVED_TO|IN_ONLYDIR);
                 if (r < 0)
                         return r;
 
@@ -1046,7 +1046,7 @@ int manager_new(RuntimeScope runtime_scope, ManagerTestRunFlags test_run_flags, 
 
         if (test_run_flags == 0) {
                 if (MANAGER_IS_SYSTEM(m))
-                        r = mkdir_label("/run/systemd/units", 0755);
+                        r = mkdir_label(RUNSTATEDIR "/systemd/units", 0755);
                 else {
                         _cleanup_free_ char *units_path = NULL;
                         r = xdg_user_runtime_dir("/systemd/units", &units_path);
@@ -2090,7 +2090,7 @@ static void manager_ready(Manager *m) {
 
         /* Create a file which will indicate when the manager started loading units the last time. */
         if (MANAGER_IS_SYSTEM(m))
-                (void) touch_file("/run/systemd/systemd-units-load", false,
+                (void) touch_file(RUNSTATEDIR "/systemd/systemd-units-load", false,
                         m->timestamps[MANAGER_TIMESTAMP_UNITS_LOAD].realtime ?: now(CLOCK_REALTIME),
                         UID_INVALID, GID_INVALID, 0444);
 }
@@ -4233,7 +4233,7 @@ static int manager_execute_generators(Manager *m, char * const *paths, bool remo
                  * because they're API, and /tmp/ that safe_fork() mounted for us.
                  */
                 r = bind_remount_recursive("/", MS_RDONLY, MS_RDONLY,
-                                           STRV_MAKE("/sys", "/run", "/proc", "/dev/shm", "/tmp"));
+                                           STRV_MAKE("/sys", RUNSTATEDIR, "/proc", "/dev/shm", SYSTEM_TMPDIR));
                 if (r < 0)
                         log_warning_errno(r, "Read-only bind remount failed, ignoring: %m");
         }
@@ -4291,7 +4291,7 @@ static int manager_run_generators(Manager *m) {
 
         /* On some systems /tmp/ doesn't exist, and on some other systems we cannot create it at all. Avoid
          * trying to mount a private tmpfs on it as there's no one size fits all. */
-        if (is_dir("/tmp", /* follow= */ false) > 0 && !MANAGER_IS_TEST_RUN(m))
+        if (is_dir(SYSTEM_TMPDIR, /* follow= */ false) > 0 && !MANAGER_IS_TEST_RUN(m))
                 flags |= FORK_PRIVATE_TMP;
 
         r = pidref_safe_fork("(sd-gens)", flags, /* ret= */ NULL);
@@ -4570,9 +4570,9 @@ bool manager_get_show_status_on(Manager *m) {
 
 static void set_show_status_marker(bool b) {
         if (b)
-                (void) touch("/run/systemd/show-status");
+                (void) touch(RUNSTATEDIR "/systemd/show-status");
         else
-                (void) unlink("/run/systemd/show-status");
+                (void) unlink(RUNSTATEDIR "/systemd/show-status");
 }
 
 void manager_set_show_status(Manager *m, ShowStatus mode, const char *reason) {
@@ -4676,16 +4676,16 @@ void manager_set_first_boot(Manager *m, bool b) {
 
         if (m->first_boot != (int) b) {
                 if (b)
-                        (void) touch("/run/systemd/first-boot");
+                        (void) touch(RUNSTATEDIR "/systemd/first-boot");
                 else
-                        (void) unlink("/run/systemd/first-boot");
+                        (void) unlink(RUNSTATEDIR "/systemd/first-boot");
         }
 
         m->first_boot = b;
 }
 
 void manager_disable_confirm_spawn(void) {
-        (void) touch("/run/systemd/confirm_spawn_disabled");
+        (void) touch(RUNSTATEDIR "/systemd/confirm_spawn_disabled");
 }
 
 static bool manager_should_show_status(Manager *m, StatusType type) {

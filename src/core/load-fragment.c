@@ -575,7 +575,7 @@ static int patch_var_run(
         if (!e)
                 return 0;
 
-        z = path_join("/run/", e);
+        z = path_join(RUNSTATEDIR "/", e);
         if (!z)
                 return log_oom();
 

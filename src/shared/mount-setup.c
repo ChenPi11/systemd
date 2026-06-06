@@ -180,7 +180,7 @@ static const MountPoint mount_table[] = {
 #if ENABLE_SMACK
         {
                 .what = "tmpfs",
-                .where = "/run",
+                .where = RUNSTATEDIR,
                 .type = "tmpfs",
                 .options = "mode=0755,smackfsroot=*" TMPFS_LIMITS_RUN,
                 .flags = MS_NOSUID|MS_NODEV|MS_STRICTATIME,
@@ -190,7 +190,7 @@ static const MountPoint mount_table[] = {
 #endif
         {
                 .what = "tmpfs",
-                .where = "/run",
+                .where = RUNSTATEDIR,
                 .type = "tmpfs",
                 .options = "mode=0755" TMPFS_LIMITS_RUN,
                 .flags = MS_NOSUID|MS_NODEV|MS_STRICTATIME,
@@ -268,7 +268,7 @@ bool mount_point_ignore(const char *path) {
                 if (path_equal(path, i))
                         return true;
 
-        if (path_startswith(path, "/run/host")) /* All mounts passed in from the container manager are
+        if (path_startswith(path, RUNSTATEDIR "/host")) /* All mounts passed in from the container manager are
                                                  * something we better ignore. */
                 return true;
 
@@ -383,7 +383,7 @@ static int relabel_cb(
         case RECURSE_DIR_ENTER:
                 /* /run/initramfs/ + /run/nextroot/ are static data and big, no need to dynamically relabel
                  * its contents at boot... */
-                if (PATH_STARTSWITH_SET(path, "/run/initramfs", "/run/nextroot"))
+                if (PATH_STARTSWITH_SET(path, RUNSTATEDIR "/initramfs", RUNSTATEDIR "/nextroot"))
                         return RECURSE_DIR_SKIP_ENTRY;
 
                 _fallthrough_;
@@ -419,7 +419,7 @@ static int relabel_extra(void) {
 
         r = conf_files_list(&files, ".relabel", NULL,
                             CONF_FILES_FILTER_MASKED | CONF_FILES_REGULAR | CONF_FILES_WARN,
-                            "/run/systemd/relabel-extra.d/");
+                            RUNSTATEDIR "/systemd/relabel-extra.d/");
         if (r < 0)
                 return log_error_errno(r, "Failed to enumerate /run/systemd/relabel-extra.d/, ignoring: %m");
 
@@ -466,7 +466,7 @@ static int relabel_extra(void) {
         }
 
         /* Remove when we complete things. */
-        if (rmdir("/run/systemd/relabel-extra.d") < 0 &&
+        if (rmdir(RUNSTATEDIR "/systemd/relabel-extra.d") < 0 &&
             errno != ENOENT)
                 log_warning_errno(errno, "Failed to remove /run/systemd/relabel-extra.d/ directory: %m");
 
@@ -492,7 +492,7 @@ int mount_setup(bool loaded_policy, bool leave_propagation) {
 
                 before_relabel = now(CLOCK_MONOTONIC);
 
-                FOREACH_STRING(i, "/dev", "/dev/shm", "/run")
+                FOREACH_STRING(i, "/dev", "/dev/shm", RUNSTATEDIR)
                         (void) relabel_tree(i);
 
                 n_extra = relabel_extra();
@@ -523,29 +523,29 @@ int mount_setup(bool loaded_policy, bool leave_propagation) {
         /* Create a few directories we always want around, Note that sd_booted() checks for /run/systemd/system, so
          * this mkdir really needs to stay for good, otherwise software that copied sd-daemon.c into their sources will
          * misdetect systemd. */
-        (void) mkdir_label("/run/systemd", 0755);
-        (void) mkdir_label("/run/systemd/system", 0755);
+        (void) mkdir_label(RUNSTATEDIR "/systemd", 0755);
+        (void) mkdir_label(RUNSTATEDIR "/systemd/system", 0755);
 
         /* Make sure there's always a place where sandboxed environments can mount root file systems they are
          * about to move into, even when unprivileged, without having to create a temporary one in /tmp/
          * (which they then have to keep track of and clean) */
-        (void) mkdir_label("/run/systemd/mount-rootfs", 0555);
+        (void) mkdir_label(RUNSTATEDIR "/systemd/mount-rootfs", 0555);
 
         /* Make sure we have a mount point to hide in sandboxes */
-        (void) mkdir_label("/run/credentials", 0755);
+        (void) mkdir_label(RUNSTATEDIR "/credentials", 0755);
 
         /* Also create /run/systemd/inaccessible nodes, so that we always have something to mount
          * inaccessible nodes from. If we run in a container the host might have created these for us already
          * in /run/host/inaccessible/. Use those if we can, since that way we likely get access to block/char
          * device nodes that are inaccessible, and if userns is used to nodes that are on mounts owned by a
          * userns outside the container and thus nicely read-only and not remountable. */
-        if (access("/run/host/inaccessible/", F_OK) < 0) {
+        if (access(RUNSTATEDIR "/host/inaccessible/", F_OK) < 0) {
                 if (errno != ENOENT)
                         log_debug_errno(errno, "Failed to check if /run/host/inaccessible exists, ignoring: %m");
 
-                (void) make_inaccessible_nodes("/run/systemd", UID_INVALID, GID_INVALID);
+                (void) make_inaccessible_nodes(RUNSTATEDIR "/systemd", UID_INVALID, GID_INVALID);
         } else
-                (void) symlink("../host/inaccessible", "/run/systemd/inaccessible");
+                (void) symlink("../host/inaccessible", RUNSTATEDIR "/systemd/inaccessible");
 
         return 0;
 }

@@ -133,9 +133,9 @@
 #include "vpick.h"
 
 /* The notify socket inside the container it can use to talk to nspawn using the sd_notify(3) protocol */
-#define NSPAWN_NOTIFY_SOCKET_PATH "/run/host/notify"
-#define NSPAWN_MOUNT_TUNNEL "/run/host/incoming"
-#define NSPAWN_JOURNAL_SOCKET_PATH "/run/host/journal/socket"
+#define NSPAWN_NOTIFY_SOCKET_PATH RUNSTATEDIR "/host/notify"
+#define NSPAWN_MOUNT_TUNNEL RUNSTATEDIR "/host/incoming"
+#define NSPAWN_JOURNAL_SOCKET_PATH RUNSTATEDIR "/host/journal/socket"
 
 #define EXIT_FORCE_RESTART 133
 
@@ -2039,7 +2039,7 @@ static int setup_boot_id_file(const char *directory) {
          * instance, the backing file must remain on disk. It lives in /run/host/ which is cleaned up on
          * shutdown anyway. */
 
-        p = path_join(directory, "/run/host/proc-sys-kernel-random-boot-id");
+        p = path_join(directory, RUNSTATEDIR "/host/proc-sys-kernel-random-boot-id");
         if (!p)
                 return log_oom();
 
@@ -2059,7 +2059,7 @@ static int setup_boot_id(void) {
 
         r = mount_nofollow_verbose(
                         LOG_ERR,
-                        "/run/host/proc-sys-kernel-random-boot-id",
+                        RUNSTATEDIR "/host/proc-sys-kernel-random-boot-id",
                         "/proc/sys/kernel/random/boot_id",
                         /* fstype= */ NULL,
                         MS_BIND,
@@ -2372,7 +2372,7 @@ int make_run_host(const char *root) {
 
         assert(root);
 
-        r = userns_mkdir(root, "/run/host", 0755, 0, 0);
+        r = userns_mkdir(root, RUNSTATEDIR "/host", 0755, 0, 0);
         if (r < 0)
                 return log_error_errno(r, "Failed to create /run/host/: %m");
 
@@ -2403,11 +2403,11 @@ static int setup_credentials(const char *root) {
         if (r < 0)
                 return r;
 
-        r = userns_mkdir(root, "/run/host/credentials", world_readable ? 0777 : 0700, 0, 0);
+        r = userns_mkdir(root, RUNSTATEDIR "/host/credentials", world_readable ? 0777 : 0700, 0, 0);
         if (r < 0)
                 return log_error_errno(r, "Failed to create /run/host/credentials: %m");
 
-        _cleanup_free_ char *q = path_join(root, "/run/host/credentials");
+        _cleanup_free_ char *q = path_join(root, RUNSTATEDIR "/host/credentials");
         if (!q)
                 return log_oom();
 
@@ -2459,7 +2459,7 @@ static int setup_kmsg_fifo(const char *directory) {
 
         assert(directory);
 
-        p = path_join(directory, "/run/host/proc-kmsg");
+        p = path_join(directory, RUNSTATEDIR "/host/proc-kmsg");
         if (!p)
                 return log_oom();
 
@@ -2482,11 +2482,11 @@ static int setup_kmsg(int fd_inner_socket) {
          * that writing blocks when nothing is reading. In order to avoid any problems with containers
          * deadlocking due to this we simply make /dev/kmsg unavailable to the container. */
 
-        r = mount_nofollow_verbose(LOG_ERR, "/run/host/proc-kmsg", "/proc/kmsg", NULL, MS_BIND, NULL);
+        r = mount_nofollow_verbose(LOG_ERR, RUNSTATEDIR "/host/proc-kmsg", "/proc/kmsg", NULL, MS_BIND, NULL);
         if (r < 0)
                 return r;
 
-        fd = open("/run/host/proc-kmsg", O_RDWR|O_NONBLOCK|O_CLOEXEC);
+        fd = open(RUNSTATEDIR "/host/proc-kmsg", O_RDWR|O_NONBLOCK|O_CLOEXEC);
         if (fd < 0)
                 return log_error_errno(errno, "Failed to open fifo: %m");
 
@@ -2758,9 +2758,9 @@ static int mount_tunnel_dig(const char *root) {
                 return 0;
         }
 
-        (void) mkdir_p("/run/systemd/nspawn/", 0755);
-        (void) mkdir_p("/run/systemd/nspawn/propagate", 0600);
-        _cleanup_free_ char *p = path_join("/run/systemd/nspawn/propagate/", arg_machine);
+        (void) mkdir_p(RUNSTATEDIR "/systemd/nspawn/", 0755);
+        (void) mkdir_p(RUNSTATEDIR "/systemd/nspawn/propagate", 0600);
+        _cleanup_free_ char *p = path_join(RUNSTATEDIR "/systemd/nspawn/propagate/", arg_machine);
         if (!p)
                 return log_oom();
 
@@ -2840,11 +2840,11 @@ static int setup_varlink_socket(const char *directory, const char *name) {
         if (r < 0)
                 return r;
 
-        _cleanup_free_ char *src = path_join("/run/systemd", name);
+        _cleanup_free_ char *src = path_join(RUNSTATEDIR "/systemd", name);
         if (!src)
                 return log_oom();
 
-        _cleanup_free_ char *dest = path_join(directory, "/run/host", name);
+        _cleanup_free_ char *dest = path_join(directory, RUNSTATEDIR "/host", name);
         if (!dest)
                 return log_oom();
 
@@ -4129,7 +4129,7 @@ static int outer_child(
                         arg_bind_user,
                         arg_bind_user_shell,
                         arg_bind_user_shell_copy,
-                        "/run/host/home",
+                        RUNSTATEDIR "/host/home",
                         arg_bind_user_groups,
                         &bind_user_context);
         if (r < 0)
@@ -4304,7 +4304,7 @@ static int outer_child(
 
         (void) dev_setup(directory, chown_uid, chown_uid);
 
-        _cleanup_free_ char *p = path_join(directory, "/run/host");
+        _cleanup_free_ char *p = path_join(directory, RUNSTATEDIR "/host");
         if (!p)
                 return log_oom();
 
@@ -4379,7 +4379,7 @@ static int outer_child(
 
         /* The same stuff as the $container env var, but nicely readable for the entire payload */
         free(p);
-        p = path_join(directory, "/run/host/container-manager");
+        p = path_join(directory, RUNSTATEDIR "/host/container-manager");
         if (!p)
                 return log_oom();
 
@@ -4387,7 +4387,7 @@ static int outer_child(
 
         /* The same stuff as the $container_uuid env var */
         free(p);
-        p = path_join(directory, "/run/host/container-uuid");
+        p = path_join(directory, RUNSTATEDIR "/host/container-uuid");
         if (!p)
                 return log_oom();
 
@@ -4533,10 +4533,10 @@ static int uid_shift_pick(uid_t *shift, LockFile *ret_lock_file) {
 
         candidate = *shift;
 
-        (void) mkdir("/run/systemd/nspawn-uid", 0755);
+        (void) mkdir(RUNSTATEDIR "/systemd/nspawn-uid", 0755);
 
         for (;;) {
-                char lock_path[STRLEN("/run/systemd/nspawn-uid/") + DECIMAL_STR_MAX(uid_t) + 1];
+                char lock_path[STRLEN(RUNSTATEDIR "/systemd/nspawn-uid/") + DECIMAL_STR_MAX(uid_t) + 1];
                 _cleanup_(release_lock_file) LockFile lf = LOCK_FILE_INIT;
 
                 if (--n_tries <= 0)
@@ -4547,7 +4547,7 @@ static int uid_shift_pick(uid_t *shift, LockFile *ret_lock_file) {
                 if ((candidate & UINT32_C(0xFFFF)) != 0)
                         goto next;
 
-                xsprintf(lock_path, "/run/systemd/nspawn-uid/" UID_FMT, candidate);
+                xsprintf(lock_path, RUNSTATEDIR "/systemd/nspawn-uid/" UID_FMT, candidate);
                 r = make_lock_file(lock_path, LOCK_EX|LOCK_NB, &lf);
                 if (r == -EBUSY) /* Range already taken by another nspawn instance */
                         goto next;
@@ -6043,7 +6043,7 @@ static int cant_be_in_netns(void) {
         if (fd < 0)
                 return log_error_errno(errno, "Failed to allocate udev control socket: %m");
 
-        r = connect_unix_path(fd, AT_FDCWD, "/run/udev/control");
+        r = connect_unix_path(fd, AT_FDCWD, RUNSTATEDIR "/udev/control");
         if (r == -ENOENT || ERRNO_IS_NEG_DISCONNECT(r))
                 return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP),
                                        "Sorry, but --image= requires access to the host's /run/ hierarchy, since we need access to udev.");
@@ -6073,7 +6073,7 @@ static void cleanup_propagation_and_export_directories(const char *runtime_dir) 
         if (!runtime_dir || arg_userns_mode == USER_NAMESPACE_MANAGED)
                 return;
 
-        p = path_join("/run/systemd/nspawn/propagate", arg_machine);
+        p = path_join(RUNSTATEDIR "/systemd/nspawn/propagate", arg_machine);
         if (p)
                 (void) rm_rf(p, REMOVE_ROOT);
 
@@ -6637,7 +6637,7 @@ static int run(int argc, char *argv[]) {
         }
 
         /* Create a temporary place to mount stuff. */
-        r = mkdtemp_malloc("/tmp/nspawn-root-XXXXXX", &rootdir);
+        r = mkdtemp_malloc(SYSTEM_TMPDIR "/nspawn-root-XXXXXX", &rootdir);
         if (r < 0) {
                 log_error_errno(r, "Failed to create temporary directory: %m");
                 goto finish;

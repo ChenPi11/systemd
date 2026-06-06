@@ -382,7 +382,7 @@ size_t udev_replace_chars(char *str, const char *allow) {
 }
 
 int udev_queue_is_empty(void) {
-        return access("/run/udev/queue", F_OK) < 0 ?
+        return access(RUNSTATEDIR "/udev/queue", F_OK) < 0 ?
                 (errno == ENOENT ? true : -errno) : false;
 }
 

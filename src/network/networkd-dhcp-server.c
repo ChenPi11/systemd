@@ -196,7 +196,7 @@ static int link_get_dhcp_server_lease_file(Link *link, int *ret_dir_fd, char **r
                 return 1;
         }
         case DHCP_SERVER_PERSIST_LEASES_RUNTIME: {
-                char *p = path_join("/run/systemd/netif/dhcp-server-lease", link->ifname);
+                char *p = path_join(RUNSTATEDIR "/systemd/netif/dhcp-server-lease", link->ifname);
                 if (!p)
                         return -ENOMEM;
 

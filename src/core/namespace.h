@@ -227,7 +227,7 @@ typedef struct NamespaceParameters {
 
 int setup_namespace(const NamespaceParameters *p, char **reterr_path);
 
-#define RUN_SYSTEMD_EMPTY "/run/systemd/empty"
+#define RUN_SYSTEMD_EMPTY RUNSTATEDIR "/systemd/empty"
 
 char* namespace_cleanup_tmpdir(char *p);
 DEFINE_TRIVIAL_CLEANUP_FUNC(char*, namespace_cleanup_tmpdir);

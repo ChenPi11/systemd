@@ -2347,9 +2347,9 @@ int manager_init(Manager *m) {
         if (e)
                 m->runtime_directory = strdup(e);
         else if (m->namespace)
-                m->runtime_directory = strjoin("/run/systemd/journal.", m->namespace);
+                m->runtime_directory = strjoin(RUNSTATEDIR "/systemd/journal.", m->namespace);
         else
-                m->runtime_directory = strdup("/run/systemd/journal");
+                m->runtime_directory = strdup(RUNSTATEDIR "/systemd/journal");
         if (!m->runtime_directory)
                 return log_oom();
 
@@ -2509,9 +2509,9 @@ int manager_init(Manager *m) {
         manager_cache_machine_id(m);
 
         if (m->namespace)
-                m->runtime_storage.path = strjoin("/run/log/journal/", MANAGER_MACHINE_ID(m), ".", m->namespace);
+                m->runtime_storage.path = strjoin(RUNSTATEDIR "/log/journal/", MANAGER_MACHINE_ID(m), ".", m->namespace);
         else
-                m->runtime_storage.path = strjoin("/run/log/journal/", MANAGER_MACHINE_ID(m));
+                m->runtime_storage.path = strjoin(RUNSTATEDIR "/log/journal/", MANAGER_MACHINE_ID(m));
         if (!m->runtime_storage.path)
                 return log_oom();
 

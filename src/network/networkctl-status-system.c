@@ -40,7 +40,7 @@ static int get_netifs(char **ret) {
 
         assert(ret);
 
-        r = get_files_in_directory("/run/systemd/netif/links/", &netifs);
+        r = get_files_in_directory(RUNSTATEDIR "/systemd/netif/links/", &netifs);
         if (IN_SET(r, 0, -ENOENT)) {
                 *ret = NULL;
                 return 0;

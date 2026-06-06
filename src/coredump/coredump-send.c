@@ -29,7 +29,7 @@ int coredump_send(CoredumpContext *context) {
         if (fd < 0)
                 return log_error_errno(errno, "Failed to create coredump socket: %m");
 
-        r = connect_unix_path(fd, AT_FDCWD, "/run/systemd/coredump");
+        r = connect_unix_path(fd, AT_FDCWD, RUNSTATEDIR "/systemd/coredump");
         if (r < 0)
                 return log_error_errno(r, "Failed to connect to coredump service: %m");
 
@@ -276,7 +276,7 @@ int coredump_send_to_container(CoredumpContext *context) {
         if (r == 0) {
                 pair[0] = safe_close(pair[0]);
 
-                r = access_nofollow("/run/systemd/coredump", W_OK);
+                r = access_nofollow(RUNSTATEDIR "/systemd/coredump", W_OK);
                 if (r < 0) {
                         log_error_errno(r, "Cannot find coredump socket, exiting: %m");
                         _exit(EXIT_FAILURE);

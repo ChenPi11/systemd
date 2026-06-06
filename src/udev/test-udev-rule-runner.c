@@ -64,7 +64,7 @@ static int fake_filesystems(void) {
         } fakefss[] = {
                 { "tmpfs/sys", "/sys",                    "Failed to mount test /sys",                        false },
                 { "tmpfs/dev", "/dev",                    "Failed to mount test /dev",                        false },
-                { "run",       "/run",                    "Failed to mount test /run",                        false },
+                { "run",       RUNSTATEDIR,                    "Failed to mount test /run",                        false },
                 { "run",       "/etc/udev/rules.d",       "Failed to mount empty /etc/udev/rules.d",          true },
                 { "run",       UDEVLIBEXECDIR "/rules.d", "Failed to mount empty " UDEVLIBEXECDIR "/rules.d", true },
         };

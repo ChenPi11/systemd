@@ -423,7 +423,7 @@ int show_cgroup_get_path_and_warn(
                 if (!hostname_is_valid(machine, 0))
                         return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Machine name is not valid: %s", machine);
 
-                m = strjoina("/run/systemd/machines/", machine);
+                m = strjoina(RUNSTATEDIR "/systemd/machines/", machine);
                 r = parse_env_file(NULL, m, "SCOPE", &unit);
                 if (r < 0)
                         return log_error_errno(r, "Failed to load machine data: %m");

@@ -49,7 +49,7 @@
  * go below 4MB for writing core files to storage. */
 #define PROCESS_SIZE_MIN (4U*1024U*1024U)
 
-#define MOUNT_TREE_ROOT "/run/systemd/mount-rootfs"
+#define MOUNT_TREE_ROOT RUNSTATEDIR "/systemd/mount-rootfs"
 
 static const char* coredump_tmpfile_name(const char *s) {
         return s ?: "(unnamed temporary file)";

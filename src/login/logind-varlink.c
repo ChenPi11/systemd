@@ -479,7 +479,7 @@ int manager_varlink_init(Manager *m, int fd) {
                 return log_error_errno(r, "Failed to register varlink methods: %m");
 
         if (fd < 0)
-                r = sd_varlink_server_listen_address(s, "/run/systemd/io.systemd.Login", /* mode= */ 0666);
+                r = sd_varlink_server_listen_address(s, RUNSTATEDIR "/systemd/io.systemd.Login", /* mode= */ 0666);
         else
                 r = sd_varlink_server_listen_fd(s, fd);
         if (r < 0)

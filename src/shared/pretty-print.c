@@ -399,7 +399,7 @@ static int guess_type(const char **name, char ***ret_prefixes, bool *ret_is_coll
 
         /* This is static so that the array doesn't get deallocated when we exit the function */
         static const char* const std_prefixes[] = { CONF_PATHS(""), NULL };
-        static const char* const run_prefixes[] = { "/run/", NULL };
+        static const char* const run_prefixes[] = { RUNSTATEDIR "/", NULL };
 
         if (path_equal(*name, "environment.d"))
                 /* Special case: we need to include /etc/environment in the search path, even

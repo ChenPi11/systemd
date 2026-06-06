@@ -758,7 +758,7 @@ static int device_tag(sd_device *device, const char *tag, bool add) {
         if (r < 0)
                 return r;
 
-        path = strjoina("/run/udev/tags/", tag, "/", id);
+        path = strjoina(RUNSTATEDIR "/udev/tags/", tag, "/", id);
 
         if (add)
                 return touch_file(path, true, USEC_INFINITY, UID_INVALID, GID_INVALID, 0444);
@@ -832,7 +832,7 @@ static int device_get_db_path(sd_device *device, char **ret) {
         if (r < 0)
                 return r;
 
-        path = path_join("/run/udev/data/", id);
+        path = path_join(RUNSTATEDIR "/udev/data/", id);
         if (!path)
                 return -ENOMEM;
 

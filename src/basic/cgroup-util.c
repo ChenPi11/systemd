@@ -1019,7 +1019,7 @@ int cg_path_get_machine_name(const char *path, char **ret_machine) {
         if (r < 0)
                 return r;
 
-        sl = strjoina("/run/systemd/machines/unit:", u);
+        sl = strjoina(RUNSTATEDIR "/systemd/machines/unit:", u);
         return readlink_malloc(sl, ret_machine);
 }
 

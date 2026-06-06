@@ -67,7 +67,7 @@ static int acquire_machine_id(const char *root, bool machine_id_from_firmware, s
          * /etc/machine-id yet. This is important on switching root especially on soft-reboot, Otherwise,
          * machine ID may be changed after the transition. */
         if (isempty(root) && running_in_chroot() <= 0 &&
-            id128_read("/run/machine-id", ID128_FORMAT_PLAIN, ret) >= 0) {
+            id128_read(RUNSTATEDIR "/machine-id", ID128_FORMAT_PLAIN, ret) >= 0) {
                 log_info("Reusing machine ID stored in /run/machine-id.");
                 return 1; /* Indicate that the machine ID is reused. */
         }
@@ -249,9 +249,9 @@ int machine_id_setup(const char *root, sd_id128_t machine_id, MachineIdSetupFlag
         if (write_run_machine_id) {
                 _cleanup_free_ char *run = NULL;
 
-                r = chase("/run/", root, CHASE_PREFIX_ROOT|CHASE_MKDIR_0755|CHASE_MUST_BE_DIRECTORY, &run, &run_fd);
+                r = chase(RUNSTATEDIR "/", root, CHASE_PREFIX_ROOT|CHASE_MKDIR_0755|CHASE_MUST_BE_DIRECTORY, &run, &run_fd);
                 if (r < 0)
-                        return log_error_errno(r, "Failed to open %s: %m", "/run/");
+                        return log_error_errno(r, "Failed to open %s: %m", RUNSTATEDIR "/");
 
                 run_machine_id = path_join(run, "machine-id");
                 if (!run_machine_id)
@@ -267,9 +267,9 @@ int machine_id_setup(const char *root, sd_id128_t machine_id, MachineIdSetupFlag
 
                 unlink_run_machine_id = true;
         } else {
-                r = chase("/run/machine-id", root, CHASE_PREFIX_ROOT|CHASE_MUST_BE_REGULAR, &run_machine_id, /* ret_fd= */ NULL);
+                r = chase(RUNSTATEDIR "/machine-id", root, CHASE_PREFIX_ROOT|CHASE_MUST_BE_REGULAR, &run_machine_id, /* ret_fd= */ NULL);
                 if (r < 0)
-                        return log_error_errno(r, "Failed to open %s: %m", "/run/machine-id");
+                        return log_error_errno(r, "Failed to open %s: %m", RUNSTATEDIR "/machine-id");
         }
 
         /* And now, let's mount it over */

@@ -20,7 +20,7 @@
 #include "string-util.h"
 #include "strv.h"
 
-#define NETWORK_UNIT_DIRECTORY "/run/systemd/network/"
+#define NETWORK_UNIT_DIRECTORY RUNSTATEDIR "/systemd/network/"
 
 static const char *arg_root = NULL;
 
@@ -239,7 +239,7 @@ static int run(int argc, char *argv[]) {
         RET_GATHER(ret, context_save(&context));
 
         static const PickUpCredential table[] = {
-                { "network.conf.",    "/run/systemd/networkd.conf.d/", ".conf"    },
+                { "network.conf.",    RUNSTATEDIR "/systemd/networkd.conf.d/", ".conf"    },
                 { "network.link.",    NETWORK_UNIT_DIRECTORY,          ".link"    },
                 { "network.netdev.",  NETWORK_UNIT_DIRECTORY,          ".netdev"  },
                 { "network.network.", NETWORK_UNIT_DIRECTORY,          ".network" },

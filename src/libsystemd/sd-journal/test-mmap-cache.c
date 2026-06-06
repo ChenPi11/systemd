@@ -11,7 +11,7 @@
 int main(int argc, char *argv[]) {
         MMapFileDescriptor *fx;
         int x, y, z;
-        char px[] = "/tmp/testmmapXXXXXXX", py[] = "/tmp/testmmapYXXXXXX", pz[] = "/tmp/testmmapZXXXXXX";
+        char px[] = SYSTEM_TMPDIR "/testmmapXXXXXXX", py[] = SYSTEM_TMPDIR "/testmmapYXXXXXX", pz[] = SYSTEM_TMPDIR "/testmmapZXXXXXX";
         MMapCache *m;
         void *p, *q;
 

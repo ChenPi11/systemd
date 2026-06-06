@@ -68,9 +68,9 @@ int device_path_make_inaccessible(mode_t mode, char **ret) {
         assert(ret);
 
         if (S_ISCHR(mode))
-                s = "/run/systemd/inaccessible/chr";
+                s = RUNSTATEDIR "/systemd/inaccessible/chr";
         else if (S_ISBLK(mode))
-                s = "/run/systemd/inaccessible/blk";
+                s = RUNSTATEDIR "/systemd/inaccessible/blk";
         else
                 return -ENODEV;
 
@@ -106,10 +106,10 @@ int device_path_parse_major_minor(const char *path, mode_t *ret_mode, dev_t *ret
          * paths, as well out synthetic inaccessible device nodes. Never goes to disk. Returns -ENODEV if the device
          * path cannot be parsed like this.  */
 
-        if (path_equal(path, "/run/systemd/inaccessible/chr")) {
+        if (path_equal(path, RUNSTATEDIR "/systemd/inaccessible/chr")) {
                 mode = S_IFCHR;
                 devnum = makedev(0, 0);
-        } else if (path_equal(path, "/run/systemd/inaccessible/blk")) {
+        } else if (path_equal(path, RUNSTATEDIR "/systemd/inaccessible/blk")) {
                 mode = S_IFBLK;
                 devnum = makedev(0, 0);
         } else {

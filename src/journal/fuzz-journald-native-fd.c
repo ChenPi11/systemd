@@ -13,7 +13,7 @@
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         _cleanup_(manager_freep) Manager *m = NULL;
         _cleanup_close_ int sealed_fd = -EBADF, unsealed_fd = -EBADF;
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/fuzz-journald-native-fd.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/fuzz-journald-native-fd.XXXXXX";
         struct ucred ucred;
         struct timeval *tv = NULL;
 

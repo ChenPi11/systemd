@@ -20,6 +20,7 @@ executables += [
                 'name' : 'bootctl',
                 'public' : true,
                 'conditions' : [
+                          'ENABLE_BOOTCTL',
                           'HAVE_BLKID',
                 ],
                 'sources' : bootctl_sources,

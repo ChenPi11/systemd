@@ -644,7 +644,7 @@ int manager_setup(Manager *m) {
         if (r < 0)
                 return r;
 
-        m->state_file = strdup("/run/systemd/netif/state");
+        m->state_file = strdup(RUNSTATEDIR "/systemd/netif/state");
         if (!m->state_file)
                 return -ENOMEM;
 

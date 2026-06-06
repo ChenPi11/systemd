@@ -613,7 +613,7 @@ static int portable_extract_by_path(
                 (void) dlopen_cryptsetup(LOG_DEBUG);
                 (void) dlopen_libmount(LOG_DEBUG);
 
-                r = mkdtemp_malloc("/tmp/inspect-XXXXXX", &tmpdir);
+                r = mkdtemp_malloc(SYSTEM_TMPDIR "/inspect-XXXXXX", &tmpdir);
                 if (r < 0)
                         return log_debug_errno(r, "Failed to create temporary directory: %m");
 

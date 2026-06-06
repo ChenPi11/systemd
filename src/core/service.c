@@ -3228,15 +3228,15 @@ static void service_enter_refresh_extensions(Service *s) {
 
                 assert(pidref_is_set(&s->main_pid));
 
-                _cleanup_free_ char *propagate_dir = path_join("/run/systemd/propagate/", UNIT(s)->id);
+                _cleanup_free_ char *propagate_dir = path_join(RUNSTATEDIR "/systemd/propagate/", UNIT(s)->id);
                 if (!propagate_dir) {
                         log_unit_error_errno(UNIT(s), -ENOMEM, "Failed to allocate memory for propagate directory: %m");
                         _exit(EXIT_FAILURE);
                 }
 
                 NamespaceParameters p = {
-                        .private_namespace_dir = "/run/systemd",
-                        .incoming_dir = "/run/systemd/incoming",
+                        .private_namespace_dir = RUNSTATEDIR "/systemd",
+                        .incoming_dir = RUNSTATEDIR "/systemd/incoming",
                         .propagate_dir = propagate_dir,
                         .runtime_scope = UNIT(s)->manager->runtime_scope,
                         .extension_images = s->exec_context.extension_images,
@@ -5986,7 +5986,7 @@ static int service_live_mount(
                 goto fail;
         }
 
-        const char *propagate_directory = strjoina("/run/systemd/propagate/", u->id);
+        const char *propagate_directory = strjoina(RUNSTATEDIR "/systemd/propagate/", u->id);
 
         /* Given we are running from PID1, avoid doing potentially heavy I/O operations like opening images
          * directly, and instead fork a worker process. We record the D-Bus message, so that we can reply
@@ -6011,7 +6011,7 @@ static int service_live_mount(
                         r = mount_image_in_namespace(
                                         &s->main_pid,
                                         propagate_directory,
-                                        "/run/systemd/incoming/",
+                                        RUNSTATEDIR "/systemd/incoming/",
                                         src, dst,
                                         flags,
                                         options,
@@ -6020,7 +6020,7 @@ static int service_live_mount(
                         r = bind_mount_in_namespace(
                                         &s->main_pid,
                                         propagate_directory,
-                                        "/run/systemd/incoming/",
+                                        RUNSTATEDIR "/systemd/incoming/",
                                         src, dst,
                                         flags);
                 if (r < 0)

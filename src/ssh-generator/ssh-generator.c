@@ -273,7 +273,7 @@ static int add_local_unix_socket(
         r = write_socket_unit(
                         dest,
                         "sshd-unix-local.socket",
-                        "/run/ssh-unix-local/socket",
+                        RUNSTATEDIR "/ssh-unix-local/socket",
                         "AF_UNIX Local",
                         /* extra= */ NULL,
                         /* with_ssh_access_target_dependency= */ false);
@@ -305,7 +305,7 @@ static int add_export_unix_socket(
                 return 0;
         }
 
-        if (access("/run/host/unix-export/", W_OK) < 0) {
+        if (access(RUNSTATEDIR "/host/unix-export/", W_OK) < 0) {
                 if (errno == ENOENT) {
                         log_debug("Container manager does not provide /run/host/unix-export/ mount, not binding AF_UNIX socket there.");
                         return 0;
@@ -330,7 +330,7 @@ static int add_export_unix_socket(
         r = write_socket_unit(
                         dest,
                         "sshd-unix-export.socket",
-                        "/run/host/unix-export/ssh",
+                        RUNSTATEDIR "/host/unix-export/ssh",
                         "AF_UNIX Export",
                         /* extra= */ NULL,
                         /* with_ssh_access_target_dependency= */ true);

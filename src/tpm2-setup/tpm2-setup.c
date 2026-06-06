@@ -35,10 +35,10 @@ static bool arg_graceful = false;
 STATIC_DESTRUCTOR_REGISTER(arg_tpm2_device, freep);
 
 #define TPM2_SRK_PEM_PERSISTENT_PATH "/var/lib/systemd/tpm2-srk-public-key.pem"
-#define TPM2_SRK_PEM_RUNTIME_PATH "/run/systemd/tpm2-srk-public-key.pem"
+#define TPM2_SRK_PEM_RUNTIME_PATH RUNSTATEDIR "/systemd/tpm2-srk-public-key.pem"
 
 #define TPM2_SRK_TPM2B_PUBLIC_PERSISTENT_PATH "/var/lib/systemd/tpm2-srk-public-key.tpm2b_public"
-#define TPM2_SRK_TPM2B_PUBLIC_RUNTIME_PATH "/run/systemd/tpm2-srk-public-key.tpm2b_public"
+#define TPM2_SRK_TPM2B_PUBLIC_RUNTIME_PATH RUNSTATEDIR "/systemd/tpm2-srk-public-key.tpm2b_public"
 
 static int help(void) {
         _cleanup_free_ char *link = NULL;

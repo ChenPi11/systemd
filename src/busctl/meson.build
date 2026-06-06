@@ -11,10 +11,12 @@ executables += [
         executable_template + {
                 'name' : 'busctl',
                 'public' : true,
+                'conditions' : ['ENABLE_BUSCTL'],
                 'sources' : busctl_sources,
                 'extract' : busctl_extract_sources,
         },
         test_template + {
+                'conditions' : ['ENABLE_BUSCTL'],
                 'sources' : files('test-busctl-introspect.c'),
                 'objects' : ['busctl'],
         },

@@ -14,5 +14,5 @@ bool session_id_valid(const char *id) {
 }
 
 bool logind_running(void) {
-        return access("/run/systemd/seats/", F_OK) >= 0;
+        return access(RUNSTATEDIR "/systemd/seats/", F_OK) >= 0;
 }

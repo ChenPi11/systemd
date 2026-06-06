@@ -534,7 +534,7 @@ int mount_all(const char *dest,
               const char *selinux_apifs_context) {
 
 #define PROC_INACCESSIBLE_REG(path)                                     \
-        { "/run/host/inaccessible/reg", (path), NULL, NULL, MS_BIND,    \
+        { RUNSTATEDIR "/host/inaccessible/reg", (path), NULL, NULL, MS_BIND,    \
           MOUNT_IN_USERNS|MOUNT_APPLY_APIVFS_RO }, /* Bind mount first ... */ \
         { NULL, (path), NULL, NULL, MS_BIND|MS_RDONLY|MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_REMOUNT, \
           MOUNT_IN_USERNS|MOUNT_APPLY_APIVFS_RO } /* Then, make it r/o */
@@ -590,7 +590,7 @@ int mount_all(const char *dest,
                   MOUNT_IN_USERNS|MOUNT_MKDIR },
 
                 /* Then we list outer child mounts (i.e. mounts applied *before* entering user namespacing when we are privileged) */
-                { "tmpfs",                  "/tmp",                         "tmpfs", "mode=01777" NESTED_TMPFS_LIMITS, MS_NOSUID|MS_NODEV|MS_STRICTATIME,
+                { "tmpfs",                  SYSTEM_TMPDIR,                         "tmpfs", "mode=01777" NESTED_TMPFS_LIMITS, MS_NOSUID|MS_NODEV|MS_STRICTATIME,
                   MOUNT_FATAL|MOUNT_APPLY_TMPFS_TMP|MOUNT_MKDIR|MOUNT_USRQUOTA_GRACEFUL },
                 { "tmpfs",                  "/sys",                         "tmpfs", "mode=0555" TMPFS_LIMITS_SYS,     MS_NOSUID|MS_NOEXEC|MS_NODEV,
                   MOUNT_FATAL|MOUNT_APPLY_APIVFS_NETNS|MOUNT_MKDIR|MOUNT_UNMANAGED },
@@ -602,19 +602,19 @@ int mount_all(const char *dest,
                   MOUNT_FATAL|MOUNT_MKDIR },
                 { "tmpfs",                  "/dev/shm",                     "tmpfs", "mode=01777" NESTED_TMPFS_LIMITS, MS_NOSUID|MS_NODEV|MS_STRICTATIME,
                   MOUNT_FATAL|MOUNT_MKDIR|MOUNT_USRQUOTA_GRACEFUL },
-                { "tmpfs",                  "/run",                         "tmpfs", "mode=0755" TMPFS_LIMITS_RUN,     MS_NOSUID|MS_NODEV|MS_STRICTATIME,
+                { "tmpfs",                  RUNSTATEDIR,                         "tmpfs", "mode=0755" TMPFS_LIMITS_RUN,     MS_NOSUID|MS_NODEV|MS_STRICTATIME,
                   MOUNT_FATAL|MOUNT_MKDIR },
-                { "/run/host",              "/run/host",                    NULL,    NULL,                             MS_BIND,
+                { RUNSTATEDIR "/host",              RUNSTATEDIR "/host",                    NULL,    NULL,                             MS_BIND,
                   MOUNT_FATAL|MOUNT_MKDIR|MOUNT_PREFIX_ROOT }, /* Prepare this so that we can make it read-only when we are done */
-                { "/etc/os-release",        "/run/host/os-release",         NULL,    NULL,                             MS_BIND,
+                { "/etc/os-release",        RUNSTATEDIR "/host/os-release",         NULL,    NULL,                             MS_BIND,
                   MOUNT_TOUCH }, /* As per kernel interface requirements, bind mount first (creating mount points) and make read-only later */
-                { "/usr/lib/os-release",    "/run/host/os-release",         NULL,    NULL,                             MS_BIND,
+                { "/usr/lib/os-release",    RUNSTATEDIR "/host/os-release",         NULL,    NULL,                             MS_BIND,
                   MOUNT_FATAL }, /* If /etc/os-release doesn't exist use the version in /usr/lib as fallback */
-                { NULL,                     "/run/host/os-release",         NULL,    NULL,                             MS_BIND|MS_RDONLY|MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_REMOUNT,
+                { NULL,                     RUNSTATEDIR "/host/os-release",         NULL,    NULL,                             MS_BIND|MS_RDONLY|MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_REMOUNT,
                   MOUNT_FATAL },
-                { NULL,                     "/run/host/os-release",         NULL,    NULL,                             MS_PRIVATE,
+                { NULL,                     RUNSTATEDIR "/host/os-release",         NULL,    NULL,                             MS_PRIVATE,
                   MOUNT_FATAL },  /* Turn off propagation (we only want that for the mount propagation tunnel dir) */
-                { NULL,                     "/run/host",                    NULL,    NULL,                             MS_BIND|MS_RDONLY|MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_REMOUNT,
+                { NULL,                     RUNSTATEDIR "/host",                    NULL,    NULL,                             MS_BIND|MS_RDONLY|MS_NOSUID|MS_NOEXEC|MS_NODEV|MS_REMOUNT,
                   MOUNT_FATAL|MOUNT_IN_USERNS },
 #if HAVE_SELINUX
                 { "/sys/fs/selinux",        "/sys/fs/selinux",              NULL,    NULL,                             MS_BIND,
@@ -1182,7 +1182,7 @@ static int setup_volatile_yes(const char *directory, uid_t uid_shift, const char
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
                                        "Error starting image: if --volatile=yes is used /bin must be a symlink (for merged /usr support) or non-existent (in which case a symlink is created automatically).");
 
-        r = mkdtemp_malloc("/tmp/nspawn-volatile-XXXXXX", &template);
+        r = mkdtemp_malloc(SYSTEM_TMPDIR "/nspawn-volatile-XXXXXX", &template);
         if (r < 0)
                 return log_error_errno(r, "Failed to create temporary directory: %m");
 
@@ -1258,7 +1258,7 @@ static int setup_volatile_overlay(const char *directory, uid_t uid_shift, const 
 
         /* --volatile=overlay means we mount an overlayfs to the root dir. */
 
-        r = mkdtemp_malloc("/tmp/nspawn-volatile-XXXXXX", &template);
+        r = mkdtemp_malloc(SYSTEM_TMPDIR "/nspawn-volatile-XXXXXX", &template);
         if (r < 0)
                 return log_error_errno(r, "Failed to create temporary directory: %m");
 
@@ -1429,7 +1429,7 @@ int setup_pivot_root(const char *directory, const char *pivot_root_new, const ch
                 return r;
 
         if (pivot_root_old) {
-                r = mkdtemp_malloc("/tmp/nspawn-pivot-XXXXXX", &pivot_tmp);
+                r = mkdtemp_malloc(SYSTEM_TMPDIR "/nspawn-pivot-XXXXXX", &pivot_tmp);
                 if (r < 0)
                         return log_error_errno(r, "Failed to create temporary directory: %m");
 
@@ -1455,8 +1455,8 @@ int setup_pivot_root(const char *directory, const char *pivot_root_new, const ch
         return 0;
 }
 
-#define NSPAWN_PRIVATE_FULLY_VISIBLE_PROCFS "/run/host/proc"
-#define NSPAWN_PRIVATE_FULLY_VISIBLE_SYSFS "/run/host/sys"
+#define NSPAWN_PRIVATE_FULLY_VISIBLE_PROCFS RUNSTATEDIR "/host/proc"
+#define NSPAWN_PRIVATE_FULLY_VISIBLE_SYSFS RUNSTATEDIR "/host/sys"
 
 int pin_fully_visible_api_fs(void) {
         int r;

@@ -28,24 +28,24 @@ static int make_volatile(const char *path) {
         if (r < 0)
                 return log_error_errno(r, "/usr not available in old root: %m");
 
-        r = mkdir_p("/run/systemd/volatile-sysroot", 0700);
+        r = mkdir_p(RUNSTATEDIR "/systemd/volatile-sysroot", 0700);
         if (r < 0)
                 return log_error_errno(r, "Couldn't generate volatile sysroot directory: %m");
 
-        r = mount_nofollow_verbose(LOG_ERR, "tmpfs", "/run/systemd/volatile-sysroot", "tmpfs", MS_STRICTATIME, "mode=0755" TMPFS_LIMITS_ROOTFS);
+        r = mount_nofollow_verbose(LOG_ERR, "tmpfs", RUNSTATEDIR "/systemd/volatile-sysroot", "tmpfs", MS_STRICTATIME, "mode=0755" TMPFS_LIMITS_ROOTFS);
         if (r < 0)
                 goto finish_rmdir;
 
-        if (mkdir("/run/systemd/volatile-sysroot/usr", 0755) < 0) {
+        if (mkdir(RUNSTATEDIR "/systemd/volatile-sysroot/usr", 0755) < 0) {
                 r = log_error_errno(errno, "Failed to create /usr directory: %m");
                 goto finish_umount;
         }
 
-        r = mount_nofollow_verbose(LOG_ERR, old_usr, "/run/systemd/volatile-sysroot/usr", NULL, MS_BIND|MS_REC, NULL);
+        r = mount_nofollow_verbose(LOG_ERR, old_usr, RUNSTATEDIR "/systemd/volatile-sysroot/usr", NULL, MS_BIND|MS_REC, NULL);
         if (r < 0)
                 goto finish_umount;
 
-        r = bind_remount_recursive("/run/systemd/volatile-sysroot/usr", MS_RDONLY, MS_RDONLY, NULL);
+        r = bind_remount_recursive(RUNSTATEDIR "/systemd/volatile-sysroot/usr", MS_RDONLY, MS_RDONLY, NULL);
         if (r < 0) {
                 log_error_errno(r, "Failed to remount /usr read-only: %m");
                 goto finish_umount;
@@ -60,13 +60,13 @@ static int make_volatile(const char *path) {
         if (mount(NULL, "/", NULL, MS_SLAVE|MS_REC, NULL) < 0)
                 log_warning_errno(errno, "Failed to remount %s MS_SLAVE|MS_REC, ignoring: %m", path);
 
-        r = mount_nofollow_verbose(LOG_ERR, "/run/systemd/volatile-sysroot", path, NULL, MS_MOVE, NULL);
+        r = mount_nofollow_verbose(LOG_ERR, RUNSTATEDIR "/systemd/volatile-sysroot", path, NULL, MS_MOVE, NULL);
 
 finish_umount:
-        (void) umount_recursive("/run/systemd/volatile-sysroot", 0);
+        (void) umount_recursive(RUNSTATEDIR "/systemd/volatile-sysroot", 0);
 
 finish_rmdir:
-        (void) rmdir("/run/systemd/volatile-sysroot");
+        (void) rmdir(RUNSTATEDIR "/systemd/volatile-sysroot");
 
         return r;
 }
@@ -79,22 +79,22 @@ static int make_overlay(const char *path) {
 
         assert(path);
 
-        r = mkdir_p("/run/systemd/overlay-sysroot", 0700);
+        r = mkdir_p(RUNSTATEDIR "/systemd/overlay-sysroot", 0700);
         if (r < 0)
                 return log_error_errno(r, "Couldn't create overlay sysroot directory: %m");
 
-        r = mount_nofollow_verbose(LOG_ERR, "tmpfs", "/run/systemd/overlay-sysroot", "tmpfs", MS_STRICTATIME, "mode=0755" TMPFS_LIMITS_ROOTFS);
+        r = mount_nofollow_verbose(LOG_ERR, "tmpfs", RUNSTATEDIR "/systemd/overlay-sysroot", "tmpfs", MS_STRICTATIME, "mode=0755" TMPFS_LIMITS_ROOTFS);
         if (r < 0)
                 goto finish;
 
         tmpfs_mounted = true;
 
-        if (mkdir("/run/systemd/overlay-sysroot/upper", 0755) < 0) {
+        if (mkdir(RUNSTATEDIR "/systemd/overlay-sysroot/upper", 0755) < 0) {
                 r = log_error_errno(errno, "Failed to create /run/systemd/overlay-sysroot/upper: %m");
                 goto finish;
         }
 
-        if (mkdir("/run/systemd/overlay-sysroot/work", 0755) < 0) {
+        if (mkdir(RUNSTATEDIR "/systemd/overlay-sysroot/work", 0755) < 0) {
                 r = log_error_errno(errno, "Failed to create /run/systemd/overlay-sysroot/work: %m");
                 goto finish;
         }
@@ -110,9 +110,9 @@ static int make_overlay(const char *path) {
 
 finish:
         if (tmpfs_mounted)
-                (void) umount_verbose(LOG_ERR, "/run/systemd/overlay-sysroot", UMOUNT_NOFOLLOW);
+                (void) umount_verbose(LOG_ERR, RUNSTATEDIR "/systemd/overlay-sysroot", UMOUNT_NOFOLLOW);
 
-        (void) rmdir("/run/systemd/overlay-sysroot");
+        (void) rmdir(RUNSTATEDIR "/systemd/overlay-sysroot");
         return r;
 }
 
@@ -185,7 +185,7 @@ static int run(int argc, char *argv[]) {
                 if (r < 0)
                         return log_error_errno(r, "Failed to format device node path: %m");
 
-                if (symlink(dn, "/run/systemd/volatile-root") < 0)
+                if (symlink(dn, RUNSTATEDIR "/systemd/volatile-root") < 0)
                         log_warning_errno(errno, "Failed to create symlink /run/systemd/volatile-root: %m");
         }
 

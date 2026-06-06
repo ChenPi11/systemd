@@ -1193,7 +1193,7 @@ static int varlink_dump_dns_configuration(sd_json_variant **ret) {
 
         assert(ret);
 
-        r = sd_varlink_connect_address(&vl, "/run/systemd/resolve/io.systemd.Resolve");
+        r = sd_varlink_connect_address(&vl, RUNSTATEDIR "/systemd/resolve/io.systemd.Resolve");
         if (r < 0)
                 return log_error_errno(r, "Failed to connect to service /run/systemd/resolve/io.systemd.Resolve: %m");
 

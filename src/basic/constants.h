@@ -38,13 +38,13 @@
  * conf_files_list_nulstr() to implement drop-in directories for extending configuration files. */
 #define CONF_PATHS_NULSTR(n)                    \
         "/etc/" n "\0"                          \
-        "/run/" n "\0"                          \
+        RUNSTATEDIR "/" n "\0"                          \
         "/usr/local/lib/" n "\0"                \
         "/usr/lib/" n "\0"
 
 #define CONF_PATHS(n)                           \
         "/etc/" n,                              \
-        "/run/" n,                              \
+        RUNSTATEDIR "/" n,                              \
         "/usr/local/lib/" n,                    \
         "/usr/lib/" n
 
@@ -59,15 +59,15 @@
 #define DEFAULT_RLIMIT_MEMLOCK (1024ULL*1024ULL*8ULL)
 
 /* Path where PID1 listens for varlink subscriptions from systemd-oomd to notify of changes in ManagedOOM settings. */
-#define VARLINK_PATH_MANAGED_OOM_SYSTEM "/run/systemd/io.systemd.ManagedOOM"
+#define VARLINK_PATH_MANAGED_OOM_SYSTEM RUNSTATEDIR "/systemd/io.systemd.ManagedOOM"
 /* Path where systemd-oomd listens for varlink connections from user managers to report changes in ManagedOOM settings. */
-#define VARLINK_PATH_MANAGED_OOM_USER "/run/systemd/oom/io.systemd.ManagedOOM"
+#define VARLINK_PATH_MANAGED_OOM_USER RUNSTATEDIR "/systemd/oom/io.systemd.ManagedOOM"
 /* Path where systemd-machined listens to userdb varlink queries */
-#define VARLINK_PATH_MACHINED_USERDB "/run/systemd/userdb/io.systemd.Machine"
+#define VARLINK_PATH_MACHINED_USERDB RUNSTATEDIR "/systemd/userdb/io.systemd.Machine"
 /* Path where systemd-machined listens to resolve.hook varlink queries */
-#define VARLINK_PATH_MACHINED_RESOLVE_HOOK "/run/systemd/resolve.hook/io.systemd.Machine"
+#define VARLINK_PATH_MACHINED_RESOLVE_HOOK RUNSTATEDIR "/systemd/resolve.hook/io.systemd.Machine"
 /* Path where to connect to send varlink prekill events */
-#define VARLINK_DIR_OOMD_PREKILL_HOOK "/run/systemd/oomd.prekill.hook/"
+#define VARLINK_DIR_OOMD_PREKILL_HOOK RUNSTATEDIR "/systemd/oomd.prekill.hook/"
 
 /* Recommended baseline - see README for details */
 #define KERNEL_BASELINE_VERSION "5.14"

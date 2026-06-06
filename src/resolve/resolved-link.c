@@ -55,7 +55,7 @@ int link_new(Manager *m, Link **ret, int ifindex) {
                 .operstate = IF_OPER_UNKNOWN,
         };
 
-        if (asprintf(&l->state_file, "/run/systemd/resolve/netif/%i", ifindex) < 0)
+        if (asprintf(&l->state_file, RUNSTATEDIR "/systemd/resolve/netif/%i", ifindex) < 0)
                 return -ENOMEM;
 
         r = hashmap_ensure_put(&m->links, NULL, INT_TO_PTR(ifindex), l);

@@ -101,7 +101,7 @@ int logind_reboot(enum action a) {
          * soft-reboot, as /run/nextroot/ can never go away. */
         SET_FLAG(flags,
                  SD_LOGIND_SOFT_REBOOT_IF_NEXTROOT_SET_UP,
-                 a == ACTION_REBOOT && getenv_bool("SYSTEMCTL_SKIP_AUTO_SOFT_REBOOT") <= 0 && path_is_mount_point("/run/nextroot") > 0);
+                 a == ACTION_REBOOT && getenv_bool("SYSTEMCTL_SKIP_AUTO_SOFT_REBOOT") <= 0 && path_is_mount_point(RUNSTATEDIR "/nextroot") > 0);
         SET_FLAG(flags, SD_LOGIND_SOFT_REBOOT, a == ACTION_SOFT_REBOOT);
 
         r = bus_call_method(bus, bus_login_mgr, method_with_flags, &error, NULL, "t", flags);

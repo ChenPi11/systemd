@@ -632,7 +632,7 @@ int mode_to_inaccessible_node(
         assert(ret);
 
         if (!runtime_dir)
-                runtime_dir = "/run";
+                runtime_dir = RUNSTATEDIR;
 
         if (S_ISLNK(mode))
                 return -EINVAL;
@@ -963,7 +963,7 @@ static int mount_in_namespace_legacy(
                 const ImagePolicy *image_policy) {
 
         _cleanup_close_pair_ int errno_pipe_fd[2] = EBADF_PAIR;
-        char mount_slave[] = "/tmp/propagate.XXXXXX", *mount_tmp, *mount_outside, *p;
+        char mount_slave[] = SYSTEM_TMPDIR "/propagate.XXXXXX", *mount_tmp, *mount_outside, *p;
         bool mount_slave_created = false, mount_slave_mounted = false,
                 mount_tmp_created = false, mount_tmp_mounted = false,
                 mount_outside_created = false, mount_outside_mounted = false;

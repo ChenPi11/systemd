@@ -40,7 +40,7 @@ static void clock_state_release(ClockState *sp) {
 static int clock_state_update(ClockState *sp, sd_event *event);
 
 static int update_notify_run_systemd_timesync(ClockState *sp) {
-        sp->run_systemd_timesync_wd = inotify_add_watch(sp->inotify_fd, "/run/systemd/timesync", IN_CREATE|IN_DELETE_SELF);
+        sp->run_systemd_timesync_wd = inotify_add_watch(sp->inotify_fd, RUNSTATEDIR "/systemd/timesync", IN_CREATE|IN_DELETE_SELF);
         return sp->run_systemd_timesync_wd;
 }
 
@@ -146,7 +146,7 @@ static int clock_state_update(
         log_info("adjtime state %i status %x time %s", sp->adjtime_state, (unsigned) tx.status,
                  FORMAT_TIMESTAMP_STYLE(t, TIMESTAMP_US_UTC) ?: "unrepresentable");
 
-        sp->has_watchfile = access("/run/systemd/timesync/synchronized", F_OK) >= 0;
+        sp->has_watchfile = access(RUNSTATEDIR "/systemd/timesync/synchronized", F_OK) >= 0;
         if (sp->has_watchfile)
                 /* Presence of watch file overrides adjtime_state */
                 r = 0;
@@ -203,7 +203,7 @@ static int run(int argc, char * argv[]) {
         if (r < 0)
                 return log_error_errno(r, "Failed to create notify event source: %m");
 
-        r = inotify_add_watch_and_warn(state.inotify_fd, "/run/systemd/", IN_CREATE);
+        r = inotify_add_watch_and_warn(state.inotify_fd, RUNSTATEDIR "/systemd/", IN_CREATE);
         if (r < 0)
                 return r;
 

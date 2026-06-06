@@ -1467,7 +1467,7 @@ static int add_mounts_from_creds(bool prefix_sysroot) {
                         return ret;
 
                 RET_GATHER(ret, parse_fstab_one(
-                                           "/run/credentials",
+                                           RUNSTATEDIR "/credentials",
                                            sym_mnt_fs_get_source(fs),
                                            sym_mnt_fs_get_target(fs),
                                            sym_mnt_fs_get_fstype(fs),

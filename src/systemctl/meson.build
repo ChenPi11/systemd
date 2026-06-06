@@ -51,6 +51,7 @@ executables += [
         executable_template + {
                 'name' : 'systemctl',
                 'public' : true,
+                'conditions' : ['ENABLE_SYSTEMCTL'],
                 'sources' : systemctl_sources,
                 'extract' : systemctl_extract_sources,
                 'link_with' : systemctl_link_with,
@@ -62,14 +63,17 @@ executables += [
                 'install_tag' : 'systemctl',
         },
         fuzz_template + {
+                'conditions' : ['ENABLE_SYSTEMCTL'],
                 'sources' : files('fuzz-systemctl-parse-argv.c'),
                 'objects' : ['systemctl'],
                 'link_with' : systemctl_link_with,
         },
 ]
 
-foreach alias : ['halt', 'poweroff', 'reboot', 'shutdown']
-        install_symlink(alias,
-                        pointing_to : sbin_to_bin + 'systemctl',
-                        install_dir : sbindir)
-endforeach
+if conf.get('ENABLE_SYSTEMCTL') == 1
+        foreach alias : ['halt', 'poweroff', 'reboot', 'shutdown']
+                install_symlink(alias,
+                                pointing_to : sbin_to_bin + 'systemctl',
+                                install_dir : sbindir)
+        endforeach
+endif

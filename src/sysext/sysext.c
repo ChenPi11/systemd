@@ -1736,11 +1736,11 @@ static int merge_subprocess(
                         return log_error_errno(r, "Failed to resolve --root='%s': %m", strempty(arg_root));
         }
 
-        assert(path_startswith(workspace, "/run/"));
+        assert(path_startswith(workspace, RUNSTATEDIR "/"));
 
         /* Mark the whole of /run as MS_SLAVE, so that we can mount stuff below it that doesn't show up on
          * the host otherwise. */
-        r = mount_nofollow_verbose(LOG_ERR, NULL, "/run", NULL, MS_SLAVE|MS_REC, NULL);
+        r = mount_nofollow_verbose(LOG_ERR, NULL, RUNSTATEDIR, NULL, MS_SLAVE|MS_REC, NULL);
         if (r < 0)
                 return log_error_errno(r, "Failed to remount /run/ MS_SLAVE: %m");
 
@@ -2268,7 +2268,7 @@ static int merge(ImageClass image_class,
         if (r == 0) {
                 /* Child with its own mount namespace */
 
-                r = merge_subprocess(image_class, hierarchies, force, always_refresh, noexec, images, "/run/systemd/sysext");
+                r = merge_subprocess(image_class, hierarchies, force, always_refresh, noexec, images, RUNSTATEDIR "/systemd/sysext");
 
                 /* Our namespace ceases to exist here, also implicitly detaching all temporary mounts we
                  * created below /run. Nice! */

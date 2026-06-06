@@ -816,7 +816,7 @@ static int enumerator_scan_devices_tag(sd_device_enumerator *enumerator, const c
         assert(enumerator);
         assert(tag);
 
-        path = strjoina("/run/udev/tags/", tag);
+        path = strjoina(RUNSTATEDIR "/udev/tags/", tag);
 
         dir = opendir(path);
         if (!dir) {

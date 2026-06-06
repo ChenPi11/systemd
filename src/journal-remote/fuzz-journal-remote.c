@@ -31,7 +31,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
         fuzz_setup_logging();
 
-        assert_se(mkdtemp_malloc("/tmp/fuzz-journal-remote-XXXXXX", &tmp) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/fuzz-journal-remote-XXXXXX", &tmp) >= 0);
         assert_se(name = path_join(tmp, "fuzz-journal-remote.XXXXXX.journal"));
 
         fdin = fdin_close = memfd_new_and_seal("fuzz-journal-remote", data, size);

@@ -73,7 +73,7 @@ int session_new(Manager *m, const char *id, Session **ret) {
         *s = (Session) {
                 .manager = m,
                 .id = strdup(id),
-                .state_file = path_join("/run/systemd/sessions/", id),
+                .state_file = path_join(RUNSTATEDIR "/systemd/sessions/", id),
                 .vtfd = -EBADF,
                 .audit_id = AUDIT_SESSION_INVALID,
                 .tty_validity = _TTY_VALIDITY_INVALID,
@@ -344,7 +344,7 @@ int session_save(Session *s) {
         if (!s->started)
                 return 0;
 
-        r = mkdir_safe_label("/run/systemd/sessions", 0755, 0, 0, MKDIR_WARN_MODE);
+        r = mkdir_safe_label(RUNSTATEDIR "/systemd/sessions", 0755, 0, 0, MKDIR_WARN_MODE);
         if (r < 0)
                 return log_error_errno(r, "Failed to create /run/systemd/sessions/: %m");
 

@@ -1118,7 +1118,7 @@ static void context_determine_hostname_source(Context *c) {
                  * that the hostname was set by an older version that had a different fallback, in the initrd
                  * or before we reexecuted. */
 
-                r = read_one_line_file("/run/systemd/default-hostname", &fallback);
+                r = read_one_line_file(RUNSTATEDIR "/systemd/default-hostname", &fallback);
                 if (r < 0 && r != -ENOENT)
                         log_warning_errno(r, "Failed to read /run/systemd/default-hostname, ignoring: %m");
 
@@ -2055,7 +2055,7 @@ static int connect_varlink(Context *c) {
         if (r < 0)
                 return log_error_errno(r, "Failed to bind to passed Varlink sockets: %m");
         if (r == 0) {
-                r = sd_varlink_server_listen_address(c->varlink_server, "/run/systemd/io.systemd.Hostname", 0666);
+                r = sd_varlink_server_listen_address(c->varlink_server, RUNSTATEDIR "/systemd/io.systemd.Hostname", 0666);
                 if (r < 0)
                         return log_error_errno(r, "Failed to bind to Varlink socket: %m");
         }

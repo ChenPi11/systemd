@@ -194,7 +194,7 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
                 }
 
         if (!arg_issue_path && !arg_issue_stdout) {
-                arg_issue_path = strdup("/run/issue.d/50-ssh-vsock.issue");
+                arg_issue_path = strdup(RUNSTATEDIR "/issue.d/50-ssh-vsock.issue");
                 if (!arg_issue_path)
                         return log_oom();
         }

@@ -88,7 +88,7 @@ static CreditEntropy may_credit(int seed_fd) {
         /* Don't credit the random seed if we are in first-boot mode, because we are supposed to start from
          * scratch. This is a safety precaution for cases where people ship "golden" images with empty
          * /etc but populated /var that contains a random seed. */
-        r = RET_NERRNO(access("/run/systemd/first-boot", F_OK));
+        r = RET_NERRNO(access(RUNSTATEDIR "/systemd/first-boot", F_OK));
         if (r == -ENOENT)
                 /* All is good, we are not in first-boot mode. */
                 return CREDIT_ENTROPY_YES_PLEASE;

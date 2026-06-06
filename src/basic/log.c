@@ -219,7 +219,7 @@ static int log_open_journal(void) {
                 goto fail;
         }
 
-        r = connect_unix_path(journal_fd, AT_FDCWD, "/run/systemd/journal/socket");
+        r = connect_unix_path(journal_fd, AT_FDCWD, RUNSTATEDIR "/systemd/journal/socket");
         if (r < 0)
                 goto fail;
 

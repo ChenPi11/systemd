@@ -316,8 +316,8 @@ int verb_control_main(int argc, char *argv[], uintptr_t _data, void *userdata) {
 
         if (arg_load_credentials) {
                 static const PickUpCredential table[] = {
-                        { "udev.conf.",  "/run/udev/udev.conf.d/", ".conf"  },
-                        { "udev.rules.", "/run/udev/rules.d/",     ".rules" },
+                        { "udev.conf.",  RUNSTATEDIR "/udev/udev.conf.d/", ".conf"  },
+                        { "udev.rules.", RUNSTATEDIR "/udev/rules.d/",     ".rules" },
                 };
                 r = pick_up_credentials(table, ELEMENTSOF(table));
                 if (r < 0)

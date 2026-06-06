@@ -20,7 +20,7 @@ static const char *no_catalog_dirs[] = {
 };
 
 static OrderedHashmap* test_import(const char* contents, ssize_t size, int code) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-catalog.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-catalog.XXXXXX";
         _cleanup_close_ int fd = -EBADF;
         OrderedHashmap *h = NULL;
 
@@ -180,7 +180,7 @@ static void test_catalog_file_lang(void) {
 }
 
 int main(int argc, char *argv[]) {
-        _cleanup_(unlink_tempfilep) char database[] = "/tmp/test-catalog.XXXXXX";
+        _cleanup_(unlink_tempfilep) char database[] = SYSTEM_TMPDIR "/test-catalog.XXXXXX";
         _cleanup_close_ int fd = -EBADF;
         _cleanup_free_ char *text = NULL;
 

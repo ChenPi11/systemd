@@ -66,7 +66,7 @@ static const char* const xdg_desktop_file[] = {
 };
 
 static void test_xdg_desktop_parse_one(unsigned i, const char *s) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-xdg-autostart-parser.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-xdg-autostart-parser.XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
         _cleanup_(xdg_autostart_service_freep) XdgAutostartService *service = NULL;
 

@@ -431,7 +431,7 @@ int manager_process_native_file(
                         return log_ratelimit_error_errno(r, JOURNAL_LOG_RATELIMIT,
                                                          "Failed to get path of passed fd: %m");
 
-                e = PATH_STARTSWITH_SET(k, "/dev/shm/", "/tmp/", "/var/tmp/");
+                e = PATH_STARTSWITH_SET(k, "/dev/shm/", SYSTEM_TMPDIR "/", "/var/tmp/");
                 if (!e)
                         return log_ratelimit_error_errno(SYNTHETIC_ERRNO(EPERM), JOURNAL_LOG_RATELIMIT,
                                                          "Received file outside of allowed directories, refusing.");

@@ -911,7 +911,7 @@ int bus_init_private(Manager *m) {
                 if (getpid_cached() != 1)
                         return 0;
 
-                r = sockaddr_un_set_path(&sa.un, "/run/systemd/private");
+                r = sockaddr_un_set_path(&sa.un, RUNSTATEDIR "/systemd/private");
         } else {
                 _cleanup_free_ char *p = NULL;
 

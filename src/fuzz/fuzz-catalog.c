@@ -9,7 +9,7 @@
 #include "tmpfile-util.h"
 
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/fuzz-catalog.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/fuzz-catalog.XXXXXX";
         _cleanup_close_ int fd = -EBADF;
         _cleanup_ordered_hashmap_free_ OrderedHashmap *h = NULL;
 

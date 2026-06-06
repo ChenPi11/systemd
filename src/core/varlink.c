@@ -536,8 +536,8 @@ static int manager_varlink_init_system_api(Manager *m) {
                 r = varlink_server_listen_many_idempotent(
                                 m->varlink_server, fresh,
                                 /* prefix = */ NULL,
-                                "/run/systemd/io.systemd.Manager",
-                                "/run/systemd/userdb/io.systemd.DynamicUser",
+                                RUNSTATEDIR "/systemd/io.systemd.Manager",
+                                RUNSTATEDIR "/systemd/userdb/io.systemd.DynamicUser",
                                 VARLINK_PATH_MANAGED_OOM_SYSTEM);
                 if (r < 0)
                         return r;

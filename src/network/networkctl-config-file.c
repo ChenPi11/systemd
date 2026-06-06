@@ -338,7 +338,7 @@ static int add_config_to_edit(
                 return log_error_errno(SYNTHETIC_ERRNO(EEXIST),
                                        "Cannot edit runtime config file: overridden by %s", path);
 
-        if (path_startswith(path, "/usr") || arg_runtime != !!path_startswith(path, "/run")) {
+        if (path_startswith(path, "/usr") || arg_runtime != !!path_startswith(path, RUNSTATEDIR)) {
                 _cleanup_free_ char *name = NULL;
 
                 r = path_extract_filename(path, &name);
@@ -364,7 +364,7 @@ static int add_config_to_edit(
                         return log_error_errno(SYNTHETIC_ERRNO(EEXIST),
                                                "Cannot edit runtime config file: overridden by %s", old_dropin);
 
-                need_new_dropin = path_startswith(old_dropin, "/usr") || arg_runtime != !!path_startswith(old_dropin, "/run");
+                need_new_dropin = path_startswith(old_dropin, "/usr") || arg_runtime != !!path_startswith(old_dropin, RUNSTATEDIR);
         } else
                 need_new_dropin = true;
 

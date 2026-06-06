@@ -156,7 +156,7 @@ static Manager* manager_free(Manager *m) {
         sd_device_monitor_unref(m->device_uaccess_monitor);
 
         if (m->unlink_nologin)
-                (void) unlink_or_warn("/run/nologin");
+                (void) unlink_or_warn(RUNSTATEDIR "/nologin");
 
         hashmap_free(m->polkit_registry);
 
@@ -252,12 +252,12 @@ static int manager_enumerate_seats(Manager *m) {
          * actually create any seats. Removes data of seats that no
          * longer exist. */
 
-        d = opendir("/run/systemd/seats");
+        d = opendir(RUNSTATEDIR "/systemd/seats");
         if (!d) {
                 if (errno == ENOENT)
                         return 0;
 
-                return log_error_errno(errno, "Failed to open %s: %m", "/run/systemd/seats/");
+                return log_error_errno(errno, "Failed to open %s: %m", RUNSTATEDIR "/systemd/seats/");
         }
 
         FOREACH_DIRENT(de, d, return -errno) {
@@ -325,12 +325,12 @@ static int manager_enumerate_users(Manager *m) {
         r = manager_enumerate_linger_users(m);
 
         /* Read in user data stored on disk */
-        d = opendir("/run/systemd/users");
+        d = opendir(RUNSTATEDIR "/systemd/users");
         if (!d) {
                 if (errno == ENOENT)
                         return 0;
 
-                return log_error_errno(errno, "Failed to open %s: %m", "/run/systemd/users/");
+                return log_error_errno(errno, "Failed to open %s: %m", RUNSTATEDIR "/systemd/users/");
         }
 
         FOREACH_DIRENT(de, d, return -errno) {
@@ -542,12 +542,12 @@ static int manager_enumerate_sessions(Manager *m) {
         assert(m);
 
         /* Read in session data stored on disk */
-        d = opendir("/run/systemd/sessions");
+        d = opendir(RUNSTATEDIR "/systemd/sessions");
         if (!d) {
                 if (errno == ENOENT)
                         return 0;
 
-                return log_error_errno(errno, "Failed to open %s: %m", "/run/systemd/sessions/");
+                return log_error_errno(errno, "Failed to open %s: %m", RUNSTATEDIR "/systemd/sessions/");
         }
 
         FOREACH_DIRENT(de, d, return -errno) {
@@ -608,12 +608,12 @@ static int manager_enumerate_inhibitors(Manager *m) {
 
         assert(m);
 
-        d = opendir("/run/systemd/inhibit");
+        d = opendir(RUNSTATEDIR "/systemd/inhibit");
         if (!d) {
                 if (errno == ENOENT)
                         return 0;
 
-                return log_error_errno(errno, "Failed to open %s: %m", "/run/systemd/inhibit/");
+                return log_error_errno(errno, "Failed to open %s: %m", RUNSTATEDIR "/systemd/inhibit/");
         }
 
         FOREACH_DIRENT(de, d, return -errno) {
@@ -1368,9 +1368,9 @@ static int run(int argc, char *argv[]) {
         /* Always create the directories people can create inotify watches in. Note that some applications
          * might check for the existence of /run/systemd/seats/ to determine whether logind is available, so
          * please always make sure these directories are created early on and unconditionally. */
-        (void) mkdir_label("/run/systemd/seats", 0755);
-        (void) mkdir_label("/run/systemd/users", 0755);
-        (void) mkdir_label("/run/systemd/sessions", 0755);
+        (void) mkdir_label(RUNSTATEDIR "/systemd/seats", 0755);
+        (void) mkdir_label(RUNSTATEDIR "/systemd/users", 0755);
+        (void) mkdir_label(RUNSTATEDIR "/systemd/sessions", 0755);
 
         r = manager_new(&m);
         if (r < 0)

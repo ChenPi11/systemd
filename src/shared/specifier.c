@@ -400,7 +400,7 @@ int specifier_tmp_dir(char specifier, const void *data, const char *root, const 
         assert(ret);
 
         if (root) /* If root dir is set, don't honour $TMP or similar */
-                p = "/tmp";
+                p = SYSTEM_TMPDIR;
         else {
                 r = tmp_dir(&p);
                 if (r < 0)

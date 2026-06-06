@@ -203,11 +203,11 @@ static int get_path(uint64_t type, char **buffer, const char **ret) {
                 return 0;
 
         case SD_PATH_SYSTEM_RUNTIME:
-                *ret = "/run";
+                *ret = RUNSTATEDIR;
                 return 0;
 
         case SD_PATH_SYSTEM_RUNTIME_LOGS:
-                *ret = "/run/log";
+                *ret = RUNSTATEDIR "/log";
                 return 0;
 
         case SD_PATH_SYSTEM_STATE_PRIVATE:

@@ -311,7 +311,7 @@ static int pin_capsule_socket(const char *capsule, const char *suffix, uid_t *re
         assert(ret_uid);
         assert(ret_gid);
 
-        p = path_join("/run/capsules", capsule, suffix);
+        p = path_join(RUNSTATEDIR "/capsules", capsule, suffix);
         if (!p)
                 return -ENOMEM;
 

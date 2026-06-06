@@ -42,7 +42,7 @@ TEST(parse_etc_hosts_system) {
 
 TEST(parse_etc_hosts) {
         _cleanup_(unlink_tempfilep) char
-                t[] = "/tmp/test-resolved-etc-hosts.XXXXXX";
+                t[] = SYSTEM_TMPDIR "/test-resolved-etc-hosts.XXXXXX";
 
         int fd;
         _cleanup_fclose_ FILE *f = NULL;

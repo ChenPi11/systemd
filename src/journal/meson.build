@@ -89,6 +89,7 @@ executables += [
         executable_template + {
                 'name' : 'journalctl',
                 'public' : true,
+                'conditions' : ['ENABLE_JOURNALCTL'],
                 'sources' : journalctl_sources,
                 'link_with' : journalctl_link_with,
                 'dependencies' : [

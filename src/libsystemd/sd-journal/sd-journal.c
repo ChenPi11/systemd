@@ -1568,7 +1568,7 @@ static void track_file_disposition(sd_journal *j, JournalFile *f) {
         assert(j);
         assert(f);
 
-        if (!j->has_runtime_files && path_has_prefix(j, f->path, "/run"))
+        if (!j->has_runtime_files && path_has_prefix(j, f->path, RUNSTATEDIR))
                 j->has_runtime_files = true;
         else if (!j->has_persistent_files && path_has_prefix(j, f->path, "/var"))
                 j->has_persistent_files = true;
@@ -2090,7 +2090,7 @@ static int add_directory(
 
         /* We consider everything local that is in a directory for the local machine ID, or that is stored in /run */
         if ((j->flags & SD_JOURNAL_LOCAL_ONLY) &&
-            !((dirname && dirname_is_machine_id(dirname) > 0) || path_has_prefix(j, path, "/run")))
+            !((dirname && dirname_is_machine_id(dirname) > 0) || path_has_prefix(j, path, RUNSTATEDIR)))
                 return 0;
 
         if (dirname &&
@@ -2151,7 +2151,7 @@ static int add_root_directory(sd_journal *j, const char *p, bool missing_ok) {
                 log_debug("Considering root directory '%s'.", p);
 
                 if ((j->flags & SD_JOURNAL_RUNTIME_ONLY) &&
-                    !path_has_prefix(j, p, "/run"))
+                    !path_has_prefix(j, p, RUNSTATEDIR))
                         return -EINVAL;
 
                 if (j->prefix)
@@ -2366,7 +2366,7 @@ _public_ int sd_journal_open_container(sd_journal **ret, const char *machine, in
         assert_return((flags & ~OPEN_CONTAINER_ALLOWED_FLAGS) == 0, -EINVAL);
         assert_return(hostname_is_valid(machine, 0), -EINVAL);
 
-        p = strjoina("/run/systemd/machines/", machine);
+        p = strjoina(RUNSTATEDIR "/systemd/machines/", machine);
         r = parse_env_file(NULL, p,
                            "ROOT", &root,
                            "CLASS", &class);

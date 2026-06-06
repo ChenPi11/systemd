@@ -68,7 +68,7 @@ int runtime_directory_generic(RuntimeScope scope, const char *suffix, char **ret
                 return xdg_user_runtime_dir(suffix, ret);
 
         case RUNTIME_SCOPE_SYSTEM: {
-                char *d = path_join("/run", suffix);
+                char *d = path_join(RUNSTATEDIR, suffix);
                 if (!d)
                         return -ENOMEM;
                 *ret = d;
@@ -213,7 +213,7 @@ static int acquire_generator_dirs(
         if (tempdir)
                 prefix = tempdir;
         else if (scope == RUNTIME_SCOPE_SYSTEM)
-                prefix = "/run/systemd";
+                prefix = RUNSTATEDIR "/systemd";
         else { /* RUNTIME_SCOPE_USER */
                 r = xdg_user_runtime_dir("/systemd", &prefix_alloc);
                 if (r < 0)
@@ -253,7 +253,7 @@ static int acquire_transient_dir(RuntimeScope scope, const char *tempdir, char *
         if (tempdir)
                 transient = path_join(tempdir, "transient");
         else if (scope == RUNTIME_SCOPE_SYSTEM)
-                transient = strdup("/run/systemd/transient");
+                transient = strdup(RUNSTATEDIR "/systemd/transient");
         else /* RUNTIME_SCOPE_USER */
                 return xdg_user_runtime_dir("/systemd/transient", ret);
 
@@ -284,16 +284,16 @@ static int acquire_lookup_dirs(
                 const char *runtime;
         } dirs[_LOOKUP_DIR_MAX][_RUNTIME_SCOPE_MAX] = {
                 [LOOKUP_DIR_CONFIG] = {
-                        [RUNTIME_SCOPE_SYSTEM] = { SYSTEM_CONFIG_UNIT_DIR, "/run/systemd/system" },
-                        [RUNTIME_SCOPE_GLOBAL] = { USER_CONFIG_UNIT_DIR,   "/run/systemd/user"   },
+                        [RUNTIME_SCOPE_SYSTEM] = { SYSTEM_CONFIG_UNIT_DIR, RUNSTATEDIR "/systemd/system" },
+                        [RUNTIME_SCOPE_GLOBAL] = { USER_CONFIG_UNIT_DIR,   RUNSTATEDIR "/systemd/user"   },
                         [RUNTIME_SCOPE_USER]   = { "systemd/user",         "systemd/user"        },
                 },
                 [LOOKUP_DIR_CONTROL] = {
-                        [RUNTIME_SCOPE_SYSTEM] = { "/etc/systemd/system.control", "/run/systemd/system.control" },
+                        [RUNTIME_SCOPE_SYSTEM] = { "/etc/systemd/system.control", RUNSTATEDIR "/systemd/system.control" },
                         [RUNTIME_SCOPE_USER]   = { "systemd/user.control",        "systemd/user.control"        },
                 },
                 [LOOKUP_DIR_ATTACHED] = {
-                        [RUNTIME_SCOPE_SYSTEM] = { "/etc/systemd/system.attached", "/run/systemd/system.attached" },
+                        [RUNTIME_SCOPE_SYSTEM] = { "/etc/systemd/system.attached", RUNSTATEDIR "/systemd/system.attached" },
                         [RUNTIME_SCOPE_USER]   = { "systemd/user.attached",        "systemd/user.attached"        },
                 },
         };
@@ -518,7 +518,7 @@ int lookup_paths_init(
         }
 
         if (FLAGS_SET(flags, LOOKUP_PATHS_TEMPORARY_GENERATED)) {
-                r = mkdtemp_malloc("/tmp/systemd-temporary-XXXXXX", &tempdir);
+                r = mkdtemp_malloc(SYSTEM_TMPDIR "/systemd-temporary-XXXXXX", &tempdir);
                 if (r < 0)
                         return log_debug_errno(r, "Failed to create temporary directory: %m");
         }
@@ -584,7 +584,7 @@ int lookup_paths_init(
                                        "/etc/systemd/system",
                                        ASSERT_PTR(persistent_attached),
                                        ASSERT_PTR(runtime_config),
-                                       "/run/systemd/system",
+                                       RUNSTATEDIR "/systemd/system",
                                        ASSERT_PTR(runtime_attached),
                                        STRV_IFNOTNULL(generator),
                                        "/usr/local/lib/systemd/system",
@@ -610,7 +610,7 @@ int lookup_paths_init(
                                        USER_CONFIG_UNIT_DIR,
                                        "/etc/systemd/user",
                                        ASSERT_PTR(runtime_config),
-                                       "/run/systemd/user",
+                                       RUNSTATEDIR "/systemd/user",
                                        "/usr/local/share/systemd/user",
                                        "/usr/share/systemd/user",
                                        "/usr/local/lib/systemd/user",
@@ -753,7 +753,7 @@ void lookup_paths_log(LookupPaths *lp) {
 }
 
 static const char* const system_generator_paths[] = {
-        "/run/systemd/system-generators",
+        RUNSTATEDIR "/systemd/system-generators",
         "/etc/systemd/system-generators",
         "/usr/local/lib/systemd/system-generators",
         SYSTEM_GENERATOR_DIR,
@@ -761,7 +761,7 @@ static const char* const system_generator_paths[] = {
 };
 
 static const char* const user_generator_paths[] = {
-        "/run/systemd/user-generators",
+        RUNSTATEDIR "/systemd/user-generators",
         "/etc/systemd/user-generators",
         "/usr/local/lib/systemd/user-generators",
         USER_GENERATOR_DIR,
@@ -769,7 +769,7 @@ static const char* const user_generator_paths[] = {
 };
 
 static const char* const system_env_generator_paths[] = {
-        "/run/systemd/system-environment-generators",
+        RUNSTATEDIR "/systemd/system-environment-generators",
         "/etc/systemd/system-environment-generators",
         "/usr/local/lib/systemd/system-environment-generators",
         SYSTEM_ENV_GENERATOR_DIR,
@@ -777,7 +777,7 @@ static const char* const system_env_generator_paths[] = {
 };
 
 static const char* const user_env_generator_paths[] = {
-        "/run/systemd/user-environment-generators",
+        RUNSTATEDIR "/systemd/user-environment-generators",
         "/etc/systemd/user-environment-generators",
         "/usr/local/lib/systemd/user-environment-generators",
         USER_ENV_GENERATOR_DIR,

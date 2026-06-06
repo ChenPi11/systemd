@@ -34,7 +34,7 @@ static int load_boot_secret(struct iovec *ret) {
 
         assert(ret);
 
-        const char *bs = in_initrd() ? "/.extra/boot-secret" : "/run/systemd/stub/boot-secret";
+        const char *bs = in_initrd() ? "/.extra/boot-secret" : RUNSTATEDIR "/systemd/stub/boot-secret";
         r = read_full_file_full(
                         AT_FDCWD,
                         bs,

@@ -8,7 +8,7 @@
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
         _cleanup_(manager_freep) Manager *manager = NULL;
         _cleanup_fclose_ FILE *f = NULL;
-        _cleanup_(unlink_tempfilep) char netdev_config[] = "/tmp/fuzz-networkd.XXXXXX";
+        _cleanup_(unlink_tempfilep) char netdev_config[] = SYSTEM_TMPDIR "/fuzz-networkd.XXXXXX";
         _cleanup_(netdev_unrefp) NetDev *netdev = NULL;
 
         if (outside_size_range(size, 0, 65536))

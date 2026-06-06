@@ -341,7 +341,7 @@ int setup_bridge(const char *veth_name, const char *bridge_name, bool create) {
                 /* We take a system-wide lock here, so that we can safely check whether there's still a member in the
                  * bridge before removing it, without risking interference from other nspawn instances. */
 
-                r = make_lock_file("/run/systemd/nspawn-network-zone", LOCK_EX, &bridge_lock);
+                r = make_lock_file(RUNSTATEDIR "/systemd/nspawn-network-zone", LOCK_EX, &bridge_lock);
                 if (r < 0)
                         return log_error_errno(r, "Failed to take network zone lock: %m");
         }
@@ -376,7 +376,7 @@ int remove_bridge(const char *bridge_name) {
         if (isempty(bridge_name))
                 return 0;
 
-        r = make_lock_file("/run/systemd/nspawn-network-zone", LOCK_EX, &bridge_lock);
+        r = make_lock_file(RUNSTATEDIR "/systemd/nspawn-network-zone", LOCK_EX, &bridge_lock);
         if (r < 0)
                 return log_error_errno(r, "Failed to take network zone lock: %m");
 

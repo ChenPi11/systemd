@@ -179,7 +179,7 @@ static bool nonunmountable_path(const char *path) {
         assert(path);
 
         return PATH_IN_SET(path, "/", "/usr") ||
-                path_startswith(path, "/run/initramfs");
+                path_startswith(path, RUNSTATEDIR "/initramfs");
 }
 
 static void log_umount_blockers(const char *mnt) {
@@ -444,11 +444,11 @@ static int mount_points_list_umount(MountPoint **head, bool *changed, bool last_
                  * /run/shutdown/mounts from there.
                  */
                 if (!resolved_mounts_path)
-                        (void) chase("/run/shutdown/mounts", NULL, 0, &resolved_mounts_path, NULL);
+                        (void) chase(RUNSTATEDIR "/shutdown/mounts", NULL, 0, &resolved_mounts_path, NULL);
                 if (!path_equal(dirname, resolved_mounts_path)) {
-                        char newpath[STRLEN("/run/shutdown/mounts/") + 16 + 1];
+                        char newpath[STRLEN(RUNSTATEDIR "/shutdown/mounts/") + 16 + 1];
 
-                        xsprintf(newpath, "/run/shutdown/mounts/%016" PRIx64, random_u64());
+                        xsprintf(newpath, RUNSTATEDIR "/shutdown/mounts/%016" PRIx64, random_u64());
 
                         /* on error of is_dir, assume directory */
                         if (is_dir(m->path, true) != 0) {

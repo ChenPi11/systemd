@@ -27,7 +27,7 @@ static int run(int argc, char *argv[]) {
         /* We only touch /run/nologin. See create_shutdown_run_nologin_or_warn() for details. */
 
         if (streq(argv[1], "start"))
-                return unlink_or_warn("/run/nologin");
+                return unlink_or_warn(RUNSTATEDIR "/nologin");
         if (streq(argv[1], "stop"))
                 return create_shutdown_run_nologin_or_warn();
 

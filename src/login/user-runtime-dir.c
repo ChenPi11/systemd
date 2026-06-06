@@ -80,7 +80,7 @@ static int user_mkdir_runtime_path(
         assert(uid_is_valid(uid));
         assert(gid_is_valid(gid));
 
-        r = mkdir_safe_label("/run/user", 0755, 0, 0, MKDIR_WARN_MODE);
+        r = mkdir_safe_label(RUNSTATEDIR "/user", 0755, 0, 0, MKDIR_WARN_MODE);
         if (r < 0)
                 return log_error_errno(r, "Failed to create /run/user: %m");
 
@@ -145,8 +145,8 @@ static int do_mount(UserRecord *ur) {
         if (r < 0)
                 return r;
 
-        char runtime_path[STRLEN("/run/user/") + DECIMAL_STR_MAX(uid_t)];
-        xsprintf(runtime_path, "/run/user/" UID_FMT, ur->uid);
+        char runtime_path[STRLEN(RUNSTATEDIR "/user/") + DECIMAL_STR_MAX(uid_t)];
+        xsprintf(runtime_path, RUNSTATEDIR "/user/" UID_FMT, ur->uid);
 
         log_debug("Will mount %s owned by "UID_FMT":"GID_FMT, runtime_path, ur->uid, user_record_gid(ur));
         return user_mkdir_runtime_path(runtime_path, ur->uid, user_record_gid(ur), runtime_dir_size, runtime_dir_inodes);
@@ -176,7 +176,7 @@ static int user_remove_runtime_path(const char *runtime_path) {
 }
 
 static int do_umount(const char *user) {
-        char runtime_path[STRLEN("/run/user/") + DECIMAL_STR_MAX(uid_t)];
+        char runtime_path[STRLEN(RUNSTATEDIR "/user/") + DECIMAL_STR_MAX(uid_t)];
         uid_t uid;
         int r;
 
@@ -192,7 +192,7 @@ static int do_umount(const char *user) {
                                                user);
         }
 
-        xsprintf(runtime_path, "/run/user/" UID_FMT, uid);
+        xsprintf(runtime_path, RUNSTATEDIR "/user/" UID_FMT, uid);
 
         log_debug("Will remove %s", runtime_path);
         return user_remove_runtime_path(runtime_path);
@@ -313,7 +313,7 @@ static int do_tmpfs_quota(UserRecord *ur) {
         if (!uid_is_valid(ur->uid))
                 return log_error_errno(SYNTHETIC_ERRNO(ENOMSG), "User '%s' lacks UID, refusing.", ur->user_name);
 
-        r = apply_tmpfs_quota(STRV_MAKE("/tmp", "/var/tmp"), ur->uid, ur->tmp_limit.limit, user_record_tmp_limit_scale(ur));
+        r = apply_tmpfs_quota(STRV_MAKE(SYSTEM_TMPDIR, "/var/tmp"), ur->uid, ur->tmp_limit.limit, user_record_tmp_limit_scale(ur));
         if (r < 0)
                 return r;
 

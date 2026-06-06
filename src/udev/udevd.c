@@ -53,7 +53,7 @@ int run_udevd(int argc, char *argv[]) {
         /* Make sure we can have plenty fds (for example for pidfds) */
         (void) rlimit_nofile_bump(-1);
 
-        r = RET_NERRNO(mkdir("/run/udev", 0755));
+        r = RET_NERRNO(mkdir(RUNSTATEDIR "/udev", 0755));
         if (r < 0 && r != -EEXIST)
                 return log_error_errno(r, "Failed to create /run/udev: %m");
 

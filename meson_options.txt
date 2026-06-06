@@ -1,6 +1,11 @@
 # -*- mode: meson -*-
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+option('tmpdir', type : 'string', value : '/tmp',
+       description : 'path to the temporary directory used at runtime (default: /tmp)')
+option('runstatedir', type : 'string', value : '/run',
+       description : 'path to the runtime state directory (default: /run)')
+
 option('version-tag', type : 'string',
        description : 'set the extended version string (defaults to project version)')
 option('shared-lib-tag', type : 'string',
@@ -561,6 +566,9 @@ option('ukify', type : 'feature', deprecated : { 'true' : 'enabled', 'false' : '
        description : 'install ukify')
 option('analyze', type: 'boolean', value: true,
        description : 'install systemd-analyze')
+option('disabled-standalone-programs', type : 'array', value : [],
+       choices : ['bootctl', 'busctl', 'journalctl', 'systemctl', 'systemd-delta', 'systemd-mount', 'systemd-run'],
+       description : 'standalone public programs to skip building (systemd-analyze is controlled by -Danalyze=false)')
 
 option('bpf-compiler', type : 'combo', choices : ['clang', 'gcc'],
        description : 'compiler used to build BPF programs')

@@ -610,7 +610,7 @@ static Virtualization detect_container_files(void) {
         } container_file_table[] = {
                 /* https://github.com/containers/podman/issues/6192 */
                 /* https://github.com/containers/podman/issues/3586#issuecomment-661918679 */
-                { "/run/.containerenv", VIRTUALIZATION_PODMAN },
+                { RUNSTATEDIR "/.containerenv", VIRTUALIZATION_PODMAN },
                 /* https://github.com/moby/moby/issues/18355 */
                 /* Docker must be the last in this table, see below. */
                 { "/.dockerenv",        VIRTUALIZATION_DOCKER },
@@ -690,7 +690,7 @@ Virtualization detect_container(void) {
 
         /* The container manager might have placed this in the /run/host/ hierarchy for us, which is best
          * because we can be consumed just like that, without special privileges. */
-        r = read_one_line_file("/run/host/container-manager", &m);
+        r = read_one_line_file(RUNSTATEDIR "/host/container-manager", &m);
         if (r > 0) {
                 e = m;
                 goto translate_name;
@@ -718,7 +718,7 @@ Virtualization detect_container(void) {
 
         /* Otherwise, PID 1 might have dropped this information into a file in /run. This is better than accessing
          * /proc/1/environ, since we don't need CAP_SYS_PTRACE for that. */
-        r = read_one_line_file("/run/systemd/container", &m);
+        r = read_one_line_file(RUNSTATEDIR "/systemd/container", &m);
         if (r > 0) {
                 e = m;
                 goto translate_name;

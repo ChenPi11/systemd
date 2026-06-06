@@ -210,7 +210,7 @@ int verb_settle_main(int argc, char *argv[], uintptr_t _data, void *userdata) {
                         return r;
         } else {
                 /* For non-privileged users, at least check if udevd is running. */
-                if (access("/run/udev/control", F_OK) < 0)
+                if (access(RUNSTATEDIR "/udev/control", F_OK) < 0)
                         return log_error_errno(errno,
                                                errno == ENOENT ? "systemd-udevd is not running." :
                                                                  "Failed to check if /run/udev/control exists: %m");
@@ -220,7 +220,7 @@ int verb_settle_main(int argc, char *argv[], uintptr_t _data, void *userdata) {
         if (r < 0)
                 return log_error_errno(r, "Failed to get default sd-event object: %m");
 
-        r = sd_event_add_inotify(event, NULL, "/run/udev" , IN_DELETE, on_inotify, NULL);
+        r = sd_event_add_inotify(event, NULL, RUNSTATEDIR "/udev" , IN_DELETE, on_inotify, NULL);
         if (r < 0)
                 return log_error_errno(r, "Failed to add inotify watch for /run/udev: %m");
 

@@ -76,7 +76,7 @@ int udev_ctrl_new_from_fd(UdevCtrl **ret, int fd) {
 
         uctrl->saddr.un = (struct sockaddr_un) {
                 .sun_family = AF_UNIX,
-                .sun_path = "/run/udev/control",
+                .sun_path = RUNSTATEDIR "/udev/control",
         };
 
         uctrl->addrlen = sockaddr_un_len(&uctrl->saddr.un);

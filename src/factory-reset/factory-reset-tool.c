@@ -283,7 +283,7 @@ static int verb_complete(int argc, char *argv[], uintptr_t _data, void *userdata
                                        "Failed to remove FactoryResetRequest EFI variable: %m");
         }
 
-        r = touch("/run/systemd/factory-reset-complete");
+        r = touch(RUNSTATEDIR "/systemd/factory-reset-complete");
         if (r < 0)
                 return log_error_errno(r, "Failed to create /run/systemd/factory-reset-complete file: %m");
 

@@ -383,7 +383,7 @@ static int manager_hook_discover(Manager *m) {
          * /run/systemd/resolve/, but the hook directory is where other privileged code shall bind a socket
          * in (and where root ownership hence makes sense). Hence we do not nest the directories, but put
          * them side by side, so that they can have different ownership. */
-        static const char dp[] = "/run/systemd/resolve.hook";
+        static const char dp[] = RUNSTATEDIR "/systemd/resolve.hook";
         _cleanup_closedir_ DIR *d = NULL;
         int r;
 

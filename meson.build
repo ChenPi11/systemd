@@ -120,6 +120,8 @@ sysconfdir = prefixdir / get_option('sysconfdir')
 includedir = prefixdir / get_option('includedir')
 datadir = prefixdir / get_option('datadir')
 localstatedir = '/' / get_option('localstatedir')
+runstatedir = '/' / get_option('runstatedir')
+tmpdir = get_option('tmpdir')
 
 libexecdir = prefixdir / 'lib/systemd'
 libexecdir_to_bin = '../../bin/'
@@ -265,6 +267,8 @@ conf.set_quoted('SSHCONFDIR',                                 sshconfdir)
 conf.set_quoted('SSHDCONFDIR',                                sshdconfdir)
 conf.set_quoted('SHELLPROFILEDIR',                            shellprofiledir)
 conf.set_quoted('SYSCONF_DIR',                                sysconfdir)
+conf.set_quoted('RUNSTATEDIR',                                runstatedir)
+conf.set_quoted('SYSTEM_TMPDIR',                              tmpdir)
 conf.set_quoted('SYSCTL_DIR',                                 sysctldir)
 conf.set_quoted('SYSTEMCTL_BINARY_PATH',                      bindir / 'systemctl')
 conf.set_quoted('SYSTEMD_BINARY_PATH',                        libexecdir / 'systemd')
@@ -1556,6 +1560,19 @@ conf.set10('ENABLE_NSPAWN', feature.allowed())
 
 conf.set10('DEFAULT_MOUNTFSD_TRUSTED_DIRECTORIES', get_option('default-mountfsd-trusted-directories'))
 
+disabled_standalone_programs = get_option('disabled-standalone-programs')
+foreach tuple : [
+                ['bootctl',          'ENABLE_BOOTCTL'],
+                ['busctl',           'ENABLE_BUSCTL'],
+                ['journalctl',       'ENABLE_JOURNALCTL'],
+                ['systemctl',        'ENABLE_SYSTEMCTL'],
+                ['systemd-delta',    'ENABLE_SYSTEMD_DELTA'],
+                ['systemd-mount',    'ENABLE_SYSTEMD_MOUNT'],
+                ['systemd-run',      'ENABLE_SYSTEMD_RUN'],
+        ]
+        conf.set10(tuple[1], tuple[0] not in disabled_standalone_programs)
+endforeach
+
 foreach tuple : [
                 ['analyze'],
                 ['backlight'],
@@ -2777,6 +2794,7 @@ summary({
         'ssh server configuration directory'        : sshdconfdir,
         'ssh server privilege separation directory' : sshdprivsepdir,
         'ssh client configuration directory'        : sshconfdir,
+        'disabled standalone programs'             : disabled_standalone_programs.length() > 0 ? ', '.join(disabled_standalone_programs) : 'none',
         'libcryptsetup plugins directory'           : libcryptsetup_plugins_dir,
         'Shell profile directory'                   : shellprofiledir,
         'RPM macros directory'                      : rpmmacrosdir,
@@ -2914,6 +2932,13 @@ foreach tuple : [
         ['sysext'],
         ['sysinstall'],
         ['systemd-analyze',        conf.get('ENABLE_ANALYZE') == 1],
+        ['bootctl',                conf.get('ENABLE_BOOTCTL') == 1],
+        ['busctl',                 conf.get('ENABLE_BUSCTL') == 1],
+        ['journalctl',             conf.get('ENABLE_JOURNALCTL') == 1],
+        ['systemctl',              conf.get('ENABLE_SYSTEMCTL') == 1],
+        ['systemd-delta',          conf.get('ENABLE_SYSTEMD_DELTA') == 1],
+        ['systemd-mount',          conf.get('ENABLE_SYSTEMD_MOUNT') == 1],
+        ['systemd-run',            conf.get('ENABLE_SYSTEMD_RUN') == 1],
         ['sysupdate'],
         ['sysupdated'],
         ['sysusers'],

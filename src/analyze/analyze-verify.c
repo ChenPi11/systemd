@@ -64,7 +64,7 @@ int verb_verify(int argc, char *argv[], uintptr_t _data, void *userdata) {
         _cleanup_(rm_rf_physical_and_freep) char *tempdir = NULL;
         int r;
 
-        r = mkdtemp_malloc("/tmp/systemd-analyze-XXXXXX", &tempdir);
+        r = mkdtemp_malloc(SYSTEM_TMPDIR "/systemd-analyze-XXXXXX", &tempdir);
         if (r < 0)
                 return log_error_errno(r, "Failed to setup working directory: %m");
 

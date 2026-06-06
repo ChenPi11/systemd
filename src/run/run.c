@@ -2035,7 +2035,7 @@ static int fchown_to_capsule(int fd, const char *capsule) {
         assert(fd >= 0);
         assert(capsule);
 
-        p = path_join("/run/capsules/", capsule);
+        p = path_join(RUNSTATEDIR "/capsules/", capsule);
         if (!p)
                 return -ENOMEM;
 

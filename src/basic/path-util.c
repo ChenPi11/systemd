@@ -1303,7 +1303,7 @@ bool valid_device_node_path(const char *path) {
         /* Some superficial checks whether the specified path is a valid device node path, all without
          * looking at the actual device node. */
 
-        if (!PATH_STARTSWITH_SET(path, "/dev/", "/run/systemd/inaccessible/"))
+        if (!PATH_STARTSWITH_SET(path, "/dev/", RUNSTATEDIR "/systemd/inaccessible/"))
                 return false;
 
         if (endswith(path, "/")) /* can't be a device node if it ends in a slash */
