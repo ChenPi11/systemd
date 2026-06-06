@@ -7,6 +7,7 @@ libcore_sources = files(
         'bpf-firewall.c',
         'bpf-foreign.c',
         'bpf-restrict-fs.c',
+        'bpf-restrict-fsaccess.c',
         'bpf-restrict-ifaces.c',
         'bpf-socket-bind.c',
         'bpf-bind-iface.c',
@@ -42,6 +43,7 @@ libcore_sources = files(
         'kill.c',
         'load-dropin.c',
         'load-fragment.c',
+        'luo.c',
         'manager-dump.c',
         'manager-serialize.c',
         'manager.c',
@@ -73,6 +75,12 @@ libcore_sources = files(
         'varlink-manager.c',
         'varlink-metrics.c',
         'varlink-mount.c',
+        'varlink-path.c',
+        'varlink-scope.c',
+        'varlink-service.c',
+        'varlink-socket.c',
+        'varlink-swap.c',
+        'varlink-timer.c',
         'varlink-unit.c',
 )
 
@@ -80,6 +88,10 @@ if conf.get('BPF_FRAMEWORK') == 1
         foreach name : ['socket-bind', 'restrict-fs', 'restrict-ifaces', 'bind-iface']
                 libcore_sources += bpf_programs_by_name[name]
         endforeach
+endif
+
+if conf.get('HAVE_LSM_INTEGRITY_TYPE') == 1
+        libcore_sources += bpf_programs_by_name['restrict-fsaccess']
 endif
 
 sources += libcore_sources
@@ -136,13 +148,10 @@ libcore_static = static_library(
         dependencies : [libaudit_cflags,
                         libbpf_cflags,
                         libcryptsetup_cflags,
-                        libdl,
                         libm,
                         libmount_cflags,
-                        librt,
                         libseccomp_cflags,
                         libselinux_cflags,
-                        threads,
                         userspace],
         build_by_default : false)
 

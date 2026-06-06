@@ -13,6 +13,7 @@
 #include "fd-util.h"
 #include "format-util.h"
 #include "fileio.h"
+#include "io-util.h"
 #include "iovec-util.h"
 #include "json-internal.h"
 #include "json-util.h"
@@ -60,8 +61,8 @@ static void test_tokenizer_one(const char *data, ...) {
 
                         d = va_arg(ap, double);
 
-                        assert_se(fabs(d - v.real) < 1e-10 ||
-                                  fabs((d - v.real) / v.real) < 1e-10);
+                        assert_se(ABS(d - v.real) < 1e-10 ||
+                                  ABS((d - v.real) / v.real) < 1e-10);
 
                 } else if (t == JSON_TOKEN_INTEGER) {
                         int64_t i;
@@ -242,7 +243,7 @@ static void test_2(sd_json_variant *v) {
 
         /* has thisisaverylongproperty */
         p = sd_json_variant_by_key(v, "thisisaverylongproperty");
-        assert_se(p && sd_json_variant_type(p) == SD_JSON_VARIANT_REAL && fabs(sd_json_variant_real(p) - 1.27) < 0.001);
+        assert_se(p && sd_json_variant_type(p) == SD_JSON_VARIANT_REAL && ABS(sd_json_variant_real(p) - 1.27) < 0.001);
 }
 
 static void test_zeroes(sd_json_variant *v) {
@@ -518,6 +519,68 @@ TEST(source) {
         printf("--- pretty end ---\n");
 }
 
+TEST(parse_fd) {
+        static const char data[] = "{ \"foo\" : \"bar\", \"baz\" : 4711 }";
+
+        _cleanup_(sd_json_variant_unrefp) sd_json_variant *v = NULL;
+        _cleanup_close_ int fd = -EBADF;
+
+        ASSERT_OK(fd = open_tmpfile_unlinkable(NULL, O_RDWR));
+        ASSERT_OK(loop_write(fd, data, strlen(data)));
+
+        /* By default the fd is internally duplicated, the caller's fd stays open and the JSON text is
+         * read starting at the current file offset. */
+        ASSERT_OK_ERRNO(lseek(fd, 0, SEEK_SET));
+        ASSERT_OK(sd_json_parse_fd("tmpfile", fd, /* flags= */ 0, &v, /* reterr_line= */ NULL, /* reterr_column= */ NULL));
+        ASSERT_OK(fd_validate(fd));     /* still open, we only got a duplicate */
+        ASSERT_STREQ(sd_json_variant_string(sd_json_variant_by_key(v, "foo")), "bar");
+        ASSERT_EQ(sd_json_variant_unsigned(sd_json_variant_by_key(v, "baz")), UINT64_C(4711));
+        v = sd_json_variant_unref(v);
+
+        /* Without SD_JSON_PARSE_SEEK0 and with the offset left at EOF there is nothing to read. */
+        ASSERT_OK_ERRNO(lseek(fd, 0, SEEK_END));
+        ASSERT_ERROR(sd_json_parse_fd("tmpfile", fd, /* flags= */ 0, &v, /* reterr_line= */ NULL, /* reterr_column= */ NULL), ENODATA);
+        ASSERT_NULL(v);
+        ASSERT_OK(fd_validate(fd));
+
+        /* SD_JSON_PARSE_SEEK0 rewinds to the beginning first, so the stale offset no longer matters. */
+        ASSERT_OK(sd_json_parse_fd("tmpfile", fd, SD_JSON_PARSE_SEEK0, &v, /* reterr_line= */ NULL, /* reterr_column= */ NULL));
+        ASSERT_OK(fd_validate(fd));
+        ASSERT_STREQ(sd_json_variant_string(sd_json_variant_by_key(v, "foo")), "bar");
+        v = sd_json_variant_unref(v);
+
+        /* SD_JSON_PARSE_REOPEN_FD reopens the fd internally (starting at offset 0), the caller's fd and
+         * its offset are left untouched. */
+        ASSERT_OK_ERRNO(lseek(fd, 0, SEEK_END));
+        ASSERT_OK(sd_json_parse_fd("tmpfile", fd, SD_JSON_PARSE_REOPEN_FD, &v, /* reterr_line= */ NULL, /* reterr_column= */ NULL));
+        ASSERT_OK(fd_validate(fd));
+        ASSERT_STREQ(sd_json_variant_string(sd_json_variant_by_key(v, "foo")), "bar");
+        v = sd_json_variant_unref(v);
+
+        /* SD_JSON_PARSE_REOPEN_FD and SD_JSON_PARSE_DONATE_FD are mutually exclusive. */
+        ASSERT_RETURN_EXPECTED_SE(sd_json_parse_fd("tmpfile", fd, SD_JSON_PARSE_REOPEN_FD|SD_JSON_PARSE_DONATE_FD, &v, /* reterr_line= */ NULL, /* reterr_column= */ NULL) == -EINVAL);
+        ASSERT_OK(fd_validate(fd));     /* not consumed on the -EINVAL path */
+
+        /* SD_JSON_PARSE_DONATE_FD passes ownership into the call: the fd is consumed and closed even on
+         * success. */
+        ASSERT_OK_ERRNO(lseek(fd, 0, SEEK_SET));
+        ASSERT_OK(sd_json_parse_fd("tmpfile", fd, SD_JSON_PARSE_DONATE_FD, &v, /* reterr_line= */ NULL, /* reterr_column= */ NULL));
+        ASSERT_ERROR(fd_validate(fd), EBADF);
+        TAKE_FD(fd);                    /* already closed by the call, don't double-close */
+        ASSERT_STREQ(sd_json_variant_string(sd_json_variant_by_key(v, "foo")), "bar");
+        v = sd_json_variant_unref(v);
+
+        /* SD_JSON_PARSE_DONATE_FD also consumes the fd when parsing fails. */
+        _cleanup_close_ int fd2 = -EBADF;
+        ASSERT_OK(fd2 = open_tmpfile_unlinkable(NULL, O_RDWR));
+        ASSERT_OK(loop_write(fd2, "kookoo", strlen("kookoo")));
+        ASSERT_OK_ERRNO(lseek(fd2, 0, SEEK_SET));
+        ASSERT_ERROR(sd_json_parse_fd("tmpfile", fd2, SD_JSON_PARSE_DONATE_FD, &v, /* reterr_line= */ NULL, /* reterr_column= */ NULL), EINVAL);
+        ASSERT_ERROR(fd_validate(fd2), EBADF);
+        TAKE_FD(fd2);
+        ASSERT_NULL(v);
+}
+
 TEST(depth) {
         _cleanup_(sd_json_variant_unrefp) sd_json_variant *v = NULL;
         int r;
@@ -548,8 +611,7 @@ TEST(depth) {
 
                 assert_se(r >= 0);
 
-                sd_json_variant_unref(v);
-                v = TAKE_PTR(w);
+                json_variant_unref_and_replace(v, w);
         }
 
         sd_json_variant_dump(v, 0, stdout, NULL);
@@ -691,14 +753,14 @@ static void test_float_match(sd_json_variant *v) {
         assert_se(sd_json_variant_is_array(v));
         assert_se(sd_json_variant_elements(v) == 11);
         assert_se(!iszero_safe(sd_json_variant_real(sd_json_variant_by_index(v, 0))));
-        assert_se(fabs(1.0 - (DBL_MIN / sd_json_variant_real(sd_json_variant_by_index(v, 0)))) <= delta);
+        assert_se(ABS(1.0 - (DBL_MIN / sd_json_variant_real(sd_json_variant_by_index(v, 0)))) <= delta);
         assert_se(!iszero_safe(sd_json_variant_real(sd_json_variant_by_index(v, 1))));
-        assert_se(fabs(1.0 - (DBL_MAX / sd_json_variant_real(sd_json_variant_by_index(v, 1)))) <= delta);
+        assert_se(ABS(1.0 - (DBL_MAX / sd_json_variant_real(sd_json_variant_by_index(v, 1)))) <= delta);
         assert_se(sd_json_variant_is_null(sd_json_variant_by_index(v, 2))); /* nan is not supported by json → null */
         assert_se(sd_json_variant_is_null(sd_json_variant_by_index(v, 3))); /* +inf is not supported by json → null */
         assert_se(sd_json_variant_is_null(sd_json_variant_by_index(v, 4))); /* -inf is not supported by json → null */
         assert_se(sd_json_variant_is_null(sd_json_variant_by_index(v, 5)) ||
-                  fabs(1.0 - (HUGE_VAL / sd_json_variant_real(sd_json_variant_by_index(v, 5)))) <= delta); /* HUGE_VAL might be +inf, but might also be something else */
+                  ABS(1.0 - (HUGE_VAL / sd_json_variant_real(sd_json_variant_by_index(v, 5)))) <= delta); /* HUGE_VAL might be +inf, but might also be something else */
         assert_se(sd_json_variant_is_real(sd_json_variant_by_index(v, 6)) &&
                   sd_json_variant_is_integer(sd_json_variant_by_index(v, 6)) &&
                   sd_json_variant_integer(sd_json_variant_by_index(v, 6)) == 0);
@@ -711,11 +773,11 @@ static void test_float_match(sd_json_variant *v) {
         assert_se(sd_json_variant_is_real(sd_json_variant_by_index(v, 9)) &&
                   !sd_json_variant_is_integer(sd_json_variant_by_index(v, 9)));
         assert_se(!iszero_safe(sd_json_variant_real(sd_json_variant_by_index(v, 9))));
-        assert_se(fabs(1.0 - (DBL_MIN / 2 / sd_json_variant_real(sd_json_variant_by_index(v, 9)))) <= delta);
+        assert_se(ABS(1.0 - (DBL_MIN / 2 / sd_json_variant_real(sd_json_variant_by_index(v, 9)))) <= delta);
         assert_se(sd_json_variant_is_real(sd_json_variant_by_index(v, 10)) &&
                   !sd_json_variant_is_integer(sd_json_variant_by_index(v, 10)));
         assert_se(!iszero_safe(sd_json_variant_real(sd_json_variant_by_index(v, 10))));
-        assert_se(fabs(1.0 - (-DBL_MIN / 2 / sd_json_variant_real(sd_json_variant_by_index(v, 10)))) <= delta);
+        assert_se(ABS(1.0 - (-DBL_MIN / 2 / sd_json_variant_real(sd_json_variant_by_index(v, 10)))) <= delta);
 }
 
 TEST(float) {
@@ -1081,8 +1143,8 @@ TEST(json_dispatch_double) {
                                 /* flags= */ 0,
                                 &data) >= 0);
 
-        assert_se(fabs(data.x1 - 0.5) < 0.01);
-        assert_se(fabs(data.x2 + 0.5) < 0.01);
+        assert_se(ABS(data.x1 - 0.5) < 0.01);
+        assert_se(ABS(data.x2 + 0.5) < 0.01);
         assert_se(isinf(data.x3));
         assert_se(data.x3 > 0);
         assert_se(isinf(data.x4));

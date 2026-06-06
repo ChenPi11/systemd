@@ -24,12 +24,12 @@ static int help(void) {
 
         help_cmdline("test-builtin [OPTIONS] COMMAND DEVPATH");
         help_abstract("Test a built-in command.");
-        help_section("Options:");
+        help_section("Options");
         r = table_print_or_warn(options);
         if (r < 0)
                 return r;
 
-        help_section("Commands:");
+        help_section("Commands");
         udev_builtin_list();
         return 0;
 }
@@ -42,7 +42,7 @@ static int parse_argv(int argc, char *argv[]) {
 
         OptionParser opts = { argc, argv, .namespace = "udevadm-test-builtin" };
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_NAMESPACE("udevadm-test-builtin"): {}

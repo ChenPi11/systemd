@@ -83,7 +83,7 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
 
         OptionParser opts = { argc, argv };
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_COMMON_HELP:
@@ -125,7 +125,7 @@ static int run(int argc, char *argv[]) {
         if (r < 0)
                 return r;
 
-        return dispatch_verb_with_args(args, NULL);
+        return dispatch_verb(args, NULL);
 }
 
 DEFINE_MAIN_FUNCTION(run);

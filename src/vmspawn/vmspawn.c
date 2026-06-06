@@ -41,6 +41,7 @@
 #include "fs-util.h"
 #include "gpt.h"
 #include "group-record.h"
+#include "help-util.h"
 #include "hexdecoct.h"
 #include "hostname-setup.h"
 #include "hostname-util.h"
@@ -88,6 +89,7 @@
 #include "user-record.h"
 #include "user-util.h"
 #include "utf8.h"
+#include "vmspawn-bind-volume.h"
 #include "vmspawn-mount.h"
 #include "vmspawn-qemu-config.h"
 #include "vmspawn-qmp.h"
@@ -101,6 +103,13 @@
 #define DISK_SERIAL_MAX_LEN_SCSI        30
 #define DISK_SERIAL_MAX_LEN_NVME        20
 #define DISK_SERIAL_MAX_LEN_VIRTIO_BLK  20
+
+/* First and one-past-last pcie.0 device-numbers used for multifunction-packed
+ * pcie-root-ports. Sits above the auto-assigned virtio devices (0x01-0x03) and
+ * below 0x1f, which q35 reserves for ICH9 LPC at 0x1f.0 (single-function). */
+#define VMSPAWN_PCIE_PACK_BASE_SLOT 0x10
+#define VMSPAWN_PCIE_PACK_END_SLOT  0x1f
+#define VMSPAWN_PCIE_PACK_MAX_PORTS ((VMSPAWN_PCIE_PACK_END_SLOT - VMSPAWN_PCIE_PACK_BASE_SLOT) * 8)
 
 /* An enum controlling how auxiliary state for the VM are maintained, i.e. the TPM state and the EFI variable
  * NVRAM. */
@@ -163,6 +172,7 @@ static bool arg_keep_unit = false;
 static sd_id128_t arg_uuid = {};
 static char **arg_kernel_cmdline_extra = NULL;
 static ExtraDriveContext arg_extra_drives = {};
+static BindVolumes arg_bind_volumes = {};
 static char *arg_background = NULL;
 static bool arg_pass_ssh_key = true;
 static char *arg_ssh_key_type = NULL;
@@ -200,6 +210,7 @@ STATIC_DESTRUCTOR_REGISTER(arg_runtime_mounts, runtime_mount_context_done);
 STATIC_DESTRUCTOR_REGISTER(arg_forward_journal, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_kernel_cmdline_extra, strv_freep);
 STATIC_DESTRUCTOR_REGISTER(arg_extra_drives, extra_drive_context_done);
+STATIC_DESTRUCTOR_REGISTER(arg_bind_volumes, bind_volumes_done);
 STATIC_DESTRUCTOR_REGISTER(arg_background, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_ssh_key_type, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_smbios11, strv_freep);
@@ -212,14 +223,9 @@ STATIC_DESTRUCTOR_REGISTER(arg_bind_user_shell, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_bind_user_groups, strv_freep);
 
 static int help(void) {
-        _cleanup_free_ char *link = NULL;
         int r;
 
         pager_open(arg_pager_flags);
-
-        r = terminal_urlify_man("systemd-vmspawn", "1", &link);
-        if (r < 0)
-                return log_oom();
 
         static const char* const groups[] = {
                 NULL,
@@ -235,7 +241,8 @@ static int help(void) {
                 "Credentials",
         };
 
-        _cleanup_(table_unref_many) Table* tables[ELEMENTSOF(groups) + 1] = {};
+        Table* tables[ELEMENTSOF(groups)] = {};
+        CLEANUP_ELEMENTS(tables, table_unref_array_clear);
 
         for (size_t i = 0; i < ELEMENTSOF(groups); i++) {
                 r = option_parser_get_help_table_group(groups[i], &tables[i]);
@@ -246,21 +253,18 @@ static int help(void) {
         (void) table_sync_column_widths(0, tables[0], tables[1], tables[2], tables[3], tables[4],
                                         tables[5], tables[6], tables[7], tables[8], tables[9], tables[10]);
 
-        printf("%s [OPTIONS...] [ARGUMENTS...]\n\n"
-               "%sSpawn a command or OS in a virtual machine.%s\n",
-               program_invocation_short_name,
-               ansi_highlight(),
-               ansi_normal());
+        help_cmdline("[OPTIONS...] [ARGUMENTS...]");
+        help_abstract("Spawn a command or OS in a virtual machine.");
 
         for (size_t i = 0; i < ELEMENTSOF(groups); i++) {
-                printf("\n%s%s:%s\n", ansi_underline(), groups[i] ?: "Options", ansi_normal());
+                help_section(groups[i] ?: "Options");
 
                 r = table_print_or_warn(tables[i]);
                 if (r < 0)
                         return r;
         }
 
-        printf("\nSee the %s for details.\n", link);
+        help_man_page_reference("systemd-vmspawn", "1");
         return 0;
 }
 
@@ -327,7 +331,7 @@ static int parse_argv(int argc, char *argv[]) {
 
         OptionParser opts = { argc, argv, OPTION_PARSER_STOP_AT_FIRST_NONOPTION };
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_COMMON_HELP:
@@ -762,6 +766,36 @@ static int parse_argv(int argc, char *argv[]) {
                                 .format = format,
                                 .disk_type = extra_disk_type,
                         };
+                        break;
+                }
+
+                OPTION_LONG("bind-volume", "PROVIDER:VOLUME[:CONFIG][:KEY=VALUE,...]",
+                            "Acquire a storage volume from a StorageProvider and attach it to the VM"): {
+                        _cleanup_(bind_volume_freep) BindVolume *bv = NULL;
+
+                        r = bind_volume_parse(opts.arg, &bv);
+                        if (r < 0)
+                                return log_error_errno(r, "Failed to parse --bind-volume= argument '%s': %m", opts.arg);
+
+                        if (disk_type_from_bind_volume_config(bv->config) < 0) {
+                                _cleanup_free_ char *valid = NULL;
+                                for (DiskType t = 0; t < _DISK_TYPE_MAX; t++)
+                                        if (!strextend_with_separator(&valid, ", ", disk_type_to_string(t)))
+                                                return log_oom();
+                                return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
+                                                       "Unknown device type '%s' for --bind-volume=. Valid values: %s.",
+                                                       bv->config, valid);
+                        }
+
+                        FOREACH_ARRAY(it, arg_bind_volumes.items, arg_bind_volumes.n_items)
+                                if (streq((*it)->provider, bv->provider) && streq((*it)->volume, bv->volume))
+                                        return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
+                                                               "Volume '%s:%s' specified more than once for --bind-volume=.",
+                                                               bv->provider, bv->volume);
+
+                        if (!GREEDY_REALLOC(arg_bind_volumes.items, arg_bind_volumes.n_items + 1))
+                                return log_oom();
+                        arg_bind_volumes.items[arg_bind_volumes.n_items++] = TAKE_PTR(bv);
                         break;
                 }
 
@@ -2474,7 +2508,7 @@ static int prepare_device_info(const char *runtime_dir, MachineConfig *c) {
 
         /* Build drive info for QMP-based setup. vmspawn opens all image files and
          * passes fds to QEMU via add-fd — QEMU never needs filesystem access. */
-        drives->drives = new0(DriveInfo*, 1 + arg_extra_drives.n_drives);
+        drives->drives = new0(DriveInfo*, 1 + arg_extra_drives.n_drives + arg_bind_volumes.n_items);
         if (!drives->drives)
                 return log_oom();
 
@@ -2483,6 +2517,10 @@ static int prepare_device_info(const char *runtime_dir, MachineConfig *c) {
                 return r;
 
         r = prepare_extra_drives(drives);
+        if (r < 0)
+                return r;
+
+        r = vmspawn_bind_volume_prepare_boot(arg_runtime_scope, &arg_bind_volumes, drives);
         if (r < 0)
                 return r;
 
@@ -2927,9 +2965,9 @@ static int run_virtual_machine(int kvm_device_fd, int vhost_device_fd) {
                         return r;
 
                 r = qemu_config_section(config_file, "chardev", "vdagent",
-                                        "backend", "spicevmc",
-                                        "debug", "0",
-                                        "name", "vdagent");
+                                        "backend", "qemu-vdagent",
+                                        "clipboard", "on",
+                                        "debug", "0");
                 if (r < 0)
                         return r;
 
@@ -2937,6 +2975,23 @@ static int run_virtual_machine(int kvm_device_fd, int vhost_device_fd) {
                                         "driver", "virtserialport",
                                         "chardev", "vdagent",
                                         "name", "org.qemu.guest_agent.0");
+                if (r < 0)
+                        return r;
+
+                /* Attach a USB xHCI controller and a USB keyboard. We prefer USB over the implicit PS/2
+                 * keyboard so that EDK2's UsbKbDxe driver runs, which registers the default HII keyboard
+                 * layout package — the PS/2 driver does not. That makes
+                 * EFI_HII_DATABASE_PROTOCOL.GetKeyboardLayout() return a usable layout, which systemd-boot
+                 * then exports via the LoaderKeyboardLayout EFI variable, which is useful for testing that
+                 * codepath actually works. */
+                r = qemu_config_section(config_file, "device", "xhci0",
+                                        "driver", "qemu-xhci");
+                if (r < 0)
+                        return r;
+
+                r = qemu_config_section(config_file, "device", "usb-kbd0",
+                                        "driver", "usb-kbd",
+                                        "bus", "xhci0.0");
                 if (r < 0)
                         return r;
 
@@ -3048,7 +3103,7 @@ static int run_virtual_machine(int kvm_device_fd, int vhost_device_fd) {
                                                       &tree_local_lock,
                                                       &snapshot_directory);
                         if (r < 0)
-                                return r;
+                                return log_error_errno(r, "Failed to create ephemeral snapshot of '%s': %m", arg_directory);
 
                         arg_directory = strdup(snapshot_directory);
                         if (!arg_directory)
@@ -3432,28 +3487,47 @@ static int run_virtual_machine(int kvm_device_fd, int vhost_device_fd) {
          * that will be set up via QMP, plus VMSPAWN_PCIE_HOTPLUG_SPARES spare ports for future
          * runtime hotplug. */
         if (ARCHITECTURE_NEEDS_PCIE_ROOT_PORTS) {
-                /* Count maximum possible PCI devices: root image + extra drives + SCSI controller +
-                 * network + virtiofs mounts + vsock. The actual count may be lower (e.g. no network,
-                 * no SCSI), but unused ports have negligible overhead. */
-                size_t n_pcie_ports = 1 +
-                                arg_extra_drives.n_drives +   /* drives */
-                                1 +                           /* SCSI controller */
-                                1 +                           /* network */
-                                (arg_directory ? 1 : 0) +     /* rootdir virtiofs */
-                                arg_runtime_mounts.n_mounts + /* extra virtiofs mounts */
-                                1 +                           /* vsock */
-                                VMSPAWN_PCIE_HOTPLUG_SPARES;  /* reserved for future hotplug */
+                /* Count the PCI devices that assign_pcie_ports() will place on a builtin port:
+                 * one per non-SCSI drive (root + extras + bind volumes; SCSI drives share a
+                 * virtio-scsi-pci controller drawn from the hotplug pool, see
+                 * assign_pcie_ports()), one if network is configured, one per virtiofs entry,
+                 * one if vsock is in use. Plus a fixed pool of hotplug spares for runtime
+                 * device_add. */
+                size_t n_drive_ports = 0;
+                if (!IN_SET(arg_image_disk_type, DISK_TYPE_VIRTIO_SCSI, DISK_TYPE_VIRTIO_SCSI_CDROM))
+                        n_drive_ports++;
+                FOREACH_ARRAY(d, arg_extra_drives.drives, arg_extra_drives.n_drives) {
+                        DiskType dt = d->disk_type >= 0 ? d->disk_type : arg_image_disk_type;
+                        if (!IN_SET(dt, DISK_TYPE_VIRTIO_SCSI, DISK_TYPE_VIRTIO_SCSI_CDROM))
+                                n_drive_ports++;
+                }
+                FOREACH_ARRAY(bv, arg_bind_volumes.items, arg_bind_volumes.n_items) {
+                        DiskType dt = disk_type_from_bind_volume_config((*bv)->config);
+                        if (dt < 0)
+                                continue; /* unreachable: parser rejects invalid configs */
+                        if (!IN_SET(dt, DISK_TYPE_VIRTIO_SCSI, DISK_TYPE_VIRTIO_SCSI_CDROM))
+                                n_drive_ports++;
+                }
+
+                size_t n_pcie_ports =
+                        n_drive_ports +                                    /* non-SCSI drives */
+                        (arg_network_stack != NETWORK_STACK_NONE ? 1 : 0) + /* network */
+                        (arg_directory ? 1 : 0) +                          /* rootdir virtiofs */
+                        arg_runtime_mounts.n_mounts +                      /* runtime virtiofs */
+                        (use_vsock ? 1 : 0) +                              /* vsock */
+                        VMSPAWN_PCIE_HOTPLUG_SPARES;                       /* hotplug pool */
 
                 /* Guard the unsigned subtraction below against future refactors that might drop the
                  * fixed additions. */
                 assert(n_pcie_ports >= VMSPAWN_PCIE_HOTPLUG_SPARES);
 
-                /* QEMU's pcie-root-port chassis/slot are uint8_t — i+1 must fit. */
-                if (n_pcie_ports > UINT8_MAX)
+                /* Cap derived from the packing range: cannot exceed VMSPAWN_PCIE_PACK_MAX_PORTS
+                 * (= 15 slots × 8 functions = 120) without running into the 0x1f LPC slot. */
+                if (n_pcie_ports > VMSPAWN_PCIE_PACK_MAX_PORTS)
                         return log_error_errno(SYNTHETIC_ERRNO(E2BIG),
-                                               "Too many PCIe root ports requested (%zu, max 255). "
+                                               "Too many PCIe root ports requested (%zu, max %u). "
                                                "Reduce the number of extra drives or runtime mounts.",
-                                               n_pcie_ports);
+                                               n_pcie_ports, (unsigned) VMSPAWN_PCIE_PACK_MAX_PORTS);
 
                 size_t n_builtin_ports = n_pcie_ports - VMSPAWN_PCIE_HOTPLUG_SPARES;
                 for (size_t i = 0; i < n_pcie_ports; i++) {
@@ -3468,6 +3542,8 @@ static int run_virtual_machine(int kvm_device_fd, int vhost_device_fd) {
                         if (r < 0)
                                 return r;
 
+                        /* chassis/slot are the PCIe-chassis identity (ACPI hotplug paths),
+                         * independent of the PCI bus address below. */
                         r = qemu_config_keyf(config_file, "chassis", "%zu", i + 1);
                         if (r < 0)
                                 return r;
@@ -3475,6 +3551,21 @@ static int run_virtual_machine(int kvm_device_fd, int vhost_device_fd) {
                         r = qemu_config_keyf(config_file, "slot", "%zu", i + 1);
                         if (r < 0)
                                 return r;
+
+                        /* Pack 8 root ports per pcie.0 device-number as multifunction, so 14
+                         * ports cost 2 slots on pcie.0 instead of 14. Each function remains
+                         * independently hot-pluggable (QEMU docs/pcie.txt §5.1). */
+                        size_t pci_slot = VMSPAWN_PCIE_PACK_BASE_SLOT + i / 8;
+                        size_t pci_fn   = i % 8;
+                        assert(pci_slot < VMSPAWN_PCIE_PACK_END_SLOT);
+                        r = qemu_config_keyf(config_file, "addr", "0x%zx.%zu", pci_slot, pci_fn);
+                        if (r < 0)
+                                return r;
+                        if (pci_fn == 0) {
+                                r = qemu_config_key(config_file, "multifunction", "on");
+                                if (r < 0)
+                                        return r;
+                        }
                 }
         }
 

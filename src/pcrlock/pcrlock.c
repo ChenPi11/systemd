@@ -1947,7 +1947,7 @@ static int event_log_match_component_variant(
                 return r;
 
         if (assign) {
-                /* Take ownership (Note we allow multiple components and variants to take owneship of the same record!) */
+                /* Take ownership (Note we allow multiple components and variants to take ownership of the same record!) */
                 if (!GREEDY_REALLOC(el->records[i]->mapped, el->records[i]->n_mapped+1))
                         return log_oom();
 
@@ -2500,7 +2500,7 @@ static int event_log_load_and_process(EventLog **ret) {
         return 0;
 }
 
-VERB(verb_show_log, "log", NULL, VERB_ANY, 1, VERB_DEFAULT,
+VERB_DEFAULT_NOARG(verb_show_log, "log",
      "Show measurement log");
 static int verb_show_log(int argc, char *argv[], uintptr_t _data, void *userdata) {
         _cleanup_(sd_json_variant_unrefp) sd_json_variant *log_table = NULL, *pcr_table = NULL;
@@ -5193,7 +5193,7 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
         bool auto_location = true;
         int r;
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_COMMON_HELP:
@@ -5480,7 +5480,9 @@ static int run(int argc, char *argv[]) {
 
                 /* Invocation as Varlink service */
 
-                r = varlink_server_new(&varlink_server, SD_VARLINK_SERVER_ROOT_ONLY, NULL);
+                r = varlink_server_new(&varlink_server,
+                                       SD_VARLINK_SERVER_ROOT_ONLY | SD_VARLINK_SERVER_MYSELF_ONLY,
+                                       /* userdata= */ NULL);
                 if (r < 0)
                         return log_error_errno(r, "Failed to allocate Varlink server: %m");
 
@@ -5503,7 +5505,7 @@ static int run(int argc, char *argv[]) {
                 return EXIT_SUCCESS;
         }
 
-        return dispatch_verb_with_args(args, NULL);
+        return dispatch_verb(args, NULL);
 }
 
 DEFINE_MAIN_FUNCTION_WITH_POSITIVE_FAILURE(run);

@@ -72,6 +72,7 @@
 #define REENABLE_WARNING                                                \
         _Pragma("GCC diagnostic pop")
 
+#define _alias_(x) typeof(x) __attribute__((alias(#x)))
 #define _align_(x) __attribute__((__aligned__(x)))
 #define _alignas_(x) __attribute__((__aligned__(alignof(x))))
 #define _alignptr_ __attribute__((__aligned__(sizeof(void *))))
@@ -179,12 +180,14 @@
                 UNIQ_T(A, aq) > UNIQ_T(B, bq) ? UNIQ_T(A, aq) : UNIQ_T(B, bq); \
         })
 
-#ifdef __clang__
-#  define ABS(a) __builtin_llabs(a)
-#else
-#  define ABS(a) __builtin_imaxabs(a)
-#endif
-assert_cc(sizeof(long long) == sizeof(intmax_t));
+#define ABS(a) _Generic((a),                                            \
+                float:              __builtin_fabsf((float) (a)),       \
+                double:             __builtin_fabs((double) (a)),       \
+                long double:        __builtin_fabsl((long double) (a)), \
+                unsigned long long: (a),                                \
+                unsigned long:      (a),                                \
+                unsigned int:       (a),                                \
+                default:            __builtin_llabs((long long) (a)))
 
 #define IS_UNSIGNED_INTEGER_TYPE(type) \
         (__builtin_types_compatible_p(typeof(type), unsigned char) ||   \
@@ -277,6 +280,13 @@ assert_cc(sizeof(long long) == sizeof(intmax_t));
                         const typeof(x) _x = (x);                      \
                         CONST_ISPOWEROF2(_x);                          \
                 }))
+
+/* Returns the largest power of two that divides x (i.e. x's natural alignment in bytes), or 0 if x is 0. */
+#define NATURAL_ALIGNMENT(x)                                                    \
+        ({                                                                      \
+                const uint64_t _x = (x);                                        \
+                _x == 0 ? UINT64_C(0) : UINT64_C(1) << __builtin_ctzll(_x);     \
+        })
 
 #define ADD_SAFE(ret, a, b) (!__builtin_add_overflow(a, b, ret))
 #define INC_SAFE(a, b) __INC_SAFE(UNIQ, a, b)

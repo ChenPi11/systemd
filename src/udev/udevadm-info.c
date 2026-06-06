@@ -162,7 +162,7 @@ static int print_all_attributes(sd_device *device, bool is_parent) {
                 if (skip_attribute(name))
                         continue;
 
-                r = sd_device_get_sysattr_value(device, name, &value);
+                r = device_get_sysattr_safe_string(device, name, &value);
                 if (r >= 0) {
                         /* skip any values that look like a path */
                         if (value[0] == '/')
@@ -264,7 +264,7 @@ static int print_all_attributes_in_json(sd_device *device, bool is_parent) {
                 if (skip_attribute(name))
                         continue;
 
-                r = sd_device_get_sysattr_value(device, name, &value);
+                r = device_get_sysattr_safe_string(device, name, &value);
                 if (r >= 0) {
                         /* skip any values that look like a path */
                         if (value[0] == '/')
@@ -811,7 +811,7 @@ static int help(void) {
 
         help_cmdline("info [OPTIONS] [DEVPATH|FILE]");
         help_abstract("Query sysfs or the udev database.");
-        help_section("Options:");
+        help_section("Options");
         r = table_print_or_warn(options);
         if (r < 0)
                 return r;
@@ -985,7 +985,7 @@ static int parse_argv(int argc, char *argv[]) {
 
         OptionParser opts = { argc, argv, .namespace = "udevadm-info" };
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_NAMESPACE("udevadm-info"): {}

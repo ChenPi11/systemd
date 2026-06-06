@@ -305,8 +305,7 @@ static int add_credentials_to_table(Table *t, bool encrypted) {
         return 1; /* Creds dir set */
 }
 
-VERB(verb_list, "list", NULL, VERB_ANY, 1, VERB_DEFAULT,
-     "Show list of passed credentials");
+VERB_DEFAULT_NOARG(verb_list, "list", "Show list of passed credentials");
 static int verb_list(int argc, char *argv[], uintptr_t _data, void *userdata) {
         _cleanup_(table_unrefp) Table *t = NULL;
         int r, q;
@@ -826,7 +825,7 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
         OptionParser opts = { argc, argv };
         int r;
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_COMMON_HELP:
@@ -1479,7 +1478,7 @@ static int run(int argc, char *argv[]) {
         if (arg_varlink)
                 return vl_server();
 
-        return dispatch_verb_with_args(args, NULL);
+        return dispatch_verb(args, NULL);
 }
 
 DEFINE_MAIN_FUNCTION_WITH_POSITIVE_FAILURE(run);

@@ -366,7 +366,7 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
 
         OptionParser opts = { argc, argv };
 
-        FOREACH_OPTION(c, &opts, /* on_error= */ return c)
+        FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
 
                 OPTION_COMMON_HELP:
@@ -537,11 +537,11 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
                         auto_keep_download = false;
                         break;
 
-                OPTION_LONG("system", NULL, "Operate in per-system mode"):
+                OPTION_COMMON_SYSTEM:
                         arg_runtime_scope = RUNTIME_SCOPE_SYSTEM;
                         break;
 
-                OPTION_LONG("user", NULL, "Operate in per-user mode"):
+                OPTION_COMMON_USER:
                         arg_runtime_scope = RUNTIME_SCOPE_USER;
                         break;
                 }
@@ -620,7 +620,7 @@ static int run(int argc, char *argv[]) {
 
         (void) ignore_signals(SIGPIPE);
 
-        return dispatch_verb_with_args(args, NULL);
+        return dispatch_verb(args, NULL);
 }
 
 DEFINE_MAIN_FUNCTION(run);
