@@ -625,6 +625,9 @@ if get_option('libc') == 'bionic'
         _bionic_link_args = ['-D_GNU_SOURCE', '-Wl,--no-undefined']
 
         # Functions with standard system headers available on all bionic variants.
+        # Also probe quotactl(): it was absent in older bionic headers but was added at
+        # API level 26 (__INTRODUCED_IN(26)).  Use a link test with --no-undefined so that
+        # a declaration without a real symbol (Termux variants) is caught at link time.
         foreach ident : [
                 ['setpwent',  '#include <pwd.h>',                     'setpwent();'],
                 ['getpwent',  '#include <pwd.h>',                     'getpwent();'],
@@ -636,6 +639,7 @@ if get_option('libc') == 'bionic'
                 ['endgrent',  '#include <grp.h>',                     'endgrent();'],
                 ['fgetgrent', '#include <stdio.h>\n#include <grp.h>', 'fgetgrent(0);'],
                 ['putgrent',  '#include <stdio.h>\n#include <grp.h>', 'putgrent(0, 0);'],
+                ['quotactl',  '#include <sys/quota.h>',               'quotactl(0, 0, 0, 0);'],
         ]
                 have = cc.links(
                         ident[1] + '\nint main(void) { ' + ident[2] + ' return 0; }',
