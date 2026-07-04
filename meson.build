@@ -1132,12 +1132,28 @@ else
 endif
 conf.set10('HAVE_LIBCRYPT', have)
 
-# musl declares the ucontext.h functions but does not implement them; the fiber bootstrap in
-# src/libsystemd/sd-future/fiber.c relies on them, so on musl we have to link to libucontext.
-if get_option('libc') == 'musl'
-        libucontext = dependency('libucontext')
-else
+# Some libcs may declare ucontext APIs in headers without actually providing working symbols at
+# link time. Probe with --no-undefined to catch this and require libucontext when needed.
+_ucontext_apis_in_libc = cc.links(
+        '''
+#include <ucontext.h>
+static void ucontext_noop(void) {}
+int main(void) {
+        ucontext_t uc = {};
+        (void) getcontext(&uc);
+        makecontext(&uc, ucontext_noop, /* argc= */ 0);
+        (void) swapcontext(&uc, &uc);
+        (void) setcontext(&uc);
+        return 0;
+}
+''',
+        name : 'ucontext APIs in libc',
+        args : ['-Wl,--no-undefined'],
+)
+if _ucontext_apis_in_libc
         libucontext = []
+else
+        libucontext = dependency('libucontext')
 endif
 
 bpf_framework = get_option('bpf-framework')
