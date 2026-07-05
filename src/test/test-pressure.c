@@ -30,6 +30,10 @@
 #include "tmpfile-util.h"
 #include "unit-def.h"
 
+#ifdef __BIONIC__
+#define pthread_cancel(t) pthread_kill(t, SIGKILL)
+#endif
+
 /* Shared infrastructure for fake pressure tests */
 
 static int event_loop_with_timeout(sd_event *event) {

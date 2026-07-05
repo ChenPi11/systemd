@@ -9,6 +9,19 @@
 #include <ucontext.h>
 #include <unistd.h>
 
+#if !HAVE_LIBC_UCONTEXT
+#include <libucontext.h>
+
+#undef swapcontext
+#undef makecontext
+#undef getcontext
+#undef setcontext
+#define swapcontext libucontext_swapcontext
+#define makecontext libucontext_makecontext
+#define getcontext libucontext_getcontext
+#define setcontext libucontext_setcontext
+#endif
+
 #if HAVE_VALGRIND_VALGRIND_H
 #include <valgrind/valgrind.h>
 #endif

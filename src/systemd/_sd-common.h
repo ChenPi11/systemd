@@ -22,6 +22,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <signal.h> /* for sigset_t */
 #include <sys/types.h>
 
 /* This is a private header; never even think of including this directly! */

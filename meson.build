@@ -1154,10 +1154,44 @@ int main(void) {
         name : 'ucontext APIs in libc',
         args : ['-Wl,--no-undefined'],
 )
+conf.set10('HAVE_LIBC_UCONTEXT', _ucontext_apis_in_libc)
 if _ucontext_apis_in_libc
         libucontext = []
 else
         libucontext = dependency('libucontext')
+endif
+
+# Some libcs may have not built-in libintl.
+_intl_apis_in_libc = cc.links(
+        '''
+#include <locale.h>
+#include <libintl.h>
+
+int main(void) {
+    (void)gettext("hello");
+    (void)dgettext("domain", "hello");
+    (void)dcgettext("domain", "hello", LC_MESSAGES);
+
+    (void)ngettext("file", "files", 1);
+    (void)dngettext("domain", "file", "files", 2);
+    (void)dcngettext("domain", "file", "files", 3, LC_MESSAGES);
+
+    (void)textdomain("test");
+    (void)bindtextdomain("test", ".");
+    (void)bind_textdomain_codeset("test", "UTF-8");
+
+    locale_t loc = newlocale(LC_ALL_MASK, "C", (locale_t)0);
+    locale_t old = uselocale(loc);
+    uselocale(old);
+    freelocale(loc);
+
+    return 0;
+}
+''')
+if _intl_apis_in_libc
+        libintl = []
+else
+        libintl = dependency('libintl')
 endif
 
 bpf_framework = get_option('bpf-framework')
@@ -1917,7 +1951,7 @@ libsystemd = shared_library(
         link_with : [libc_wrapper_static,
                      libbasic_static],
         link_whole : [libsystemd_static],
-        dependencies : [libucontext, userspace],
+        dependencies : [libintl, libucontext, userspace],
         link_depends : libsystemd_sym,
         install : true,
         install_tag: 'libsystemd',
@@ -1940,6 +1974,7 @@ if static_libsystemd != 'false'
                                 liblz4_cflags,
                                 libm,
                                 libucontext,
+                                libintl,
                                 libxz_cflags,
                                 libzstd_cflags,
                                 userspace],
@@ -1959,7 +1994,7 @@ libudev = shared_library(
                      '-Wl,--version-script=' + libudev_sym_path],
         link_with : [libsystemd_static],
         link_whole : libudev_basic,
-        dependencies : [userspace],
+        dependencies : [libintl, userspace],
         link_depends : libudev_sym,
         install : true,
         install_tag: 'libudev',
@@ -2040,6 +2075,7 @@ test_template = executable_template + {
 
 test_additional_kwargs = {
         'c_args' : test_cflags,
+        'dependencies' : libintl,
         'link_depends' : runtest_env,
 }
 

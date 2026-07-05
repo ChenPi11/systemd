@@ -317,6 +317,7 @@ executables += [
                         libc_wrapper_static,
                         libbasic_static,
                 ],
+                'dependencies' : libintl,
                 'install' : false,
                 'type' : 'manual',
         },
@@ -445,6 +446,7 @@ executables += [
                         libc_wrapper_static,
                         libbasic_static,
                 ],
+                'dependencies' : libintl,
         },
         test_template + {
                 'sources' : files('test-sleep.c'),
@@ -635,6 +637,7 @@ executables += [
                         libbasic_static,
                         libsystemd,
                 ],
+                'dependencies' : libintl,
         },
         test_template + {
                 'sources' : files('../libudev/test-udev-device-thread.c'),
@@ -643,6 +646,7 @@ executables += [
                         libbasic_static,
                         libudev,
                 ],
+                'dependencies' : libintl,
         },
         test_template + {
                 'sources' : files('../libudev/test-libudev.c'),

@@ -218,9 +218,10 @@ IGNORE_SECTION_TYPES = [
     'SHT_NOTE',
     'SHT_REL',
     'SHT_RELA',
-    'SHT_RELR',
-    'SHT_STRTAB',
-    'SHT_SYMTAB',
+        'SHT_RELR',
+        0x6FFFFF00,   # SHT_ANDROID_RELR (Android-specific packed relocations)
+        'SHT_STRTAB',
+        'SHT_SYMTAB',
 ]
 
 # EFI mandates 4KiB memory pages.
