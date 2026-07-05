@@ -22,6 +22,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <signal.h> /* for sigset_t */
 #include <sys/types.h>
 
 /* This is a private header; never even think of including this directly! */
@@ -67,6 +68,20 @@ typedef void (*_sd_destroy_t)(void *userdata);
 #ifndef _SD_STRINGIFY
 #  define _SD_XSTRINGIFY(x) #x
 #  define _SD_STRINGIFY(x) _SD_XSTRINGIFY(x)
+#endif
+
+/* Mirror of CONCATENATE / UNIQ from macro-fundamental.h, available to public sd-* headers. */
+#ifndef _SD_CONCATENATE
+#  define _SD_XCONCATENATE(x, y) x ## y
+#  define _SD_CONCATENATE(x, y) _SD_XCONCATENATE(x, y)
+#endif
+
+#ifndef _SD_UNIQ
+#  ifdef __COUNTER__
+#    define _SD_UNIQ __COUNTER__
+#  else
+#    define _SD_UNIQ __LINE__
+#  endif
 #endif
 
 #ifndef _SD_BEGIN_DECLARATIONS

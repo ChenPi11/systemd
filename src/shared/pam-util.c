@@ -20,8 +20,6 @@
 #include "stdio-util.h"
 #include "string-util.h"
 
-static void *libpam_dl = NULL;
-
 DLSYM_PROTOTYPE(pam_acct_mgmt) = NULL;
 DLSYM_PROTOTYPE(pam_close_session) = NULL;
 DLSYM_PROTOTYPE(pam_end) = NULL;
@@ -383,11 +381,9 @@ int pam_putenv_assign(pam_handle_t *pamh, const char *name, const char *value) {
 
 int dlopen_libpam(int log_level) {
 #if HAVE_PAM
-        SD_ELF_NOTE_DLOPEN(
-                        "pam",
-                        "Support for LinuxPAM",
-                        SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED,
-                        "libpam.so.0");
+        static void *libpam_dl = NULL;
+
+        LIBPAM_NOTE(SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
 
         return dlopen_many_sym_or_warn(
                         &libpam_dl,

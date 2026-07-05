@@ -19,6 +19,20 @@ if [[ -s /skipped ]]; then
     exit 77
 fi
 
+# stress-ng can fail with SIGILL because GCC's target_clones / ifunc resolver
+# picks an AVX-512 variant of a stressor function based on CPUID, even when
+# the actual CPU (e.g. in some VMs) does not implement AVX-512
+STRESS_NG_BROKEN=0
+stress_ng_preflight_out=$(mktemp)
+if ! timeout --kill-after=5s 10s stress-ng --timeout 2s --vm 4 --vm-bytes 10M --vm-keep \
+        >"$stress_ng_preflight_out" 2>&1; then
+    if grep -E "caught SIG(ILL|SEGV|BUS|FPE)" "$stress_ng_preflight_out" >/dev/null; then
+        STRESS_NG_BROKEN=1
+    fi
+fi
+rm -f "$stress_ng_preflight_out"
+unset stress_ng_preflight_out
+
 # Activate swap file if we are in a VM
 if systemd-detect-virt --vm --quiet; then
     swapoff --all
@@ -46,6 +60,13 @@ mkdir -p /run/systemd/system/-.slice.d/
 cat >/run/systemd/system/-.slice.d/99-oomd-test.conf <<EOF
 [Slice]
 ManagedOOMSwap=auto
+EOF
+
+mkdir -p /run/systemd/system/system.slice.d/
+cat >/run/systemd/system/system.slice.d/99-oomd-test.conf <<EOF
+[Slice]
+ManagedOOMMemoryPressure=auto
+ManagedOOMMemoryPressureLimit=0%
 EOF
 
 mkdir -p /run/systemd/system/user@.service.d/
@@ -97,6 +118,8 @@ fi
 test_basic() {
     local cgroup_path="${1:?}"
     shift
+
+    [[ "$STRESS_NG_BROKEN" == "1" ]] && { echo "stress-ng is broken on this host, skipping ${FUNCNAME[0]}"; return 0; }
 
     systemctl "$@" start TEST-55-OOMD-testchill.service
     systemctl "$@" status TEST-55-OOMD-testchill.service
@@ -151,6 +174,8 @@ testcase_preference_avoid() {
         echo "cgroup does not support user xattrs, skipping test for ManagedOOMPreference=avoid"
         return 0
     fi
+
+    [[ "$STRESS_NG_BROKEN" == "1" ]] && { echo "stress-ng is broken on this host, skipping ${FUNCNAME[0]}"; return 0; }
 
     mkdir -p /run/systemd/system/TEST-55-OOMD-testbloat.service.d/
     cat >/run/systemd/system/TEST-55-OOMD-testbloat.service.d/99-managed-oom-preference.conf <<EOF
@@ -213,6 +238,8 @@ EOF
 
 testcase_duration_override() {
     # Verify memory pressure duration can be overridden to non-zero values
+    [[ "$STRESS_NG_BROKEN" == "1" ]] && { echo "stress-ng is broken on this host, skipping ${FUNCNAME[0]}"; return 0; }
+
     mkdir -p /run/systemd/system/TEST-55-OOMD-testmunch.service.d/
     cat >/run/systemd/system/TEST-55-OOMD-testmunch.service.d/99-duration-test.conf <<EOF
 [Service]
@@ -354,6 +381,8 @@ EOF
 }
 
 testcase_oom_rulesets() {
+    [[ "$STRESS_NG_BROKEN" == "1" ]] && { echo "stress-ng is broken on this host, skipping ${FUNCNAME[0]}"; return 0; }
+
     # Create a ruleset that triggers on any memory pressure with no delay
     mkdir -p /run/systemd/oomd/rules.d/
     cat >/run/systemd/oomd/rules.d/testrule.oomrule <<'EOF'
@@ -365,14 +394,11 @@ EOF
 
     systemctl reload systemd-oomd.service
 
-    # Run a transient service with OOMRules=testrule that generates memory pressure.
-    # Pin --vm-method to a portable method (zero-one): the default 'all' cycles
-    # through every method, including newer ones using AVX-512 instructions that
-    # SIGILL on CPUs without AVX-512 (e.g. AMD Zen 1-3), making the test flaky.
+    # Run a transient service with OOMRules=testrule that generates memory pressure
     (! systemd-run --wait --unit=TEST-55-OOMD-testrules \
         -p MemoryHigh=3M \
         -p OOMRules=testrule \
-        stress-ng --timeout 3m --vm 10 --vm-bytes 50M --vm-keep --vm-method=zero-one)
+        stress-ng --timeout 3m --vm 10 --vm-bytes 50M --vm-keep)
 
     # Verify in the journal that the rule triggered
     journalctl --sync
@@ -445,6 +471,8 @@ testcase_oom_rulesets_lasting_sec() {
     # Baseline proof: with the same workload but LastingSec=0 (testcase_oom_rulesets
     # above) oomd kills the unit within a couple of seconds, so an active unit after
     # ~6 s demonstrates LastingSec is being respected.
+    [[ "$STRESS_NG_BROKEN" == "1" ]] && { echo "stress-ng is broken on this host, skipping ${FUNCNAME[0]}"; return 0; }
+
     mkdir -p /run/systemd/oomd/rules.d/
     cat >/run/systemd/oomd/rules.d/slowrule.oomrule <<'EOF'
 [Rule]
@@ -457,14 +485,10 @@ EOF
 
     # Start the unit without --wait so we can check mid-run state. The
     # stress-ng timeout bounds the test if anything goes wrong.
-    # Pin --vm-method to a portable method (zero-one): the default 'all' cycles
-    # through every method, including newer ones using AVX-512 instructions that
-    # SIGILL on CPUs without AVX-512 (e.g. AMD Zen 1-3) and would cause stress-ng
-    # to exit before the 6 s wait below elapses, failing the ActiveState check.
     systemd-run --unit=TEST-55-OOMD-slowrule \
         -p MemoryHigh=3M \
         -p OOMRules=slowrule \
-        stress-ng --timeout 15s --vm 10 --vm-bytes 50M --vm-keep --vm-method=zero-one
+        stress-ng --timeout 15s --vm 10 --vm-bytes 50M --vm-keep
 
     # Wait long enough for oomd's 1s rule-check loop to evaluate the condition
     # many times. With LastingSec=1h the kill must not fire.
@@ -482,6 +506,8 @@ EOF
 }
 
 testcase_prekill_hook() {
+    [[ "$STRESS_NG_BROKEN" == "1" ]] && { echo "stress-ng is broken on this host, skipping ${FUNCNAME[0]}"; return 0; }
+
     cat >/run/systemd/oomd.conf.d/99-oomd-prekill-test.conf <<'EOF'
 [OOM]
 PrekillHookTimeoutSec=3s

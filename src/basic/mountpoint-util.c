@@ -242,7 +242,7 @@ struct file_handle* file_handle_dup(const struct file_handle *fh) {
 int is_mount_point_at(int dir_fd, const char *path, int flags) {
         int r;
 
-        assert(dir_fd >= 0 || IN_SET(dir_fd, AT_FDCWD, XAT_FDROOT));
+        assert(wildcard_fd_is_valid(dir_fd));
         assert((flags & ~AT_SYMLINK_FOLLOW) == 0);
 
         if (path_equal(path, "/"))
@@ -306,7 +306,7 @@ static int path_get_mnt_id_at_internal(int dir_fd, const char *path, bool unique
         struct statx sx;
         int r;
 
-        assert(dir_fd >= 0 || IN_SET(dir_fd, AT_FDCWD, XAT_FDROOT));
+        assert(wildcard_fd_is_valid(dir_fd));
         assert(ret);
 
         r = xstatx(dir_fd, path,
@@ -483,6 +483,22 @@ bool fstype_can_fmask_dmask(const char *fstype) {
          * not be allowed in our MAC context. If we don't know ourselves, on new kernels we can just ask the
          * kernel. */
         return streq(fstype, "vfat") || (mount_option_supported(fstype, "fmask", "0177") > 0 && mount_option_supported(fstype, "dmask", "0077") > 0);
+}
+
+bool fstype_can_ownership(const char *fstype) {
+        /* File systems which are not known to not support uid/gid ownership.
+         * For some types, this can be a bit murky. So just exclude the ones that for sure
+         * don't support with the current implementations in Linux. */
+
+        return !STR_IN_SET(ASSERT_PTR(fstype),
+                           "adfs",
+                           "exfat",
+                           "fat",
+                           "hfs",
+                           "hpfs",
+                           "msdos",
+                           "ntfs",
+                           "vfat");
 }
 
 bool fstype_can_uid_gid(const char *fstype) {

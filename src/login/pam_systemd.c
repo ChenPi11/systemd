@@ -1147,7 +1147,7 @@ static int register_session(
                                         JSON_BUILD_PAIR_ENUM("Class", c->class),
                                         JSON_BUILD_PAIR_STRING_NON_EMPTY("Desktop", c->desktop),
                                         JSON_BUILD_PAIR_STRING_NON_EMPTY("Seat", c->seat),
-                                        SD_JSON_BUILD_PAIR_CONDITION(c->vtnr > 0, "VTNr", SD_JSON_BUILD_UNSIGNED(c->vtnr)),
+                                        JSON_BUILD_PAIR_UNSIGNED_NON_ZERO("VTNr", c->vtnr),
                                         JSON_BUILD_PAIR_STRING_NON_EMPTY("TTY", c->tty),
                                         JSON_BUILD_PAIR_STRING_NON_EMPTY("Display", c->display),
                                         SD_JSON_BUILD_PAIR_BOOLEAN("Remote", c->remote),
@@ -1748,7 +1748,7 @@ _public_ PAM_EXTERN int pam_sm_open_session(
 
         assert(pamh);
 
-        r = dlopen_libpam(LOG_DEBUG);
+        r = DLOPEN_LIBPAM(LOG_DEBUG, SD_ELF_NOTE_DLOPEN_PRIORITY_REQUIRED);
         if (r < 0)
                 return PAM_SERVICE_ERR;
 
@@ -1847,7 +1847,7 @@ _public_ PAM_EXTERN int pam_sm_close_session(
 
         assert(pamh);
 
-        r = dlopen_libpam(LOG_DEBUG);
+        r = DLOPEN_LIBPAM(LOG_DEBUG, SD_ELF_NOTE_DLOPEN_PRIORITY_REQUIRED);
         if (r < 0)
                 return PAM_SERVICE_ERR;
 

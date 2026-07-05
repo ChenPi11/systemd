@@ -17,7 +17,8 @@
 #include "assert-util.h"                /* IWYU pragma: export */
 #include "cleanup-util.h"               /* IWYU pragma: export */
 #include "macro.h"                      /* IWYU pragma: export */
-#include "string-table-fundamental.h"   /* IWYU pragma: export */
+
+#include "../fundamental/string-table.h"   /* IWYU pragma: export */
 
 /* Generic types */
 
@@ -116,10 +117,13 @@ typedef enum UnitNameMangle UnitNameMangle;
 typedef enum UnitType UnitType;
 typedef enum WaitFlags WaitFlags;
 
+typedef struct Fiber Fiber;
+typedef struct FiberOps FiberOps;
 typedef struct Hashmap Hashmap;
 typedef struct HashmapBase HashmapBase;
 typedef struct IteratedCache IteratedCache;
 typedef struct Iterator Iterator;
+typedef struct LogContext LogContext;
 typedef struct OrderedHashmap OrderedHashmap;
 typedef struct OrderedSet OrderedSet;
 typedef struct Set Set;
@@ -140,10 +144,12 @@ typedef struct SocketAddress SocketAddress;
  * having to include the full header that provides these constants. */
 
 /* glibc defines AT_FDCWD as -100, but musl defines it as (-100). */
+#ifndef AT_FDCWD
 #ifdef __GLIBC__
 #define AT_FDCWD                -100
 #else
 #define AT_FDCWD                (-100)
+#endif
 #endif
 #define AT_EMPTY_PATH           0x1000
 #define AT_SYMLINK_FOLLOW       0x400

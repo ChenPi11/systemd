@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 #pragma once
 
+#include <time.h>
+
 #include "basic-forward.h"
 
 #define LONG_LINE_MAX (1U*1024U*1024U)

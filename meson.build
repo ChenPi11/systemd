@@ -15,7 +15,8 @@ project('systemd', 'c',
 
 add_test_setup(
         'default',
-        exclude_suites : ['clang-tidy', 'unused-symbols', 'integration-tests'],
+        exclude_suites : ['clang-tidy', 'coccinelle', 'unused-symbols', 'integration-tests'],
+        exe_wrapper : find_program('tools/test-crash-trace.sh'),
         is_default : true,
 )
 
@@ -37,10 +38,17 @@ conf.set_quoted('PROJECT_VERSION_STR', project_major_version,
         description: 'Stringified project version (used where a simple string is expected)')
 conf.set_quoted('PROJECT_VERSION_FULL', meson.project_version(), description : 'Full project version')
 
-relative_source_path = run_command('realpath',
-                                   '--relative-to=@0@'.format(meson.project_build_root()),
-                                   meson.project_source_root(),
-                                   check : true).stdout().strip()
+fs = import('fs')
+
+if meson.version().version_compare('>=1.3.0')
+        relative_source_path = fs.relative_to(meson.project_source_root(),
+                                              meson.project_build_root())
+else
+        relative_source_path = run_command('realpath',
+                                           '--relative-to=@0@'.format(meson.project_build_root()),
+                                           meson.project_source_root(),
+                                           check : true).stdout().strip()
+endif
 conf.set_quoted('RELATIVE_SOURCE_PATH', relative_source_path)
 
 conf.set10('BUILD_MODE_DEVELOPER', get_option('mode') == 'developer',
@@ -79,7 +87,6 @@ summary({
 
 #####################################################################
 
-fs = import('fs')
 if get_option('split-bin') == 'auto'
         split_bin = not fs.is_symlink('/usr/sbin')
 else
@@ -424,10 +431,16 @@ possible_common_cc_flags = [
         '-Wno-string-plus-int',  # clang
 
         '-fdiagnostics-show-option',
+        '-fexcess-precision=standard',
         '-fno-common',
         '-fstack-protector',
         '-fstack-protector-strong',
         '-fstrict-flex-arrays=3',
+        # We don't read errno from any libm call, and the math-errno fallback
+        # forces a DT_NEEDED on libm via the cold error path even when the hot
+        # path is a single hardware instruction (sqrtsd, etc.). Drop it so the
+        # builtins lower to pure hardware instructions.
+        '-fno-math-errno',
         '--param=ssp-buffer-size=4',
 ]
 
@@ -562,6 +575,16 @@ have = cc.compiles(
         name : '__attribute__((__no_reorder__))')
 conf.set10('HAVE_ATTRIBUTE_NO_REORDER', have)
 
+# The "R" (SHF_GNU_RETAIN) section flag is only understood by binutils >= 2.36.
+# TODO: drop when support for CentOS 9 is dropped.
+if cc.compiles(
+        '__asm__(".pushsection .note.test, \\"aR\\", %note\\n.popsection\\n");',
+        name : 'assembler supports the "R" (SHF_GNU_RETAIN) section flag')
+        conf.set_quoted('_SD_ELF_NOTE_DLOPEN_SECTION_FLAGS', 'aGR')
+else
+        conf.set_quoted('_SD_ELF_NOTE_DLOPEN_SECTION_FLAGS', 'aG')
+endif
+
 #####################################################################
 # compilation result tests
 
@@ -602,6 +625,9 @@ if get_option('libc') == 'bionic'
         _bionic_link_args = ['-D_GNU_SOURCE', '-Wl,--no-undefined']
 
         # Functions with standard system headers available on all bionic variants.
+        # Also probe quotactl(): it was absent in older bionic headers but was added at
+        # API level 26 (__INTRODUCED_IN(26)).  Use a link test with --no-undefined so that
+        # a declaration without a real symbol (Termux variants) is caught at link time.
         foreach ident : [
                 ['setpwent',  '#include <pwd.h>',                     'setpwent();'],
                 ['getpwent',  '#include <pwd.h>',                     'getpwent();'],
@@ -613,6 +639,7 @@ if get_option('libc') == 'bionic'
                 ['endgrent',  '#include <grp.h>',                     'endgrent();'],
                 ['fgetgrent', '#include <stdio.h>\n#include <grp.h>', 'fgetgrent(0);'],
                 ['putgrent',  '#include <stdio.h>\n#include <grp.h>', 'putgrent(0, 0);'],
+                ['quotactl',  '#include <sys/quota.h>',               'quotactl(0, 0, 0, 0);'],
         ]
                 have = cc.links(
                         ident[1] + '\nint main(void) { ' + ident[2] + ' return 0; }',
@@ -1108,6 +1135,64 @@ else
         have = libcrypt.found()
 endif
 conf.set10('HAVE_LIBCRYPT', have)
+
+# Some libcs may declare ucontext APIs in headers without actually providing working symbols at
+# link time. Probe with --no-undefined to catch this and require libucontext when needed.
+_ucontext_apis_in_libc = cc.links(
+        '''
+#include <ucontext.h>
+static void ucontext_noop(void) {}
+int main(void) {
+        ucontext_t uc = {};
+        (void) getcontext(&uc);
+        makecontext(&uc, ucontext_noop, /* argc= */ 0);
+        (void) swapcontext(&uc, &uc);
+        (void) setcontext(&uc);
+        return 0;
+}
+''',
+        name : 'ucontext APIs in libc',
+        args : ['-Wl,--no-undefined'],
+)
+conf.set10('HAVE_LIBC_UCONTEXT', _ucontext_apis_in_libc)
+if _ucontext_apis_in_libc
+        libucontext = []
+else
+        libucontext = dependency('libucontext')
+endif
+
+# Some libcs may have not built-in libintl.
+_intl_apis_in_libc = cc.links(
+        '''
+#include <locale.h>
+#include <libintl.h>
+
+int main(void) {
+    (void)gettext("hello");
+    (void)dgettext("domain", "hello");
+    (void)dcgettext("domain", "hello", LC_MESSAGES);
+
+    (void)ngettext("file", "files", 1);
+    (void)dngettext("domain", "file", "files", 2);
+    (void)dcngettext("domain", "file", "files", 3, LC_MESSAGES);
+
+    (void)textdomain("test");
+    (void)bindtextdomain("test", ".");
+    (void)bind_textdomain_codeset("test", "UTF-8");
+
+    locale_t loc = newlocale(LC_ALL_MASK, "C", (locale_t)0);
+    locale_t old = uselocale(loc);
+    uselocale(old);
+    freelocale(loc);
+
+    return 0;
+}
+''')
+if _intl_apis_in_libc
+        libintl = []
+else
+        libintl = dependency('libintl')
+endif
 
 bpf_framework = get_option('bpf-framework')
 bpf_compiler = get_option('bpf-compiler')
@@ -1820,11 +1905,12 @@ basic_includes = [
         version_include,
 ]
 
-libsystemd_includes = [basic_includes, include_directories(
+libsystemd_includes = [include_directories(
         'src/libsystemd/sd-bus',
         'src/libsystemd/sd-common',
         'src/libsystemd/sd-device',
         'src/libsystemd/sd-event',
+        'src/libsystemd/sd-future',
         'src/libsystemd/sd-hwdb',
         'src/libsystemd/sd-id128',
         'src/libsystemd/sd-journal',
@@ -1833,14 +1919,14 @@ libsystemd_includes = [basic_includes, include_directories(
         'src/libsystemd/sd-network',
         'src/libsystemd/sd-path',
         'src/libsystemd/sd-resolve',
-        'src/libsystemd/sd-varlink')]
+        'src/libsystemd/sd-varlink'), basic_includes]
 
 includes = [
-        libsystemd_includes,
         include_directories(
                 'src/shared',
                 'src/bpf',
         ),
+        libsystemd_includes,
 ]
 
 subdir('po')
@@ -1865,7 +1951,7 @@ libsystemd = shared_library(
         link_with : [libc_wrapper_static,
                      libbasic_static],
         link_whole : [libsystemd_static],
-        dependencies : [userspace],
+        dependencies : [libintl, libucontext, userspace],
         link_depends : libsystemd_sym,
         install : true,
         install_tag: 'libsystemd',
@@ -1887,6 +1973,8 @@ if static_libsystemd != 'false'
                 dependencies : [libgcrypt_cflags,
                                 liblz4_cflags,
                                 libm,
+                                libucontext,
+                                libintl,
                                 libxz_cflags,
                                 libzstd_cflags,
                                 userspace],
@@ -1906,7 +1994,7 @@ libudev = shared_library(
                      '-Wl,--version-script=' + libudev_sym_path],
         link_with : [libsystemd_static],
         link_whole : libudev_basic,
-        dependencies : [userspace],
+        dependencies : [libintl, userspace],
         link_depends : libudev_sym,
         install : true,
         install_tag: 'libudev',
@@ -1987,6 +2075,7 @@ test_template = executable_template + {
 
 test_additional_kwargs = {
         'c_args' : test_cflags,
+        'dependencies' : libintl,
         'link_depends' : runtest_env,
 }
 
@@ -2377,6 +2466,7 @@ test_dlopen = executables_by_name.get('test-dlopen')
 
 nss_targets = []
 pam_targets = []
+module_targets = []
 foreach dict : modules
         name = dict.get('name')
         is_nss = name.startswith('nss_')
@@ -2420,6 +2510,8 @@ foreach dict : modules
                 kwargs : kwargs,
                 implicit_include_directories : false,
         )
+
+        module_targets += lib
 
         if is_nss
                 # We cannot use shared_module because it does not support version suffix.

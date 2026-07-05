@@ -17,8 +17,6 @@
 #include "strv.h"
 
 #if HAVE_LIBCRYPTSETUP
-static void *cryptsetup_dl = NULL;
-
 DLSYM_PROTOTYPE(crypt_activate_by_passphrase) = NULL;
 DLSYM_PROTOTYPE(crypt_activate_by_signed_key) = NULL;
 DLSYM_PROTOTYPE(crypt_activate_by_token_pin) = NULL;
@@ -275,6 +273,7 @@ int cryptsetup_get_volume_key_id(
 
 int dlopen_cryptsetup(int log_level) {
 #if HAVE_LIBCRYPTSETUP
+        static void *cryptsetup_dl = NULL;
         int r;
 
         /* libcryptsetup added crypt_reencrypt() in 2.2.0, and marked it obsolete in 2.4.0, replacing it with
@@ -282,11 +281,7 @@ int dlopen_cryptsetup(int log_level) {
          * still available though, and given we want to support 2.2.0 for a while longer, we'll use the old
          * symbol if the new one is not available. */
 
-        SD_ELF_NOTE_DLOPEN(
-                        "cryptsetup",
-                        "Support for disk encryption, integrity, and authentication",
-                        SD_ELF_NOTE_DLOPEN_PRIORITY_SUGGESTED,
-                        "libcryptsetup.so.12");
+        CRYPTSETUP_NOTE(SD_ELF_NOTE_DLOPEN_PRIORITY_SUGGESTED);
 
         r = dlopen_many_sym_or_warn(
                         &cryptsetup_dl, "libcryptsetup.so.12", log_level,
