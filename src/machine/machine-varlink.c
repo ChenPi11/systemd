@@ -126,6 +126,8 @@ static int machine_cid(const char *name, sd_json_variant *variant, sd_json_dispa
 int vl_method_register(sd_varlink *link, sd_json_variant *parameters, sd_varlink_method_flags_t flags, void *userdata) {
         Manager *manager = ASSERT_PTR(userdata);
         _cleanup_(machine_freep) Machine *machine = NULL;
+        const char *bad_field = NULL;
+        bool sender_is_admin = false;
         int r;
 
         static const sd_json_dispatch_field dispatch_table[] = {
@@ -135,8 +137,6 @@ int vl_method_register(sd_varlink *link, sd_json_variant *parameters, sd_varlink
                 { "class",               SD_JSON_VARIANT_STRING,        dispatch_machine_class,   offsetof(Machine, class),                SD_JSON_MANDATORY },
                 { "leader",              _SD_JSON_VARIANT_TYPE_INVALID, machine_pidref,           offsetof(Machine, leader),               SD_JSON_STRICT    },
                 { "leaderProcessId",     SD_JSON_VARIANT_OBJECT,        machine_pidref,           offsetof(Machine, leader),               SD_JSON_STRICT    },
-                { "supervisor",          _SD_JSON_VARIANT_TYPE_INVALID, machine_pidref,           offsetof(Machine, supervisor),           SD_JSON_STRICT    },
-                { "supervisorProcessId", SD_JSON_VARIANT_OBJECT,        machine_pidref,           offsetof(Machine, supervisor),           SD_JSON_STRICT    },
                 { "rootDirectory",       SD_JSON_VARIANT_STRING,        json_dispatch_path,       offsetof(Machine, root_directory),       SD_JSON_STRICT    },
                 { "ifIndices",           SD_JSON_VARIANT_ARRAY,         machine_ifindices,        0,                                       0                 },
                 { "vSockCid",            _SD_JSON_VARIANT_TYPE_INVALID, machine_cid,              offsetof(Machine, vsock_cid),            0                 },
@@ -152,21 +152,27 @@ int vl_method_register(sd_varlink *link, sd_json_variant *parameters, sd_varlink
         if (r < 0)
                 return r;
 
-        r = sd_varlink_dispatch(link, parameters, dispatch_table, machine);
-        if (r != 0)
+        r = sd_json_dispatch_full(parameters, dispatch_table, /* bad= */ NULL, SD_JSON_ALLOW_EXTENSIONS, machine, &bad_field);
+        if (r < 0) {
+                if (bad_field)
+                        return sd_varlink_error_invalid_parameter_name(link, bad_field);
                 return r;
+        }
 
         if (!MACHINE_CLASS_CAN_REGISTER(machine->class))
                 return sd_varlink_error_invalid_parameter_name(link, "class");
 
         if (manager->runtime_scope != RUNTIME_SCOPE_USER) {
-                r = varlink_verify_polkit_async(
+                r = varlink_verify_polkit_async_full(
                                 link,
                                 manager->system_bus,
                                 machine->allocate_unit ? "org.freedesktop.machine1.create-machine" : "org.freedesktop.machine1.register-machine",
                                 (const char**) STRV_MAKE("name", machine->name,
                                                          "class", machine_class_to_string(machine->class)),
-                                &manager->polkit_registry);
+                                /* good_user= */ UID_INVALID,
+                                /* flags= */ 0,
+                                &manager->polkit_registry,
+                                &sender_is_admin);
                 if (r <= 0)
                         return r;
         }
@@ -175,9 +181,7 @@ int vl_method_register(sd_varlink *link, sd_json_variant *parameters, sd_varlink
                 r = varlink_get_peer_pidref(link, &machine->leader);
                 if (r < 0)
                         return r;
-        }
-
-        if (!pidref_is_set(&machine->supervisor)) {
+        } else {
                 _cleanup_(pidref_done) PidRef client_pidref = PIDREF_NULL;
 
                 r = varlink_get_peer_pidref(link, &client_pidref);
@@ -196,7 +200,7 @@ int vl_method_register(sd_varlink *link, sd_json_variant *parameters, sd_varlink
         /* In system scope, ensure an unprivileged user cannot claim any process they don't
          * control as their own machine. In user scope the varlink socket is already
          * protected by $XDG_RUNTIME_DIR permissions. */
-        if (manager->runtime_scope != RUNTIME_SCOPE_USER && machine->uid != 0) {
+        if (manager->runtime_scope != RUNTIME_SCOPE_USER && machine->uid != 0 && !sender_is_admin) {
                 r = process_is_owned_by_uid(&machine->leader, machine->uid);
                 if (r < 0)
                         return r;
@@ -323,7 +327,8 @@ int vl_method_unregister_internal(sd_varlink *link, sd_json_variant *parameters,
                                                          "verb", "unregister"),
                                 machine->uid,
                                 /* flags= */ 0,
-                                &manager->polkit_registry);
+                                &manager->polkit_registry,
+                                /* ret_admin= */ NULL);
                 if (r <= 0)
                         return r;
         }
@@ -349,7 +354,8 @@ int vl_method_terminate_internal(sd_varlink *link, sd_json_variant *parameters, 
                                                          "verb", "terminate"),
                                 machine->uid,
                                 /* flags= */ 0,
-                                &manager->polkit_registry);
+                                &manager->polkit_registry,
+                                /* ret_admin= */ NULL);
                 if (r <= 0)
                         return r;
         }
@@ -417,7 +423,8 @@ int vl_method_kill(sd_varlink *link, sd_json_variant *parameters, sd_varlink_met
                                                          "verb", "kill"),
                                 machine->uid,
                                 /* flags= */ 0,
-                                &manager->polkit_registry);
+                                &manager->polkit_registry,
+                                /* ret_admin= */ NULL);
                 if (r <= 0)
                         return r;
         }
@@ -583,7 +590,8 @@ int vl_method_open(sd_varlink *link, sd_json_variant *parameters, sd_varlink_met
                                 (const char**) polkit_details,
                                 machine->uid,
                                 /* flags= */ 0,
-                                &manager->polkit_registry);
+                                &manager->polkit_registry,
+                                /* ret_admin= */ NULL);
                 if (r <= 0)
                         return r;
         }

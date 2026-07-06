@@ -5,9 +5,8 @@
 #include "hash-funcs.h"
 #include "path-util.h"
 #include "string-util.h"
-#include "sysupdate.h"
+#include "sysupdate-config.h"
 #include "sysupdate-feature.h"
-#include "web-util.h"
 
 static Feature *feature_free(Feature *f) {
         if (!f)
@@ -42,45 +41,7 @@ DEFINE_HASH_OPS_WITH_VALUE_DESTRUCTOR(feature_hash_ops,
                                       char, string_hash_func, string_compare_func,
                                       Feature, feature_unref);
 
-static int config_parse_url_specifiers(
-                const char *unit,
-                const char *filename,
-                unsigned line,
-                const char *section,
-                unsigned section_line,
-                const char *lvalue,
-                int ltype,
-                const char *rvalue,
-                void *data,
-                void *userdata) {
-        char **s = ASSERT_PTR(data);
-        _cleanup_free_ char *resolved = NULL;
-        int r;
-
-        assert(rvalue);
-
-        if (isempty(rvalue)) {
-                *s = mfree(*s);
-                return 0;
-        }
-
-        r = specifier_printf(rvalue, NAME_MAX, specifier_table, arg_root, NULL, &resolved);
-        if (r < 0) {
-                log_syntax(unit, LOG_WARNING, filename, line, r,
-                           "Failed to expand specifiers in %s=, ignoring: %s", lvalue, rvalue);
-                return 0;
-        }
-
-        if (!http_url_is_valid(resolved)) {
-                log_syntax(unit, LOG_WARNING, filename, line, 0,
-                           "%s= URL is not valid, ignoring: %s", lvalue, rvalue);
-                return 0;
-        }
-
-        return free_and_replace(*s, resolved);
-}
-
-int feature_read_definition(Feature *f, const char *path, const char *const *dirs) {
+int feature_read_definition(Feature *f, const char *root, const char *path, const char *const *dirs) {
         assert(f);
 
         ConfigTableItem table[] = {
@@ -105,14 +66,14 @@ int feature_read_definition(Feature *f, const char *path, const char *const *dir
                         STRV_MAKE_CONST(path),
                         dirs,
                         strjoina(filename, ".d"),
-                        arg_root,
+                        root,
                         /* root_fd= */ -EBADF,
                         "Feature\0",
                         config_item_table_lookup, table,
                         CONFIG_PARSE_WARN,
-                        /* userdata= */ NULL,
-                        /* stats_by_path= */ NULL,
-                        /* drop_in_files= */ NULL);
+                        (void *) root,
+                        /* ret_stats_by_path= */ NULL,
+                        /* ret_drop_in_files= */ NULL);
         if (r < 0)
                 return r;
 

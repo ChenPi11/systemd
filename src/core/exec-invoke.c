@@ -33,6 +33,7 @@
 #include "constants.h"
 #include "copy.h"
 #include "coredump-util.h"
+#include "crypto-util.h"
 #include "cryptsetup-util.h"
 #include "dissect-image.h"
 #include "dynamic-user.h"
@@ -889,7 +890,7 @@ static int get_supplementary_groups(
         assert(ret_gids);
 
         /*
-         * If user is given, then lookup GID and supplementary groups list.
+         * If user is given, then look up GID and supplementary groups list.
          * We avoid NSS lookups for gid=0. Also we have to initialize groups
          * here and as early as possible so we keep the list of supplementary
          * groups of the caller.
@@ -897,15 +898,16 @@ static int get_supplementary_groups(
         bool keep_groups = false;
         if (user && gid_is_valid(gid) && gid != 0) {
                 /* First step, initialize groups from /etc/groups */
-                if (initgroups(user, gid) < 0) {
+                r = initgroups_wrapper(user, gid);
+                if (r < 0) {
                         /* If our primary gid is already the one specified in Group= (i.e. we're running in
                          * user mode), gracefully handle the case where we have no privilege to re-initgroups().
                          *
                          * Note that group memberships of the current user might have been modified, but
                          * the change will only take effect after re-login. It's better to continue on with
                          * existing credentials rather than erroring out. */
-                        if (!ERRNO_IS_PRIVILEGE(errno) || gid != getgid())
-                                return -errno;
+                        if (!ERRNO_IS_PRIVILEGE(r) || gid != getgid())
+                                return r;
                 }
 
                 keep_groups = true;
@@ -916,33 +918,29 @@ static int get_supplementary_groups(
                 return 0;
         }
 
-        /*
-         * If SupplementaryGroups= was passed then NGROUPS_MAX has to
-         * be positive, otherwise fail.
-         */
-        errno = 0;
-        int ngroups_max = (int) sysconf(_SC_NGROUPS_MAX);
-        if (ngroups_max <= 0)
-                return errno_or_else(EOPNOTSUPP);
-
-        _cleanup_free_ gid_t *l_gids = new(gid_t, ngroups_max);
-        if (!l_gids)
-                return -ENOMEM;
+        /* If SupplementaryGroups= was passed then NGROUPS_MAX has to be positive, otherwise fail. */
+        _cleanup_free_ gid_t *l_gids = NULL;
 
         int k = 0;
         if (keep_groups) {
-                /*
-                 * Lookup the list of groups that the user belongs to, we
-                 * avoid NSS lookups here too for gid=0.
-                 */
-                k = ngroups_max;
-                if (getgrouplist(user, gid, l_gids, &k) < 0)
-                        return -EINVAL;
+                /* Look up the list of groups that the user belongs to.
+                 * We avoid NSS lookups here too for gid=0. */
+
+                k = getgrouplist_malloc(user, gid, &l_gids);
+                if (k < 0)
+                        return k;
         }
+
+        int ngroups_max = sysconf_ngroups_max();
+        if (ngroups_max < 0)
+                return ngroups_max;
 
         STRV_FOREACH(i, c->supplementary_groups) {
                 if (k >= ngroups_max)
                         return -E2BIG;
+
+                if (!GREEDY_REALLOC(l_gids, k + 1))
+                        return -ENOMEM;
 
                 r = get_group_creds(*i, /* flags= */ 0, /* ret_name= */ NULL, l_gids + k);
                 if (r < 0)
@@ -956,12 +954,11 @@ static int get_supplementary_groups(
                 return 0;
         }
 
-        /* Otherwise get the final list of supplementary groups */
-        gid_t *groups = newdup(gid_t, l_gids, k);
-        if (!groups)
-                return -ENOMEM;
+        /* We *could* trim the array size with realloc(3), but right now the only caller frees the array
+         * quickly anyway, so this is not worth the trouble. If other users pop up, this should be
+         * reconsidered. */
 
-        *ret_gids = groups;
+        *ret_gids = TAKE_PTR(l_gids);
         return k;
 }
 
@@ -1089,7 +1086,7 @@ static int ask_password_conv(
 
                                 if (creds_dir) {
                                         if (setenv("CREDENTIALS_DIRECTORY", creds_dir, /* overwrite= */ true) < 0)
-                                                return log_error_errno(r, "Failed to set $CREDENTIALS_DIRECTORY: %m");
+                                                return log_error_errno(errno, "Failed to set $CREDENTIALS_DIRECTORY: %m");
                                 } else
                                         (void) unsetenv("CREDENTIALS_DIRECTORY");
 
@@ -3718,8 +3715,9 @@ static int pin_rootfs(
         if (context->root_image) {
                 _cleanup_(pick_result_done) PickResult result = PICK_RESULT_NULL;
 
-                r = path_pick(/* toplevel_path= */ NULL,
-                              /* toplevel_fd= */ AT_FDCWD,
+                r = path_pick(/* root_path= */ NULL,
+                              /* root_fd= */ AT_FDCWD,
+                              /* dir_fd= */ AT_FDCWD,
                               context->root_image,
                               pick_filter_image_raw,
                               ELEMENTSOF(pick_filter_image_raw),
@@ -3759,8 +3757,9 @@ static int pin_rootfs(
         if (context->root_directory) {
                 _cleanup_(pick_result_done) PickResult result = PICK_RESULT_NULL;
 
-                r = path_pick(/* toplevel_path= */ NULL,
-                              /* toplevel_fd= */ AT_FDCWD,
+                r = path_pick(/* root_path= */ NULL,
+                              /* root_fd= */ AT_FDCWD,
+                              /* dir_fd= */ AT_FDCWD,
                               context->root_directory,
                               pick_filter_image_dir,
                               ELEMENTSOF(pick_filter_image_dir),
@@ -3788,8 +3787,9 @@ static int pin_rootfs(
         if (context->root_mstack) {
                 _cleanup_(pick_result_done) PickResult result = PICK_RESULT_NULL;
 
-                r = path_pick(/* toplevel_path= */ NULL,
-                              /* toplevel_fd= */ AT_FDCWD,
+                r = path_pick(/* root_path= */ NULL,
+                              /* root_fd= */ AT_FDCWD,
+                              /* dir_fd= */ AT_FDCWD,
                               context->root_mstack,
                               pick_filter_image_mstack,
                               /* n_filters= */ 1,
@@ -5642,8 +5642,10 @@ int exec_invoke(
 
         if (mpol_is_valid(numa_policy_get_type(&context->numa_policy))) {
                 r = apply_numa_policy(&context->numa_policy);
-                if (ERRNO_IS_NEG_NOT_SUPPORTED(r))
+                if (r == -ENOSYS)
                         log_debug_errno(r, "NUMA support not available, ignoring.");
+                else if (ERRNO_IS_NEG_NOT_SUPPORTED(r))
+                        log_warning_errno(r, "NUMA policy not supported by kernel, ignoring.");
                 else if (r < 0) {
                         *exit_status = EXIT_NUMA_POLICY;
                         return log_error_errno(r, "Failed to set NUMA memory policy: %m");
@@ -6002,6 +6004,8 @@ int exec_invoke(
         (void) DLOPEN_CRYPTSETUP(LOG_DEBUG, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
         (void) DLOPEN_LIBMOUNT(LOG_DEBUG, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
         (void) DLOPEN_LIBSECCOMP(LOG_DEBUG, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
+        /* Needed for userspace verity verification fallback */
+        (void) DLOPEN_LIBCRYPTO(LOG_DEBUG, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
 
         /* Let's now disable further dlopen()ing of libraries, since we are about to do namespace
          * shenanigans, and do not want to mix resources from host and namespace */
@@ -6012,8 +6016,10 @@ int exec_invoke(
                  * Users with CAP_SYS_ADMIN can set up user namespaces last because they will be able to
                  * set up all of the other namespaces (i.e. network, mount, UTS) without a user namespace. */
 
-                if (context->user_namespace_path && runtime->shared->userns_storage_socket[0] >= 0)
+                if (context->user_namespace_path && runtime->shared->userns_storage_socket[0] >= 0) {
+                        *exit_status = EXIT_USER;
                         return log_error_errno(SYNTHETIC_ERRNO(EPERM), "UserNamespacePath= is configured, but user namespace setup not permitted");
+                }
 
                 PrivateUsers pu = exec_context_get_effective_private_users(context, params);
                 if (pu == PRIVATE_USERS_NO)
@@ -6098,12 +6104,16 @@ int exec_invoke(
          * case of mount namespaces being less privileged when the mount point list is copied from a
          * different user namespace). */
         if (needs_sandboxing && context->user_namespace_path && runtime->shared && runtime->shared->userns_storage_socket[0] >= 0) {
-                if (!namespace_type_supported(NAMESPACE_USER))
+                if (!namespace_type_supported(NAMESPACE_USER)) {
+                        *exit_status = EXIT_USER;
                         return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP), "UserNamespacePath= is not supported, refusing.");
+                }
 
                 r = setup_shareable_ns(runtime->shared->userns_storage_socket, CLONE_NEWUSER);
-                if (ERRNO_IS_NEG_PRIVILEGE(r))
-                        return log_notice_errno(r, "PrivateUsers= is configured, but user namespace setup not permitted, refusing.");
+                if (ERRNO_IS_NEG_PRIVILEGE(r)) {
+                        *exit_status = EXIT_USER;
+                        return log_error_errno(r, "UserNamespacePath= is configured, but user namespace setup not permitted, refusing.");
+                }
                 if (r < 0) {
                         *exit_status = EXIT_USER;
                         return log_error_errno(r, "Failed to set up user namespacing: %m");

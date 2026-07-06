@@ -68,6 +68,8 @@
 #define VARLINK_PATH_MACHINED_RESOLVE_HOOK RUNSTATEDIR "/systemd/resolve.hook/io.systemd.Machine"
 /* Path where to connect to send varlink prekill events */
 #define VARLINK_DIR_OOMD_PREKILL_HOOK RUNSTATEDIR "/systemd/oomd.prekill.hook/"
+/* Directory whose sockets receive io.systemd.SysUpdate.Notify() after a successful sysupdate run */
+#define VARLINK_DIR_SYSUPDATE_NOTIFY_HOOK RUNSTATEDIR "/systemd/sysupdate/notify/"
 
 /* Recommended baseline - see README for details */
 #define KERNEL_BASELINE_VERSION "5.14"

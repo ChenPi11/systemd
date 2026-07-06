@@ -10,11 +10,16 @@ executables += [
                 'public' : true,
                 'sources' : files('imdsd.c'),
                 'extract' : files('imds-util.c'),
+                'dependencies' : [
+                        libcurl_cflags,
+                ],
         },
         libexec_template + {
                 'name' : 'systemd-imds',
                 'public' : true,
-                'sources' : files('imds-tool.c'),
+                'sources' : files(
+                        'imds-tool.c',
+                        'imds-tool-metrics.c'),
                 'objects' : ['systemd-imdsd'],
         },
         generator_template + {

@@ -1,12 +1,47 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 #pragma once
 
-#include "specifier.h"
 #include "sysupdate-forward.h"
+#include "sysupdate-target.h"
 
-extern bool arg_sync;
-extern uint64_t arg_instances_max;
-extern char *arg_root;
-extern char *arg_transfer_source;
+typedef struct Context {
+        /* Parameters/Command line arguments: */
+        char *definitions;
+        bool sync;
+        uint64_t instances_max;
+        char *root;
+        char *image;
+        bool reboot;
+        int cleanup;
+        char *component;
+        bool component_all;
+        int verify;
+        ImagePolicy *image_policy;
+        bool offline;
+        char *transfer_source;
 
-extern const Specifier specifier_table[];
+        /* Loaded state: */
+        LoopDevice *loop_device;
+        char *mounted_dir;
+
+        Transfer **transfers;
+        size_t n_transfers;
+
+        Transfer **disabled_transfers;
+        size_t n_disabled_transfers;
+
+        Hashmap *features; /* Defined features, keyed by ID */
+
+        UpdateSet **update_sets;
+        size_t n_update_sets;
+
+        UpdateSet *newest_installed, *candidate;
+
+        Hashmap *web_cache; /* Cache for downloaded resources, keyed by URL */
+
+        int installdb_fd;
+
+        TargetIdentifier target_identifier;
+} Context;
+
+void context_done(Context *c);

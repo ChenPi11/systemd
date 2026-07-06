@@ -86,12 +86,21 @@ static void wait_for_service_finish(Manager *m, Unit *unit) {
         printf("%s\n", unit->id);
         exec_context_dump(&service->exec_context, stdout, "\t");
 
+        /* Use a per-Exec timeout rather than a service timeout, as especially under sanitizers some test
+         * units running many commands can hit the service timeout. */
         _cleanup_(sd_event_source_unrefp) sd_event_source *s = NULL;
         ASSERT_OK(sd_event_add_time_relative(m->event, &s, CLOCK_MONOTONIC, timeout, 0, time_handler, unit));
 
         /* Here, sd_event_loop() cannot be used, as the sd_event object will be reused in the next test case. */
-        while (!IN_SET(service->state, SERVICE_DEAD, SERVICE_FAILED))
+        ExecCommand *last_command = service->main_command;
+        while (!IN_SET(service->state, SERVICE_DEAD, SERVICE_FAILED)) {
                 ASSERT_OK(sd_event_run(m->event, 100 * USEC_PER_MSEC));
+
+                if (service->main_command != last_command) {
+                        last_command = service->main_command;
+                        ASSERT_OK(sd_event_source_set_time_relative(s, timeout));
+                }
+        }
 }
 
 static void check_main_result(const char *file, unsigned line, const char *func,
@@ -295,7 +304,7 @@ static void _test(const char *file, unsigned line, const char *func,
 
         ASSERT_NOT_NULL(unit_name);
 
-        ASSERT_OK(manager_load_startable_unit_or_warn(m, unit_name, NULL, &unit));
+        ASSERT_OK(manager_load_startable_unit_or_warn(m, unit_name, NULL, LOG_ERR, &unit));
         /* We need to start the slices as well otherwise the slice cgroups might be pruned
          * in on_cgroup_empty_event. */
         start_parent_slices(unit);
@@ -313,7 +322,7 @@ static void _test_service(const char *file, unsigned line, const char *func,
 
         ASSERT_NOT_NULL(unit_name);
 
-        ASSERT_OK(manager_load_startable_unit_or_warn(m, unit_name, NULL, &unit));
+        ASSERT_OK(manager_load_startable_unit_or_warn(m, unit_name, NULL, LOG_ERR, &unit));
         ASSERT_OK(unit_start(unit, NULL));
         check_service_result(file, line, func, m, unit, result_expected);
 }

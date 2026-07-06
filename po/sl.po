@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 #
 # Martin Srebotnjak <miles@filmsi.net>, 2024, 2025, 2026.
-# Weblate Translation Memory <noreply-mt-weblate-translation-memory@weblate.org>, 2024.
+# Weblate Translation Memory <noreply-mt-weblate-translation-memory@weblate.org>, 2024, 2026.
 msgid ""
 msgstr ""
 "Project-Id-Version: systemd\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-30 00:13+0200\n"
-"PO-Revision-Date: 2026-06-05 08:02+0000\n"
+"POT-Creation-Date: 2026-06-01 11:49+0200\n"
+"PO-Revision-Date: 2026-06-21 11:10+0000\n"
 "Last-Translator: Martin Srebotnjak <miles@filmsi.net>\n"
 "Language-Team: Slovenian <https://translate.fedoraproject.org/projects/"
 "systemd/main/sl/>\n"
@@ -1459,15 +1459,21 @@ msgstr ""
 "Preverjanje pristnosti je potrebno za zamrznitev ali odmrzovanje postopkov "
 "enote »$(enota)«."
 
-#: src/shared/libfido2-util.c:497 src/shared/libfido2-util.c:554
+#: src/shared/libfido2-util.c:500 src/shared/libfido2-util.c:557
 msgid "Please confirm presence on security token to unlock."
 msgstr "Potrdite prisotnost za varnostni žeton, da bo možno odklepanje."
 
-#: src/shared/libfido2-util.c:513
+#: src/shared/libfido2-util.c:516
 msgid "Please verify user on security token to unlock."
 msgstr "Preverite uporabnika na varnostnem žetonu, da bo možno odklepanje."
 
-#: src/shared/libfido2-util.c:926
+#: src/shared/libfido2-util.c:936
+#, c-format
+msgid ""
+"Please enter security token PIN (remaining attempts before lock-out: %d):"
+msgstr "Vnesite PIN varnostnega žetona (preostali poskusi pred zaklepom: %d):"
+
+#: src/shared/libfido2-util.c:948
 msgid "Please enter security token PIN:"
 msgstr "Vnesite PIN varnostnega žetona:"
 

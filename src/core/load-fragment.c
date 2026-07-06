@@ -30,6 +30,7 @@
 #include "execute.h"
 #include "extract-word.h"
 #include "fd-util.h"
+#include "fileio.h"
 #include "fstab-util.h"
 #include "hashmap.h"
 #include "hexdecoct.h"
@@ -41,6 +42,7 @@
 #include "limits-util.h"
 #include "load-fragment.h"
 #include "log.h"
+#include "luo-util.h"
 #include "manager.h"
 #include "mountpoint-util.h"
 #include "nsflags.h"
@@ -71,6 +73,16 @@
 #include "unit-printf.h"
 #include "user-util.h"
 #include "web-util.h"
+
+/* Built-in copies of a few essential unit files, embedded at build time. They are used as a fallback
+ * when no fragment for the unit is found on disk, so that the manager can reach a usable state even on
+ * a system that ships none of these unit files. */
+static const struct {
+        const char *name;
+        const char *data;
+} builtin_units[] = {
+#  include "builtin-units.inc"
+};
 
 static int parse_socket_protocol(const char *s) {
         int r;
@@ -2070,6 +2082,14 @@ int config_parse_timer(
                         log_syntax(unit, LOG_WARNING, filename, line, r, "Failed to parse calendar specification, ignoring: %s", k);
                         return 0;
                 }
+
+                int wday;
+                if (calendar_spec_weekday_conflicts(c, &wday))
+                        log_syntax(unit, LOG_WARNING, filename, line, 0,
+                                   "Weekday constraint does not match the fixed date %04d-%02d-%02d "
+                                   "(which is a %s), so this timer will never elapse.",
+                                   c->year->start, c->month->start, c->day->start,
+                                   weekday_to_string(wday));
         } else {
                 r = parse_sec(k, &usec);
                 if (r < 0) {
@@ -2242,6 +2262,66 @@ int config_parse_socket_service(
         }
 
         unit_ref_set(&s->service, UNIT(s), x);
+
+        return 0;
+}
+
+int config_parse_xattr(
+                const char *unit,
+                const char *filename,
+                unsigned line,
+                const char *section,
+                unsigned section_line,
+                const char *lvalue,
+                int ltype,
+                const char *rvalue,
+                void *data,
+                void *userdata) {
+
+        char ***lp = ASSERT_PTR(data);
+        Unit *u = userdata;
+        int r;
+
+        assert(filename);
+        assert(lvalue);
+        assert(rvalue);
+
+        if (isempty(rvalue)) {
+                *lp = strv_free(*lp);
+                return 0;
+        }
+
+        _cleanup_free_ char *name = NULL, *value = NULL;
+        r = split_pair(rvalue, "=", &name, &value);
+        if (r < 0) {
+                log_syntax(unit, LOG_WARNING, filename, line, r, "Failed to parse extended attribute expression, ignoring: %s", rvalue);
+                return 0;
+        }
+
+        _cleanup_free_ char *expanded_name = NULL;
+        r = unit_full_printf(u, name, &expanded_name);
+        if (r < 0) {
+                log_syntax(unit, LOG_WARNING, filename, line, r, "Failed to expand specifiers in extended attribute expression, ignoring: %s", name);
+                return 0;
+        }
+
+        if (!startswith(expanded_name, "user.")) {
+                log_syntax(unit, LOG_WARNING, filename, line, 0, "Extended attribute name does not begin with 'user.', ignoring: %s", expanded_name);
+                return 0;
+        }
+
+        _cleanup_free_ char *expanded_value = NULL;
+        r = unit_full_printf(u, value, &expanded_value);
+        if (r < 0) {
+                log_syntax(unit, LOG_WARNING, filename, line, r, "Failed to expand specifiers in extended attribute expression, ignoring: %s", value);
+                return 0;
+        }
+
+        if (strv_push_pair(lp, expanded_name, expanded_value) < 0)
+                return log_oom();
+
+        TAKE_PTR(expanded_name);
+        TAKE_PTR(expanded_value);
 
         return 0;
 }
@@ -6110,6 +6190,16 @@ static int merge_by_names(Unit *u, Set *names, const char *id) {
         return 0;
 }
 
+static const char* builtin_unit_lookup(const char *name) {
+        assert(name);
+
+        FOREACH_ELEMENT(i, builtin_units)
+                if (streq(i->name, name))
+                        return i->data;
+
+        return NULL;
+}
+
 int unit_load_fragment(Unit *u) {
         int r;
 
@@ -6191,11 +6281,41 @@ int unit_load_fragment(Unit *u) {
                         r = config_parse(u->id, fragment, f,
                                          UNIT_VTABLE(u)->sections,
                                          config_item_perf_lookup, load_fragment_gperf_lookup,
-                                         0,
-                                         u,
-                                         NULL);
+                                         /* flags= */ 0,
+                                         /* userdata= */ u,
+                                         /* ret_stat= */ NULL);
                         if (r == -ENOEXEC)
                                 log_unit_notice_errno(u, r, "Unit configuration has fatal error, unit will not be started.");
+                        if (r < 0)
+                                return r;
+                }
+        } else if (u->manager->runtime_scope == RUNTIME_SCOPE_SYSTEM) {
+                /* No fragment found on disk. For system units, fall back to a built-in copy if we have one
+                 * embedded. This way the manager can reach a usable state even if none of these unit files
+                 * are installed. On-disk files always take precedence (including masks), since we only get
+                 * here when nothing was found in the lookup paths. */
+
+                const char *data = builtin_unit_lookup(u->id);
+                if (data) {
+                        _cleanup_fclose_ FILE *f = NULL;
+
+                        f = fmemopen_unlocked((void*) data, strlen(data), "re");
+                        if (!f)
+                                return log_oom();
+
+                        log_unit_debug(u, "Loading built-in fragment for %s.", u->id);
+
+                        u->load_state = UNIT_LOADED;
+                        u->fragment_mtime = 0;
+
+                        r = config_parse(u->id, u->id, f,
+                                         UNIT_VTABLE(u)->sections,
+                                         config_item_perf_lookup, load_fragment_gperf_lookup,
+                                         /* flags= */ 0,
+                                         /* userdata= */ u,
+                                         /* ret_stat= */ NULL);
+                        if (r == -ENOEXEC)
+                                log_unit_notice_errno(u, r, "Built-in unit configuration has fatal error, unit will not be started.");
                         if (r < 0)
                                 return r;
                 }
@@ -6725,4 +6845,62 @@ int config_parse_protect_hostname(
         c->protect_hostname = t;
         free_and_replace(c->private_hostname, h);
         return 1;
+}
+
+int config_parse_luo_sessions(
+                const char *unit,
+                const char *filename,
+                unsigned line,
+                const char *section,
+                unsigned section_line,
+                const char *lvalue,
+                int ltype,
+                const char *rvalue,
+                void *data,
+                void *userdata) {
+
+        char ***sessions = ASSERT_PTR(data);
+
+        assert(filename);
+        assert(lvalue);
+        assert(rvalue);
+
+        if (isempty(rvalue)) {
+                *sessions = strv_free(*sessions);
+                return 0;
+        }
+
+        for (const char *p = rvalue;;) {
+                _cleanup_free_ char *word = NULL;
+                int r;
+
+                r = extract_first_word(&p, &word, /* separators= */ NULL, /* flags= */ 0);
+                if (r == -ENOMEM)
+                        return log_oom();
+                if (r < 0) {
+                        log_syntax(unit, LOG_WARNING, filename, line, r,
+                                   "Failed to parse LUOSession= value, ignoring: %s", rvalue);
+                        return 0;
+                }
+                if (r == 0) {
+                        strv_sort(*sessions);
+                        return 0;
+                }
+
+                if (!luo_session_name_is_valid(word)) {
+                        log_syntax(unit, LOG_WARNING, filename, line, 0,
+                                   "LUO session name contains invalid characters, ignoring: %s", word);
+                        continue;
+                }
+
+                if (strv_contains(*sessions, word)) {
+                        log_syntax(unit, LOG_WARNING, filename, line, 0,
+                                   "Duplicate LUO session name, ignoring: %s", word);
+                        continue;
+                }
+
+                r = strv_extend(sessions, word);
+                if (r < 0)
+                        return log_oom();
+        }
 }

@@ -768,6 +768,7 @@ static int mangle_uid_into_key(
                 uid_t uid,
                 uint8_t md[static SHA256_DIGEST_LENGTH]) {
 
+        _cleanup_free_ struct passwd *pw = NULL;
         sd_id128_t mid;
         int r;
 
@@ -778,12 +779,9 @@ static int mangle_uid_into_key(
          * (specifically, UID, user name, machine ID) with the key we'd otherwise use for system credentials,
          * and use the resulting hash as actual encryption key. */
 
-        errno = 0;
-        struct passwd *pw = getpwuid(uid);
-        if (!pw)
-                return log_error_errno(
-                                IN_SET(errno, 0, ENOENT) ? SYNTHETIC_ERRNO(ESRCH) : errno,
-                                "Failed to resolve UID " UID_FMT ": %m", uid);
+        r = getpwuid_malloc(uid, &pw);
+        if (r < 0)
+                return log_error_errno(r, "Failed to resolve UID "UID_FMT": %m", uid);
 
         r = sd_id128_get_machine(&mid);
         if (r < 0)
@@ -962,6 +960,7 @@ int encrypt_credential_and_warn(
                                 tpm2_hash_pcr_values,
                                 tpm2_n_hash_pcr_values,
                                 iovec_is_set(&pubkey) ? &public : NULL,
+                                /* pubkey_policy_ref= */ NULL,
                                 /* use_pin= */ false,
                                 /* pcrlock_policy= */ NULL,
                                 &tpm2_policy);
@@ -1066,12 +1065,10 @@ int encrypt_credential_and_warn(
 
         context = sym_EVP_CIPHER_CTX_new();
         if (!context)
-                return log_error_errno(SYNTHETIC_ERRNO(ENOMEM), "Failed to allocate encryption object: %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                return log_openssl_errors(LOG_ERR, "Failed to allocate encryption object");
 
         if (sym_EVP_EncryptInit_ex(context, cc, NULL, md, iv.iov_base) != 1)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Failed to initialize encryption context: %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                return log_openssl_errors(LOG_ERR, "Failed to initialize encryption context");
 
         /* Just an upper estimate */
         output.iov_len =
@@ -1137,8 +1134,7 @@ int encrypt_credential_and_warn(
 
         /* Pass the encrypted + TPM2 header + scoped header as AAD */
         if (sym_EVP_EncryptUpdate(context, NULL, &added, output.iov_base, p) != 1)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Failed to write AAD data: %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                return log_openssl_errors(LOG_ERR, "Failed to write AAD data");
 
         /* Now construct the metadata header */
         ml = strlen_ptr(name);
@@ -1153,8 +1149,7 @@ int encrypt_credential_and_warn(
 
         /* And encrypt the metadata header */
         if (sym_EVP_EncryptUpdate(context, (uint8_t*) output.iov_base + p, &added, (const unsigned char*) m, ALIGN8(offsetof(struct metadata_credential_header, name) + ml)) != 1)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Failed to encrypt metadata header: %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                return log_openssl_errors(LOG_ERR, "Failed to encrypt metadata header");
 
         assert(added >= 0);
         assert((size_t) added <= output.iov_len - p);
@@ -1162,8 +1157,7 @@ int encrypt_credential_and_warn(
 
         /* Then encrypt the plaintext */
         if (sym_EVP_EncryptUpdate(context, (uint8_t*) output.iov_base + p, &added, input->iov_base, input->iov_len) != 1)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Failed to encrypt data: %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                return log_openssl_errors(LOG_ERR, "Failed to encrypt data");
 
         assert(added >= 0);
         assert((size_t) added <= output.iov_len - p);
@@ -1171,8 +1165,7 @@ int encrypt_credential_and_warn(
 
         /* Finalize */
         if (sym_EVP_EncryptFinal_ex(context, (uint8_t*) output.iov_base + p, &added) != 1)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Failed to finalize data encryption: %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                return log_openssl_errors(LOG_ERR, "Failed to finalize data encryption");
 
         assert(added >= 0);
         assert((size_t) added <= output.iov_len - p);
@@ -1182,8 +1175,7 @@ int encrypt_credential_and_warn(
 
         /* Append tag */
         if (sym_EVP_CIPHER_CTX_ctrl(context, EVP_CTRL_GCM_GET_TAG, tsz, (uint8_t*) output.iov_base + p) != 1)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Failed to get tag: %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                return log_openssl_errors(LOG_ERR, "Failed to get tag");
 
         p += tsz;
         assert(p <= output.iov_len);
@@ -1385,6 +1377,7 @@ int decrypt_credential_and_warn(
                                 le64toh(t->pcr_mask),
                                 le16toh(t->pcr_bank),
                                 z ? &IOVEC_MAKE(z->data, le32toh(z->size)) : NULL,
+                                /* pubkey_policy_ref= */ NULL,
                                 z ? le64toh(z->pcr_mask) : 0,
                                 signature_json,
                                 /* pin= */ NULL,
@@ -1454,24 +1447,19 @@ int decrypt_credential_and_warn(
 
         context = sym_EVP_CIPHER_CTX_new();
         if (!context)
-                return log_error_errno(SYNTHETIC_ERRNO(ENOMEM), "Failed to allocate decryption object: %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                return log_openssl_errors(LOG_ERR, "Failed to allocate decryption object");
 
         if (sym_EVP_DecryptInit_ex(context, cc, NULL, NULL, NULL) != 1)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Failed to initialize decryption context: %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                return log_openssl_errors(LOG_ERR, "Failed to initialize decryption context");
 
         if (sym_EVP_CIPHER_CTX_ctrl(context, EVP_CTRL_GCM_SET_IVLEN, le32toh(h->iv_size), NULL) != 1)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Failed to set IV size on decryption context: %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                return log_openssl_errors(LOG_ERR, "Failed to set IV size on decryption context");
 
         if (sym_EVP_DecryptInit_ex(context, NULL, NULL, md, h->iv) != 1)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Failed to set IV and key: %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                return log_openssl_errors(LOG_ERR, "Failed to set IV and key");
 
         if (sym_EVP_DecryptUpdate(context, NULL, &added, input->iov_base, p) != 1)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Failed to write AAD data: %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                return log_openssl_errors(LOG_ERR, "Failed to write AAD data");
 
         plaintext.iov_base = malloc(input->iov_len - p - le32toh(h->tag_size));
         if (!plaintext.iov_base)
@@ -1483,20 +1471,23 @@ int decrypt_credential_and_warn(
                             &added,
                             (uint8_t*) input->iov_base + p,
                             input->iov_len - p - le32toh(h->tag_size)) != 1)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Failed to decrypt data: %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                return log_openssl_errors(LOG_ERR, "Failed to decrypt data");
 
         assert(added >= 0);
         assert((size_t) added <= input->iov_len - p - le32toh(h->tag_size));
         plaintext.iov_len = added;
 
         if (sym_EVP_CIPHER_CTX_ctrl(context, EVP_CTRL_GCM_SET_TAG, le32toh(h->tag_size), (uint8_t*) input->iov_base + input->iov_len - le32toh(h->tag_size)) != 1)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Failed to set tag: %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                return log_openssl_errors(LOG_ERR, "Failed to set tag");
 
-        if (sym_EVP_DecryptFinal_ex(context, (uint8_t*) plaintext.iov_base + plaintext.iov_len, &added) != 1)
-                return log_error_errno(SYNTHETIC_ERRNO(EBADMSG), "Decryption failed (incorrect key?): %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+        if (sym_EVP_DecryptFinal_ex(context, (uint8_t*) plaintext.iov_base + plaintext.iov_len, &added) != 1) {
+                log_openssl_errors(LOG_ERR, "Decryption failed (incorrect key?)");
+                /* A GCM tag/authentication mismatch (wrong key or corrupted blob) is the common case here
+                 * and typically leaves the OpenSSL error queue empty, so we can't rely on the translated
+                 * errno. Return -EBADMSG unconditionally: it's this function's documented "corrupted file"
+                 * code, and credentials_varlink_error_table[] maps it to io.systemd.Credentials.BadFormat. */
+                return -EBADMSG;
+        }
 
         plaintext.iov_len += added;
 
@@ -1814,15 +1805,12 @@ int pick_up_credentials(const PickUpCredential *table, size_t n_table_entry) {
                 return log_error_errno(credential_dir_fd, "Failed to open credentials directory: %m");
 
         _cleanup_free_ DirectoryEntries *des = NULL;
-        r = readdir_all(credential_dir_fd, RECURSE_DIR_SORT|RECURSE_DIR_IGNORE_DOT|RECURSE_DIR_ENSURE_TYPE, &des);
+        r = readdir_all(credential_dir_fd, RECURSE_DIR_SORT|RECURSE_DIR_IGNORE_DOT|RECURSE_DIR_MUST_BE_REGULAR, &des);
         if (r < 0)
                 return log_error_errno(r, "Failed to enumerate credentials: %m");
 
         FOREACH_ARRAY(i, des->entries, des->n_entries) {
                 struct dirent *de = *i;
-
-                if (de->d_type != DT_REG)
-                        continue;
 
                 FOREACH_ARRAY(t, table, n_table_entry) {
                         r = pick_up_credential_one(credential_dir_fd, de->d_name, t);

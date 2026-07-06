@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 
 #include <fcntl.h>
+#include <sys/sysinfo.h>
 #include <sys/utsname.h>
 
 #include "sd-device.h"
@@ -139,6 +140,67 @@ static int cpus_online_generate(const MetricFamily *mf, sd_varlink *link, void *
                         link,
                         /* object= */ NULL,
                         n_cpus,
+                        /* fields= */ NULL);
+}
+
+static int load_average_generate(const MetricFamily *mf, sd_varlink *link, void *userdata) {
+        enum {
+                LOAD_AVERAGE_FIELD_1MIN,
+                LOAD_AVERAGE_FIELD_5MIN,
+                LOAD_AVERAGE_FIELD_15MIN,
+                _LOAD_AVERAGE_FIELD_MAX,
+        };
+
+        int r;
+
+        assert(mf && mf->name);
+        assert(link);
+
+        /* The classic Linux load average, i.e. the exponentially damped moving average of the number of
+         * runnable plus uninterruptible tasks over the last 1, 5 and 15 minutes. The kernel exposes these as
+         * fixed-point numbers shifted left by SI_LOAD_SHIFT bits. */
+
+        struct sysinfo info;
+        if (sysinfo(&info) < 0)
+                return log_debug_errno(errno, "Failed to call sysinfo(): %m");
+
+        assert_cc(_LOAD_AVERAGE_FIELD_MAX == ELEMENTSOF(info.loads));
+
+        for (size_t i = 0; i < _LOAD_AVERAGE_FIELD_MAX; i++) {
+
+                r = metric_build_send_double(
+                                mf + i,
+                                link,
+                                /* object= */ NULL,
+                                (double) info.loads[i] / (UINT64_C(1) << SI_LOAD_SHIFT),
+                                /* fields= */ NULL);
+                if (r < 0)
+                        return r;
+        }
+
+        return 0;
+}
+
+static int swap_generate(const MetricFamily *mf, sd_varlink *link, void *userdata) {
+        assert(mf && mf->name);
+        assert(link);
+
+        /* The total amount of configured swap space, in bytes. */
+
+        struct sysinfo info;
+        if (sysinfo(&info) < 0)
+                return log_debug_errno(errno, "Failed to call sysinfo(): %m");
+
+        /* Overflow is unrealistic (would need >16 EiB of swap), but use MUL_SAFE to make this obvious to
+         * static analyzers. */
+        uint64_t swap;
+        assert_se(MUL_SAFE(&swap, (uint64_t) info.totalswap, (uint64_t) info.mem_unit));
+
+        return metric_build_send_unsigned(
+                        mf,
+                        link,
+                        /* object= */ NULL,
+                        swap,
                         /* fields= */ NULL);
 }
 
@@ -443,7 +505,6 @@ static int virtualization_generate(const MetricFamily *mf, sd_varlink *link, voi
                 METRIC_IO_SYSTEMD_BASIC_PREFIX "OSRelease." name,       \
                 "Operating system identification (" name "= field from os-release)", \
                 METRIC_FAMILY_TYPE_STRING,                              \
-                .generate = NULL,                                       \
         }
 
 #define MACHINE_INFO_STANDARD_FIELD(name)                               \
@@ -451,7 +512,6 @@ static int virtualization_generate(const MetricFamily *mf, sd_varlink *link, voi
                 METRIC_IO_SYSTEMD_BASIC_PREFIX "MachineInfo." name,     \
                 "Machine identification (" name "= field from machine-info)", \
                 METRIC_FAMILY_TYPE_STRING,                              \
-                .generate = NULL,                                       \
         }
 
 #define SMBIOS_STANDARD_FIELD(name)                                     \
@@ -459,7 +519,6 @@ static int virtualization_generate(const MetricFamily *mf, sd_varlink *link, voi
                 METRIC_IO_SYSTEMD_BASIC_PREFIX "SMBIOS." name,          \
                 "Firmware/hardware identification (" name " field from SMBIOS/DMI)", \
                 METRIC_FAMILY_TYPE_STRING,                              \
-                .generate = NULL,                                       \
         }
 
 static const MetricFamily metric_family_table[] = {
@@ -500,6 +559,23 @@ static const MetricFamily metric_family_table[] = {
                 METRIC_FAMILY_TYPE_STRING,
                 .generate = kernel_version_generate,
         },
+        {
+                METRIC_IO_SYSTEMD_BASIC_PREFIX "LoadAverage1Min",
+                "System load average over the last 1 minute",
+                METRIC_FAMILY_TYPE_GAUGE,
+                .generate = load_average_generate,
+        },
+        {
+                METRIC_IO_SYSTEMD_BASIC_PREFIX "LoadAverage5Min",
+                "System load average over the last 5 minutes",
+                METRIC_FAMILY_TYPE_GAUGE,
+        },
+        {
+                METRIC_IO_SYSTEMD_BASIC_PREFIX "LoadAverage15Min",
+                "System load average over the last 15 minutes",
+                METRIC_FAMILY_TYPE_GAUGE,
+        },
+        /* Keep those ↑ in sync with load_average_generate(). */
         {
                 METRIC_IO_SYSTEMD_BASIC_PREFIX "MachineID",
                 "Machine ID",
@@ -569,6 +645,12 @@ static const MetricFamily metric_family_table[] = {
         SMBIOS_STANDARD_FIELD("ChassisAssetTagNumber"),
         /* Keep those ↑ in sync with smbios_generate(). */
         {
+                METRIC_IO_SYSTEMD_BASIC_PREFIX "SwapBytes",
+                "Total configured swap space in bytes",
+                METRIC_FAMILY_TYPE_GAUGE,
+                .generate = swap_generate,
+        },
+        {
                 METRIC_IO_SYSTEMD_BASIC_PREFIX "TPM2.Manufacturer",
                 "TPM2 device manufacturer (ID_TPM2_MANUFACTURER property of the tpmrm0 device)",
                 METRIC_FAMILY_TYPE_STRING,
@@ -578,7 +660,6 @@ static const MetricFamily metric_family_table[] = {
                 METRIC_IO_SYSTEMD_BASIC_PREFIX "TPM2.VendorString",
                 "TPM2 device vendor string (ID_TPM2_VENDOR_STRING property of the tpmrm0 device)",
                 METRIC_FAMILY_TYPE_STRING,
-                .generate = NULL,
         },
         /* Keep those ↑ in sync with tpm2_generate(). */
         {

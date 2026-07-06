@@ -205,6 +205,7 @@ typedef enum DirectoryType {
         DIRECTORY_STATE,
         DIRECTORY_CACHE,
         DIRECTORY_LOGS,
+        DIRECTORY_SHARED,
         _DIRECTORY_TYPE_MAX,
 } DirectoryType;
 
@@ -293,6 +294,7 @@ static int specifier_directory(
                 [DIRECTORY_STATE] =   { SD_PATH_SYSTEM_STATE_PRIVATE      },
                 [DIRECTORY_CACHE] =   { SD_PATH_SYSTEM_STATE_CACHE        },
                 [DIRECTORY_LOGS] =    { SD_PATH_SYSTEM_STATE_LOGS         },
+                [DIRECTORY_SHARED] =  { SD_PATH_SYSTEM_SHARED             },
         };
 
         static const struct table_entry paths_user[] = {
@@ -300,6 +302,7 @@ static int specifier_directory(
                 [DIRECTORY_STATE] =   { SD_PATH_USER_STATE_PRIVATE        },
                 [DIRECTORY_CACHE] =   { SD_PATH_USER_STATE_CACHE          },
                 [DIRECTORY_LOGS] =    { SD_PATH_USER_STATE_PRIVATE, "log" },
+                [DIRECTORY_SHARED] =  { SD_PATH_USER_SHARED               },
         };
 
         const struct table_entry *paths;
@@ -1419,16 +1422,20 @@ static int path_set_acl(
                    strna(t), pretty);
 
         if (!arg_dry_run &&
-            sym_acl_set_file(path, type, dup) < 0) {
-                if (ERRNO_IS_NOT_SUPPORTED(errno))
+            (r = RET_NERRNO(sym_acl_set_file(path, type, dup))) < 0) {
+                if (ERRNO_IS_NOT_SUPPORTED(r))
                         /* No error if filesystem doesn't support ACLs. Return negative. */
-                        return -errno;
-                else
-                        /* Return positive to indicate we already warned */
-                        return -log_error_errno(errno,
-                                                "Setting %s ACL \"%s\" on %s failed: %m",
-                                                type == ACL_TYPE_ACCESS ? "access" : "default",
-                                                strna(t), pretty);
+                        return r;
+                if (r == -EINVAL && running_in_chroot() > 0)
+                        return log_warning_errno(SYNTHETIC_ERRNO(EOPNOTSUPP),
+                                                 "Setting %s ACL \"%s\" on %s failed. A chroot environment was detected, ignoring.",
+                                                 type == ACL_TYPE_ACCESS ? "access" : "default",
+                                                 strna(t), pretty);
+                /* Return positive to indicate we already warned */
+                return -log_error_errno(r,
+                                        "Setting %s ACL \"%s\" on %s failed: %m",
+                                        type == ACL_TYPE_ACCESS ? "access" : "default",
+                                        strna(t), pretty);
         }
         return 0;
 }
@@ -2562,10 +2569,10 @@ static int create_device(
                 }
         }
 
-        log_debug("%s %s device node \"%s\" %u:%u.",
+        log_debug("%s %s device node \"%s\" " DEVNUM_FORMAT_STR ".",
                   creation_mode_verb_to_string(creation),
                   i->type == CREATE_BLOCK_DEVICE ? "block" : "char",
-                  i->path, major(i->mode), minor(i->mode));
+                  i->path, DEVNUM_FORMAT_VAL(i->major_minor));
 
         return fd_set_perms(c, i, fd, i->path, &st, creation);
 
@@ -3479,8 +3486,7 @@ static int clean_item(Context *c, Item *i) {
         case CREATE_SUBVOLUME_INHERIT_QUOTA:
         case CREATE_SUBVOLUME_NEW_QUOTA:
         case COPY_FILES:
-                clean_item_instance(c, i, i->path, CREATION_EXISTING);
-                return 0;
+                return clean_item_instance(c, i, i->path, CREATION_EXISTING);
 
         case EMPTY_DIRECTORY:
         case IGNORE_PATH:
@@ -3907,6 +3913,7 @@ static int parse_line(
                 { 'h', specifier_user_home,       NULL },
 
                 { 'C', specifier_directory,       UINT_TO_PTR(DIRECTORY_CACHE)   },
+                { 'D', specifier_directory,       UINT_TO_PTR(DIRECTORY_SHARED)  },
                 { 'L', specifier_directory,       UINT_TO_PTR(DIRECTORY_LOGS)    },
                 { 'S', specifier_directory,       UINT_TO_PTR(DIRECTORY_STATE)   },
                 { 't', specifier_directory,       UINT_TO_PTR(DIRECTORY_RUNTIME) },

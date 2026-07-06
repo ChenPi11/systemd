@@ -1016,12 +1016,12 @@ testcase_fscrypt() {
             bash -c 'keyctl link @u @s; eval "$1"' -- "$2"
     }
 
-    fscrypt_run0 fsfsfs1234 'echo "hello fscrypt" > /home/fscrypttest/file1'
+    fscrypt_run0 fsfsfs1234 'echo "hello fscrypt" >/home/fscrypttest/file1'
     [[ "$(fscrypt_run0 fsfsfs1234 'cat /home/fscrypttest/file1')" == "hello fscrypt" ]]
     fscrypt_run0 fsfsfs1234 'mkdir /home/fscrypttest/subdir'
     fscrypt_run0 fsfsfs1234 'dd if=/dev/urandom of=/home/fscrypttest/subdir/blob bs=4096 count=8 status=none'
     fscrypt_run0 fsfsfs1234 'cp /home/fscrypttest/subdir/blob /home/fscrypttest/subdir/blob.copy && cmp /home/fscrypttest/subdir/blob /home/fscrypttest/subdir/blob.copy'
-    fscrypt_run0 fsfsfs1234 'echo appended >> /home/fscrypttest/file1 && grep -F appended /home/fscrypttest/file1 >/dev/null'
+    fscrypt_run0 fsfsfs1234 'echo appended >>/home/fscrypttest/file1 && grep -F appended /home/fscrypttest/file1 >/dev/null'
     fscrypt_run0 fsfsfs1234 'rm /home/fscrypttest/subdir/blob.copy && test ! -e /home/fscrypttest/subdir/blob.copy'
 
     systemctl stop user@"$(id -u fscrypttest)".service 2>/dev/null || true
@@ -1060,6 +1060,53 @@ testcase_fscrypt() {
     wait_for_state fscrypttest inactive
 
     homectl remove fscrypttest
+}
+
+testcase_deactivate_busy() {
+    # Verify that "homectl deactivate" is robust against transient EBUSY
+    # failures of the umount() inside systemd-homework. This used to make
+    # TEST-46-HOMED occasionally fail when something briefly held a reference
+    # to the home mount at the moment the deactivation tried to unmount it.
+    #
+    # Reproduce the situation deterministically by spawning a background
+    # process whose cwd is the home directory: that holds the mount busy via
+    # the kernel's cwd reference until the process exits, so the initial
+    # umount2() call in homework will fail with EBUSY. homectl is expected to
+    # transparently retry the bus call until it succeeds (once the holder
+    # exits).
+
+    NEWPASSWORD=hunter2 homectl create \
+        --storage=directory \
+        --enforce-password-policy=no \
+        busytest
+    PASSWORD=hunter2 homectl activate busytest
+    inspect busytest
+
+    # Make sure the home is actually mounted before we try to hold it busy,
+    # otherwise the subshell below would silently fail to acquire the cwd
+    # reference.
+    mountpoint /home/busytest
+
+    # Spawn a process whose cwd is inside the home mount. `cd` is a shell
+    # builtin so the subshell process itself acquires the cwd reference, and
+    # `exec sleep` then preserves it across the exec.
+    ( cd /home/busytest && exec sleep 10 ) &
+    local busy_pid=$!
+
+    # Wait until the kernel actually reports the cwd of the background
+    # process as the home directory, so we know the busy reference is in
+    # place before we attempt to deactivate.
+    timeout 5 bash -c "until [[ \"\$(readlink /proc/${busy_pid}/cwd 2>/dev/null)\" == /home/busytest ]]; do sleep 0.1; done"
+
+    # The deactivate must succeed eventually: the first umount2() will fail
+    # with EBUSY, but homectl retries the call for up to 30 seconds, by
+    # which time the background process will have exited and released the
+    # cwd reference.
+    homectl deactivate busytest
+    wait_for_state busytest inactive
+
+    wait "$busy_pid" || true
+    homectl remove busytest
 }
 
 run_testcases

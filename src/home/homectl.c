@@ -25,6 +25,7 @@
 #include "extract-word.h"
 #include "fd-util.h"
 #include "fileio.h"
+#include "firstboot-util.h"
 #include "format-table.h"
 #include "format-util.h"
 #include "fs-util.h"
@@ -52,7 +53,6 @@
 #include "pkcs11-util.h"
 #include "plymouth-util.h"
 #include "polkit-agent.h"
-#include "proc-cmdline.h"
 #include "process-util.h"
 #include "prompt-util.h"
 #include "recurse-dir.h"
@@ -2062,22 +2062,41 @@ static int verb_deactivate_home(int argc, char *argv[], uintptr_t _data, void *u
                 return r;
 
         STRV_FOREACH(i, strv_skip(argv, 1)) {
-                _cleanup_(sd_bus_error_free) sd_bus_error error = SD_BUS_ERROR_NULL;
-                _cleanup_(sd_bus_message_unrefp) sd_bus_message *m = NULL;
+                /* The home directory might still be busy for a brief moment after a preceding operation
+                 * (e.g. a concurrent inspect/deactivate, or a stray reference holding the mount busy at
+                 * unmount time). homed will transition the home into "lingering" state and retry
+                 * deactivation internally after some time, but rather than failing immediately let's just
+                 * retry the bus call here for a while, so callers don't need to deal with this transient
+                 * condition themselves. Use double the time homed waits to avoid racing with it. */
+                usec_t end = usec_add(now(CLOCK_MONOTONIC), 2 * HOME_RETRY_DEACTIVATE_USEC);
 
-                r = bus_message_new_method_call(bus, &m, bus_mgr, "DeactivateHome");
-                if (r < 0)
-                        return bus_log_create_error(r);
+                for (;;) {
+                        _cleanup_(sd_bus_error_free) sd_bus_error error = SD_BUS_ERROR_NULL;
+                        _cleanup_(sd_bus_message_unrefp) sd_bus_message *m = NULL;
 
-                r = sd_bus_message_append(m, "s", *i);
-                if (r < 0)
-                        return bus_log_create_error(r);
+                        r = bus_message_new_method_call(bus, &m, bus_mgr, "DeactivateHome");
+                        if (r < 0)
+                                return bus_log_create_error(r);
 
-                r = sd_bus_call(bus, m, HOME_SLOW_BUS_CALL_TIMEOUT_USEC, &error, NULL);
-                if (r < 0) {
+                        r = sd_bus_message_append(m, "s", *i);
+                        if (r < 0)
+                                return bus_log_create_error(r);
+
+                        r = sd_bus_call(bus, m, HOME_SLOW_BUS_CALL_TIMEOUT_USEC, &error, /* ret_reply= */ NULL);
+                        if (r >= 0)
+                                break;
+
+                        if (sd_bus_error_has_name(&error, BUS_ERROR_HOME_BUSY) &&
+                            now(CLOCK_MONOTONIC) < end) {
+                                log_info("Home of user %s is currently busy, retrying deactivation.", *i);
+                                (void) usleep_safe(1 * USEC_PER_SEC);
+                                continue;
+                        }
+
                         log_error_errno(r, "Failed to deactivate user home: %s", bus_error_message(&error, r));
                         if (ret == 0)
                                 ret = r;
+                        break;
                 }
         }
 
@@ -2998,7 +3017,8 @@ static int create_interactively(void) {
         (void) plymouth_hide_splash();
 
         _cleanup_(sd_varlink_flush_close_unrefp) sd_varlink *mute_console_link = NULL;
-        (void) mute_console(&mute_console_link);
+        if (arg_mute_console)
+                (void) mute_console(&mute_console_link);
 
         (void) terminal_reset_defensive_locked(STDOUT_FILENO, /* flags= */ 0);
 
@@ -3100,12 +3120,15 @@ static int verb_firstboot(int argc, char *argv[], uintptr_t _data, void *userdat
         /* Let's honour the systemd.firstboot kernel command line option, just like the systemd-firstboot
          * tool. */
 
-        bool enabled;
-        r = proc_cmdline_get_bool("systemd.firstboot", /* flags= */ 0, &enabled);
+        FirstBootMode mode;
+        _cleanup_free_ char *bad = NULL;
+        r = firstboot_mode_from_cmdline(&mode, &bad);
         if (r < 0)
-                return log_error_errno(r, "Failed to parse systemd.firstboot= kernel command line argument, ignoring: %m");
-        if (r > 0 && !enabled) {
-                log_debug("Found systemd.firstboot=no kernel command line argument, turning off all prompts.");
+                return log_error_errno(r, "Failed to parse systemd.firstboot= kernel command line argument%s: %m",
+                                       bad ? strjoina(" (invalid value '", bad, "')") : "");
+        if (IN_SET(mode, FIRSTBOOT_NO, FIRSTBOOT_HEADLESS)) {
+                log_debug("Found systemd.firstboot=%s kernel command line argument, turning off all prompts.",
+                          firstboot_mode_to_string(mode));
                 arg_prompt_new_user = false;
         }
 

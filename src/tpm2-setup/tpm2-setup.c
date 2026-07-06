@@ -55,7 +55,7 @@ static int help(void) {
                 return r;
 
         printf("%s [OPTIONS...]\n"
-               "\n%sSet up the TPM2 Storage Root Key (SRK), and initialize NvPCRs.%s\n"
+               "\n%sSet up the TPM2 Storage Root Key (SRK) and Endorsement Key (EK), and initialize NvPCRs.%s\n"
                "\n%sOptions:%s\n",
                program_invocation_short_name,
                ansi_highlight(),
@@ -322,7 +322,7 @@ static int setup_srk(void) {
                 return log_error_errno(r, "Failed to open SRK public key file '%s' for writing: %m", pem_path);
 
         if (sym_PEM_write_PUBKEY(f, tpm2_key.pkey) <= 0)
-                return log_error_errno(SYNTHETIC_ERRNO(EIO), "Failed to write SRK public key file '%s'.", pem_path);
+                return log_openssl_errors(LOG_ERR, "Failed to write SRK public key file '%s'.", pem_path);
 
         if (fchmod(fileno(f), 0444) < 0)
                 return log_error_errno(errno, "Failed to adjust access mode of SRK public key file '%s' to 0444: %m", pem_path);
@@ -423,7 +423,7 @@ static int setup_nvpcr_one(
                                         LOG_MESSAGE("The TPM does not correctly support NV indexes in NT_EXTEND mode, unable to allocate NvPCR '%s': %m", name),
                                         LOG_MESSAGE_ID(SD_MESSAGE_TPM_NVPCR_UNSUPPORTED_STR));
         }
-        if (r == -ENOSPC) {
+        if (r == -ENOBUFS) {
                 /* The TPM's NV index space is exhausted. Remember this so we skip the remaining (less
                  * important) NvPCRs, and report it gracefully at the end rather than failing the boot.
                  * Logged at notice level, not error. */
@@ -549,10 +549,40 @@ static int setup_nvpcr(void) {
          * SuccessExitStatus= in the service unit file. */
         if (ret == -EOPNOTSUPP)
                 return EX_UNAVAILABLE;   /* e.g. no NvPCR support in TPM */
-        if (ret == -ENOSPC)
+        if (ret == -ENOBUFS)
                 return EX_CANTCREAT;     /* NV index space on TPM exhausted */
 
         return ret;
+}
+
+static int setup_ek(void) {
+        _cleanup_(tpm2_context_unrefp) Tpm2Context *c = NULL;
+        int r;
+
+        /* We don't need to create an EK during the early phase. */
+        if (arg_early) {
+                log_debug("Skipping EK setup in early boot phase.");
+                return 0;
+        }
+
+        r = tpm2_context_new_or_warn(arg_tpm2_device, &c);
+        if (r < 0)
+                return r;
+
+        r = tpm2_get_or_create_ek(c, /* session= */ NULL, /* ret_public= */ NULL, /* ret_name= */ NULL, /* ret_qname= */ NULL, /* ret_handle= */ NULL);
+        if (r == -EDEADLK) {
+                log_struct_errno(LOG_INFO, r,
+                                 LOG_MESSAGE("Insufficient permissions to access TPM, not generating EK."),
+                                 LOG_MESSAGE_ID(SD_MESSAGE_EK_ENROLLMENT_NEEDS_AUTHORIZATION_STR));
+                return EX_PROTOCOL; /* Special return value which means "Insufficient permissions to access TPM,
+                                     * cannot generate EK". This isn't really an error when called at boot. */
+        }
+        if (r == -EOPNOTSUPP)
+                return EX_UNAVAILABLE; /* eg, no valid EK certificate. */
+        if (r < 0)
+                return r;
+
+        return 0;
 }
 
 static int run(int argc, char *argv[]) {
@@ -573,17 +603,26 @@ static int run(int argc, char *argv[]) {
         if (r < 0)
                 return r;
 
-        umask(0022);
-
-        /* Execute both jobs, and then return unlisted errors preferably, and listed errors
-         * (i.e. EX_UNAVAILABLE, EX_CANTCREAT, EX_PROTOCOL) otherwise. */
-        r = setup_srk();
-        int k = setup_nvpcr();
+        r = DLOPEN_TPM2(LOG_ERR, SD_ELF_NOTE_DLOPEN_PRIORITY_REQUIRED);
         if (r < 0)
                 return r;
+
+        umask(0022);
+
+        /* Execute all jobs, and then return unlisted errors preferably, and listed errors
+         * (i.e. EX_UNAVAILABLE, EX_CANTCREAT, EX_PROTOCOL) otherwise. */
+        r = setup_srk();
+        int j = setup_nvpcr();
+        int k = setup_ek();
+        if (r < 0)
+                return r;
+        if (j < 0)
+                return j;
         if (k < 0)
                 return k;
-        return r != EXIT_SUCCESS ? r : k;
+        if (r != EXIT_SUCCESS)
+                return r;
+        return j != EXIT_SUCCESS ? j : k;
 }
 
 DEFINE_MAIN_FUNCTION_WITH_POSITIVE_FAILURE(run);

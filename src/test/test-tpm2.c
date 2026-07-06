@@ -2,6 +2,8 @@
 
 #include "crypto-util.h"
 #include "hexdecoct.h"
+#include "iovec-util.h"
+#include "random-util.h"
 #include "tests.h"
 #include "tpm2-util.h"
 #include "virt.h"
@@ -44,6 +46,70 @@ TEST(tpm2_pcr_index_from_string) {
         assert_se(tpm2_pcr_index_from_string("44") == -EINVAL);
         assert_se(tpm2_pcr_index_from_string("-5") == -EINVAL);
         assert_se(tpm2_pcr_index_from_string("24") == -EINVAL);
+}
+
+TEST(tpm2_pcr_bank_from_efi_active) {
+        uint16_t bank;
+
+        /* SHA256 is the top preference whenever it is active. */
+        ASSERT_OK(tpm2_pcr_bank_from_efi_active((1u << TPM2_ALG_SHA1) | (1u << TPM2_ALG_SHA256) | (1u << TPM2_ALG_SHA384) | (1u << TPM2_ALG_SHA512), &bank));
+        ASSERT_EQ(bank, TPM2_ALG_SHA256);
+
+        /* Without SHA256, SHA384 is preferred over SHA512 (shorter digest, less TPM event log space), and
+         * both win over SHA1. */
+        ASSERT_OK(tpm2_pcr_bank_from_efi_active((1u << TPM2_ALG_SHA1) | (1u << TPM2_ALG_SHA384) | (1u << TPM2_ALG_SHA512), &bank));
+        ASSERT_EQ(bank, TPM2_ALG_SHA384);
+        ASSERT_OK(tpm2_pcr_bank_from_efi_active((1u << TPM2_ALG_SHA1) | (1u << TPM2_ALG_SHA512), &bank));
+        ASSERT_EQ(bank, TPM2_ALG_SHA512);
+
+        /* SHA384-only firmware must resolve, not fail. */
+        ASSERT_OK(tpm2_pcr_bank_from_efi_active(1u << TPM2_ALG_SHA384, &bank));
+        ASSERT_EQ(bank, TPM2_ALG_SHA384);
+
+        /* Single-bank cases pick the obvious bank. */
+        ASSERT_OK(tpm2_pcr_bank_from_efi_active(1u << TPM2_ALG_SHA256, &bank));
+        ASSERT_EQ(bank, TPM2_ALG_SHA256);
+        ASSERT_OK(tpm2_pcr_bank_from_efi_active(1u << TPM2_ALG_SHA512, &bank));
+        ASSERT_EQ(bank, TPM2_ALG_SHA512);
+        ASSERT_OK(tpm2_pcr_bank_from_efi_active(1u << TPM2_ALG_SHA1, &bank));
+        ASSERT_EQ(bank, TPM2_ALG_SHA1);
+
+        /* No bank we are willing to use -> -EOPNOTSUPP. Empty mask, or only a bank we cannot hash in
+         * software (SM3_256, TCG algorithm id 0x12). */
+        ASSERT_ERROR(tpm2_pcr_bank_from_efi_active(0, &bank), EOPNOTSUPP);
+        ASSERT_ERROR(tpm2_pcr_bank_from_efi_active(1u << 0x12, &bank), EOPNOTSUPP);
+}
+
+TEST(tpm2_pcr_bank_from_efi_active_legacy) {
+        uint16_t bank;
+
+        /* The legacy variant re-derives the bank for old enrollments that did not record one. Such secrets
+         * could only ever have been sealed against SHA256 or SHA1, so the choice MUST stay restricted to
+         * those two banks regardless of which stronger banks the firmware reports as active — otherwise we'd
+         * re-derive a bank the secret was never bound to and silently fail to unseal. */
+
+        /* SHA256 stays the top preference. */
+        ASSERT_OK(tpm2_pcr_bank_from_efi_active_legacy((1u << TPM2_ALG_SHA1) | (1u << TPM2_ALG_SHA256) | (1u << TPM2_ALG_SHA384) | (1u << TPM2_ALG_SHA512), &bank));
+        ASSERT_EQ(bank, TPM2_ALG_SHA256);
+
+        /* The crucial backwards-compatibility case: with SHA384/SHA512 active but no SHA256, the legacy
+         * variant must fall back to SHA1, NOT pick the stronger SHA384 the way the non-legacy variant does
+         * (compare the SHA384 result in the test above). */
+        ASSERT_OK(tpm2_pcr_bank_from_efi_active_legacy((1u << TPM2_ALG_SHA1) | (1u << TPM2_ALG_SHA384) | (1u << TPM2_ALG_SHA512), &bank));
+        ASSERT_EQ(bank, TPM2_ALG_SHA1);
+
+        /* Single-bank cases for the two banks we accept. */
+        ASSERT_OK(tpm2_pcr_bank_from_efi_active_legacy(1u << TPM2_ALG_SHA256, &bank));
+        ASSERT_EQ(bank, TPM2_ALG_SHA256);
+        ASSERT_OK(tpm2_pcr_bank_from_efi_active_legacy(1u << TPM2_ALG_SHA1, &bank));
+        ASSERT_EQ(bank, TPM2_ALG_SHA1);
+
+        /* Banks the legacy variant never binds to -> -EOPNOTSUPP, even when active. A secret could not have
+         * been sealed against these by the old code, so there is nothing to re-derive. */
+        ASSERT_ERROR(tpm2_pcr_bank_from_efi_active_legacy(1u << TPM2_ALG_SHA384, &bank), EOPNOTSUPP);
+        ASSERT_ERROR(tpm2_pcr_bank_from_efi_active_legacy(1u << TPM2_ALG_SHA512, &bank), EOPNOTSUPP);
+        ASSERT_ERROR(tpm2_pcr_bank_from_efi_active_legacy((1u << TPM2_ALG_SHA384) | (1u << TPM2_ALG_SHA512), &bank), EOPNOTSUPP);
+        ASSERT_ERROR(tpm2_pcr_bank_from_efi_active_legacy(0, &bank), EOPNOTSUPP);
 }
 
 TEST(tpm2_util_pbkdf2_hmac_sha256) {
@@ -953,6 +1019,32 @@ TEST(calculate_policy_authorize) {
         assert_se(digest_check(&d, "2a5b705e83f949c27ac4d2e79e54fb5fb0a60f0b37bbd54a0ee1022ba00d3628"));
 }
 
+TEST(make_policy_authorize_tbs_data) {
+        _cleanup_(iovec_done) struct iovec tbs = {};
+
+        DEFINE_HEX_PTR(digest, "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
+        TPM2B_DIGEST d = TPM2B_DIGEST_MAKE(digest, digest_len);
+
+        /* Without a policy reference the to-be-signed data is just the approved policy digest. */
+        ASSERT_OK_ZERO(tpm2_make_policy_authorize_tbs_data(&d, NULL, &tbs));
+        ASSERT_EQ(tbs.iov_len, d.size);
+        ASSERT_EQ(memcmp(tbs.iov_base, d.buffer, d.size), 0);
+        iovec_done(&tbs);
+
+        /* An empty (zero-length) policy reference should not result in a SHA256 digest being appended. */
+        const char empty[] = "";
+        ASSERT_OK_ZERO(tpm2_make_policy_authorize_tbs_data(&d, empty, &tbs));
+        ASSERT_EQ(tbs.iov_len, d.size);
+        iovec_done(&tbs);
+
+        /* A non-empty policy reference should result in a SHA256 digest being appended. */
+        const char ref[] = "initrd";
+        ASSERT_OK_ZERO(tpm2_make_policy_authorize_tbs_data(&d, ref, &tbs));
+        ASSERT_EQ(tbs.iov_len, (size_t) d.size + SHA256_DIGEST_SIZE);
+        ASSERT_EQ(memcmp(tbs.iov_base, d.buffer, d.size), 0);
+        ASSERT_EQ(memcmp((const uint8_t*) tbs.iov_base + d.size, SHA256_DIRECT(ref, strlen(ref)), SHA256_DIGEST_SIZE), 0);
+}
+
 TEST(calculate_policy_pcr) {
         TPM2B_DIGEST d, dN[16];
 
@@ -1054,6 +1146,107 @@ static void check_best_srk_template(Tpm2Context *c) {
                 check_srk_rsa_template(&template);
         else
                 check_srk_ecc_template(&template);
+}
+
+static void check_ek_template_a(TPMT_PUBLIC *template) {
+        ASSERT_EQ(template->nameAlg, TPM2_ALG_SHA256);
+        ASSERT_EQ(template->objectAttributes, TPMA_OBJECT_FIXEDTPM | TPMA_OBJECT_FIXEDPARENT | TPMA_OBJECT_SENSITIVEDATAORIGIN | TPMA_OBJECT_ADMINWITHPOLICY | TPMA_OBJECT_RESTRICTED | TPMA_OBJECT_DECRYPT);
+        ASSERT_TRUE(digest_check(&template->authPolicy, "837197674484B3F81A90CC8D46A5D724FD52D76E06520B64F2A1DA1B331469AA"));
+        ASSERT_EQ(template->parameters.asymDetail.symmetric.algorithm, TPM2_ALG_AES);
+        ASSERT_EQ(template->parameters.asymDetail.symmetric.keyBits.sym, 128);
+        ASSERT_EQ(template->parameters.asymDetail.symmetric.mode.sym, TPM2_ALG_CFB);
+}
+
+static void check_ek_rsa_template_a(TPMT_PUBLIC *template) {
+        ASSERT_EQ(template->type, TPM2_ALG_RSA);
+
+        check_ek_template_a(template);
+
+        ASSERT_EQ(template->parameters.rsaDetail.scheme.scheme, TPM2_ALG_NULL);
+        ASSERT_EQ(template->parameters.rsaDetail.keyBits, 2048);
+}
+
+static void check_ek_ecc_template_a(TPMT_PUBLIC *template) {
+        ASSERT_EQ(template->type, TPM2_ALG_ECC);
+
+        check_ek_template_a(template);
+
+        ASSERT_EQ(template->parameters.eccDetail.scheme.scheme, TPM2_ALG_NULL);
+        ASSERT_EQ(template->parameters.eccDetail.kdf.scheme, TPM2_ALG_NULL);
+        ASSERT_EQ(template->parameters.eccDetail.curveID, TPM2_ECC_NIST_P256);
+}
+
+static void check_ek_template_b(TPMT_PUBLIC *template, TPMI_ALG_HASH expect_name_alg) {
+        ASSERT_EQ(template->nameAlg, expect_name_alg);
+        ASSERT_EQ(template->objectAttributes, TPMA_OBJECT_FIXEDTPM | TPMA_OBJECT_FIXEDPARENT | TPMA_OBJECT_SENSITIVEDATAORIGIN | TPMA_OBJECT_ADMINWITHPOLICY | TPMA_OBJECT_RESTRICTED | TPMA_OBJECT_DECRYPT | TPMA_OBJECT_USERWITHAUTH);
+
+        switch (expect_name_alg) {
+        case TPM2_ALG_SHA256:
+                ASSERT_TRUE(digest_check(&template->authPolicy, "CA3D0A99A2B93906F7A3342414EFCFB3A385D44CD1FD459089D19B5071C0B7A0"));
+                break;
+        case TPM2_ALG_SHA384:
+                ASSERT_TRUE(digest_check(&template->authPolicy, "B26E7D28D11A50BC53D882BCF5FD3A1A074148BB35D3B4E4CB1C0AD9BDE419CACB47BA09699646150F9FC000F3F80E12"));
+                break;
+        default:
+                assert_not_reached();
+        }
+
+        ASSERT_EQ(template->parameters.asymDetail.symmetric.algorithm, TPM2_ALG_AES);
+        ASSERT_EQ(template->parameters.asymDetail.symmetric.keyBits.sym, expect_name_alg == TPM2_ALG_SHA256 ? 128 : 256);
+        ASSERT_EQ(template->parameters.asymDetail.symmetric.mode.sym, TPM2_ALG_CFB);
+}
+
+static void check_ek_rsa_template_b(
+                TPMT_PUBLIC *template,
+                TPMI_ALG_HASH expect_name_alg,
+                uint16_t expect_key_bits) {
+        ASSERT_EQ(template->type, TPM2_ALG_RSA);
+
+        check_ek_template_b(template, expect_name_alg);
+
+        ASSERT_EQ(template->parameters.rsaDetail.scheme.scheme, TPM2_ALG_NULL);
+        ASSERT_EQ(template->parameters.rsaDetail.keyBits, expect_key_bits);
+}
+
+static void check_ek_ecc_template_b(
+                TPMT_PUBLIC *template,
+                TPMI_ALG_HASH expect_name_alg,
+                TPMI_ECC_CURVE expect_curve_id) {
+        ASSERT_EQ(template->type, TPM2_ALG_ECC);
+
+        check_ek_template_b(template, expect_name_alg);
+
+        ASSERT_EQ(template->parameters.eccDetail.scheme.scheme, TPM2_ALG_NULL);
+        ASSERT_EQ(template->parameters.eccDetail.kdf.scheme, TPM2_ALG_NULL);
+        ASSERT_EQ(template->parameters.eccDetail.curveID, expect_curve_id);
+}
+
+TEST(tpm2_get_default_ek_template) {
+        TPMT_PUBLIC template;
+
+        tpm2_get_default_ek_template(TPM2_EK_TEMPLATE_RSA_2048_LEGACY, &template);
+        check_ek_rsa_template_a(&template);
+        memset(&template, 0, sizeof(template));
+
+        tpm2_get_default_ek_template(TPM2_EK_TEMPLATE_ECC_NIST_P256_LEGACY, &template);
+        check_ek_ecc_template_a(&template);
+        memset(&template, 0, sizeof(template));
+
+        tpm2_get_default_ek_template(TPM2_EK_TEMPLATE_RSA_2048, &template);
+        check_ek_rsa_template_b(&template, TPM2_ALG_SHA256, 2048);
+        memset(&template, 0, sizeof(template));
+
+        tpm2_get_default_ek_template(TPM2_EK_TEMPLATE_ECC_NIST_P256, &template);
+        check_ek_ecc_template_b(&template, TPM2_ALG_SHA256, TPM2_ECC_NIST_P256);
+        memset(&template, 0, sizeof(template));
+
+        tpm2_get_default_ek_template(TPM2_EK_TEMPLATE_ECC_NIST_P384, &template);
+        check_ek_ecc_template_b(&template, TPM2_ALG_SHA384, TPM2_ECC_NIST_P384);
+        memset(&template, 0, sizeof(template));
+
+        tpm2_get_default_ek_template(TPM2_EK_TEMPLATE_RSA_3072, &template);
+        check_ek_rsa_template_b(&template, TPM2_ALG_SHA384, 3072);
+        memset(&template, 0, sizeof(template));
 }
 
 static void check_test_parms(Tpm2Context *c) {
@@ -1165,6 +1358,7 @@ static void calculate_seal_and_unseal(
                         /* hash_pcr_mask= */ 0,
                         /* pcr_bank= */ 0,
                         /* pubkey= */ NULL,
+                        /* pubkey_policy_ref = */ NULL,
                         /* pubkey_pcr_mask= */ 0,
                         /* signature= */ NULL,
                         /* pin= */ NULL,
@@ -1206,7 +1400,7 @@ static int check_calculate_seal(Tpm2Context *c) {
 
                 _cleanup_free_ TPM2B_PUBLIC *public = NULL;
                 _cleanup_(tpm2_handle_freep) Tpm2Handle *handle = NULL;
-                assert_se(tpm2_create_primary(c, NULL, &template, NULL, &public, &handle) >= 0);
+                assert_se(tpm2_create_primary(c, NULL, ESYS_TR_RH_OWNER, &template, NULL, &public, &handle) >= 0);
 
                 /* Once our minimum libtss2-esys version is 2.4.0 or later, this can assume
                  * tpm2_index_from_handle() should always work. */
@@ -1252,6 +1446,7 @@ static void check_seal_unseal_for_handle(Tpm2Context *c, TPM2_HANDLE handle) {
                         /* hash_pcr_mask= */ 0,
                         /* pcr_bank= */ 0,
                         /* pubkey= */ NULL,
+                        /* pubkey_policy_ref= */ NULL,
                         /* pubkey_pcr_mask= */ 0,
                         /* signature= */ NULL,
                         /* pin= */ NULL,
@@ -1291,6 +1486,7 @@ static void check_seal_unseal(Tpm2Context *c) {
                 assert_se(tpm2_create_primary(
                                 c,
                                 /* session= */ NULL,
+                                ESYS_TR_RH_OWNER,
                                 &public,
                                 /* sensitive= */ NULL,
                                 /* ret_public= */ NULL,
@@ -1309,6 +1505,181 @@ static void check_seal_unseal(Tpm2Context *c) {
         }
 }
 
+static void check_nv_index_read(Tpm2Context *c) {
+        int r;
+        uint8_t payload[1031];
+
+        assert(c);
+
+        TEST_LOG_FUNC();
+
+        random_bytes(payload, sizeof(payload));
+        struct iovec data = IOVEC_MAKE(payload, sizeof(payload));
+
+        /* Test chunked reads first by mocking c->max_nv_buffer_size with several values that are less than
+         * the payload size and the TPM's reported size for TPM2_PT_NV_BUFFER_MAX. */
+        TPM2_HANDLE nv_index = 0;
+        _cleanup_(tpm2_handle_freep) Tpm2Handle *nv_handle = NULL;
+        r = tpm2_define_data_nv_index(c, /* session= */ NULL, /* requested_nv_index= */ 0, &data, &nv_index, &nv_handle);
+        if (r < 0) {
+                /* Could fail because the index size is greater than the value of TPM2_PT_NV_INDEX_MAX, or
+                 * there isn't enough space available. */
+                log_notice_errno(r, "Could not allocate NV index, skipping NV index read test: %m");
+                return;
+        }
+        ASSERT_NE(nv_index, 0U);
+        ASSERT_NOT_NULL(nv_handle);
+
+        uint16_t saved_max_nv_buffer_size = c->max_nv_buffer_size;
+
+        static const uint16_t chunk_sizes[] = { 128, 256, 512, 1024 };
+        FOREACH_ELEMENT(cs, chunk_sizes) {
+                if (*cs >= saved_max_nv_buffer_size)
+                        continue;
+
+                c->max_nv_buffer_size = *cs;
+
+                _cleanup_(iovec_done) struct iovec value = {};
+                ASSERT_OK_ZERO(tpm2_read_nv_index(c, /* session= */ NULL, nv_index, nv_handle, &value));
+                ASSERT_TRUE(iovec_equal(&value, &data));
+        }
+
+        c->max_nv_buffer_size = saved_max_nv_buffer_size;
+
+        ASSERT_OK_ZERO(tpm2_undefine_nv_index(c, /* session= */ NULL, nv_index, nv_handle));
+        nv_index = 0;
+        nv_handle = tpm2_handle_free(nv_handle);
+
+        /* Test reading of a payload with the size of the reported TPM2_PT_NV_BUFFER_MAX. */
+        _cleanup_free_ void *payload2 = malloc(c->max_nv_buffer_size);
+        ASSERT_NOT_NULL(payload2);
+        random_bytes(payload2, c->max_nv_buffer_size);
+        struct iovec data2 = IOVEC_MAKE(payload2, c->max_nv_buffer_size);
+        ASSERT_OK_ZERO(tpm2_define_data_nv_index(c, /* session= */ NULL, /* requested_nv_index= */ 0, &data2, &nv_index, &nv_handle));
+        ASSERT_NE(nv_index, 0U);
+        ASSERT_NOT_NULL(nv_handle);
+
+        _cleanup_(iovec_done) struct iovec value = {};
+        ASSERT_OK_ZERO(tpm2_read_nv_index(c, /* session= */ NULL, nv_index, nv_handle, &value));
+        ASSERT_TRUE(iovec_equal(&value, &data2));
+
+        ASSERT_OK_ZERO(tpm2_undefine_nv_index(c, /* session= */ NULL, nv_index, nv_handle));
+        nv_index = 0;
+        nv_handle = tpm2_handle_free(nv_handle);
+        iovec_done(&value);
+
+        /* Test reading of a payload which is smaller than the reported size of TPM2_PT_NV_BUFFER_MAX. */
+        data.iov_len = 36;
+        ASSERT_OK_ZERO(tpm2_define_data_nv_index(c, /* session= */ NULL, /* requested_nv_index= */ 0, &data, &nv_index, &nv_handle));
+        ASSERT_NE(nv_index, 0U);
+        ASSERT_NOT_NULL(nv_handle);
+
+        ASSERT_OK_ZERO(tpm2_read_nv_index(c, /* session= */ NULL, nv_index, nv_handle, &value));
+        ASSERT_TRUE(iovec_equal(&value, &data));
+
+        ASSERT_OK_ZERO(tpm2_undefine_nv_index(c, /* session= */ NULL, nv_index, nv_handle));
+}
+
+static void check_get_ek_template(Tpm2Context *c) {
+        assert(c);
+
+        TEST_LOG_FUNC();
+
+        /* Note that this assumes that there aren't any custom templates, and doesn't test the support for
+         * custom templates. Testing this requires the use of the TPM simulator for platform hierarchy
+         * access. */
+
+        TPMT_PUBLIC template;
+
+        ASSERT_OK_ZERO(tpm2_get_ek_template(c, /* session= */ NULL, TPM2_EK_TEMPLATE_RSA_2048_LEGACY, &template));
+        check_ek_rsa_template_a(&template);
+        memset(&template, 0, sizeof(template));
+
+        ASSERT_OK_ZERO(tpm2_get_ek_template(c, /* session= */ NULL, TPM2_EK_TEMPLATE_ECC_NIST_P256_LEGACY, &template));
+        check_ek_ecc_template_a(&template);
+        memset(&template, 0, sizeof(template));
+
+        ASSERT_OK_ZERO(tpm2_get_ek_template(c, /* session= */ NULL, TPM2_EK_TEMPLATE_RSA_2048, &template));
+        check_ek_rsa_template_b(&template, TPM2_ALG_SHA256, 2048);
+        memset(&template, 0, sizeof(template));
+
+        ASSERT_OK_ZERO(tpm2_get_ek_template(c, /* session= */ NULL, TPM2_EK_TEMPLATE_ECC_NIST_P256, &template));
+        check_ek_ecc_template_b(&template, TPM2_ALG_SHA256, TPM2_ECC_NIST_P256);
+        memset(&template, 0, sizeof(template));
+
+        ASSERT_OK_ZERO(tpm2_get_ek_template(c, /* session= */ NULL, TPM2_EK_TEMPLATE_ECC_NIST_P384, &template));
+        check_ek_ecc_template_b(&template, TPM2_ALG_SHA384, TPM2_ECC_NIST_P384);
+        memset(&template, 0, sizeof(template));
+
+        ASSERT_OK_ZERO(tpm2_get_ek_template(c, /* session= */ NULL, TPM2_EK_TEMPLATE_RSA_3072, &template));
+        check_ek_rsa_template_b(&template, TPM2_ALG_SHA384, 3072);
+        memset(&template, 0, sizeof(template));
+}
+
+static void check_get_or_create_ek(Tpm2Context *c) {
+        int r;
+
+        assert(c);
+
+        TEST_LOG_FUNC();
+
+        /* This test relies on the existance of an EKcert for a supported profile. Don't fail the test if
+         * there isn't one. */
+        _cleanup_free_ TPM2B_PUBLIC *public = NULL;
+        _cleanup_free_ TPM2B_NAME *name = NULL, *qname = NULL;
+        _cleanup_(tpm2_handle_freep) Tpm2Handle *handle = NULL;
+        r = tpm2_get_or_create_ek(c, /* session= */ NULL, &public, &name, &qname, &handle);
+        ASSERT_OK_OR(r, -EOPNOTSUPP);
+        if (r < 0)
+                return;
+
+        ASSERT_NOT_NULL(public);
+        ASSERT_NOT_NULL(name);
+        ASSERT_NOT_NULL(qname);
+        ASSERT_NOT_NULL(handle);
+
+        ASSERT_TRUE(IN_SET(public->publicArea.type, TPM2_ALG_RSA, TPM2_ALG_ECC));
+
+        if ((public->publicArea.objectAttributes & TPMA_OBJECT_USERWITHAUTH) == 0) {
+                /* Test against the low-range expectations. */
+                switch (public->publicArea.type) {
+                case TPM2_ALG_RSA:
+                        check_ek_rsa_template_a(&public->publicArea);
+                        break;
+                case TPM2_ALG_ECC:
+                        check_ek_ecc_template_a(&public->publicArea);
+                        break;
+                default:
+                        assert_not_reached();
+                }
+        } else {
+                /* Test against the high-range expectations. */
+                switch (public->publicArea.type) {
+                case TPM2_ALG_RSA:
+                        check_ek_rsa_template_b(&public->publicArea, public->publicArea.nameAlg, public->publicArea.parameters.rsaDetail.keyBits);
+                        break;
+                case TPM2_ALG_ECC:
+                        check_ek_ecc_template_b(&public->publicArea, public->publicArea.nameAlg, public->publicArea.parameters.eccDetail.curveID);
+                        break;
+                default:
+                        assert_not_reached();
+                }
+        }
+
+        _cleanup_free_ TPM2B_PUBLIC *public2 = NULL;
+        _cleanup_free_ TPM2B_NAME *name2 = NULL, *qname2 = NULL;
+        _cleanup_(tpm2_handle_freep) Tpm2Handle *handle2 = NULL;
+        ASSERT_OK_POSITIVE(tpm2_get_ek(c, /* session= */ NULL, &public2, &name2, &qname2, &handle2));
+        ASSERT_NOT_NULL(public2);
+        ASSERT_NOT_NULL(name2);
+        ASSERT_NOT_NULL(qname2);
+        ASSERT_NOT_NULL(handle2);
+
+        ASSERT_EQ(memcmp_nn(public, sizeof(*public), public2, sizeof(*public2)), 0);
+        ASSERT_EQ(memcmp_nn(name->name, name->size, name2->name, name2->size), 0);
+        ASSERT_EQ(memcmp_nn(qname->name, qname->size, qname2->name, qname2->size), 0);
+}
+
 TEST_RET(tests_which_require_tpm) {
         _cleanup_(tpm2_context_unrefp) Tpm2Context *c = NULL;
         int r = 0;
@@ -1322,6 +1693,9 @@ TEST_RET(tests_which_require_tpm) {
         check_best_srk_template(c);
         check_get_or_create_srk(c);
         check_seal_unseal(c);
+        check_nv_index_read(c);
+        check_get_ek_template(c);
+        check_get_or_create_ek(c);
 
 #if HAVE_OPENSSL
         r = check_calculate_seal(c);

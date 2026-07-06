@@ -1645,6 +1645,7 @@ static int method_set_user_linger(sd_bus_message *message, void *userdata, sd_bu
                         /* good_user= */ UID_INVALID,
                         interactive ? POLKIT_ALLOW_INTERACTIVE : 0,
                         &m->polkit_registry,
+                        /* ret_admin= */ NULL,
                         error);
         if (r < 0)
                 return r;
@@ -1821,6 +1822,7 @@ static int method_attach_device(sd_bus_message *message, void *userdata, sd_bus_
                         /* good_user= */ UID_INVALID,
                         interactive ? POLKIT_ALLOW_INTERACTIVE : 0,
                         &m->polkit_registry,
+                        /* ret_admin= */ NULL,
                         error);
         if (r < 0)
                 return r;
@@ -1851,6 +1853,7 @@ static int method_flush_devices(sd_bus_message *message, void *userdata, sd_bus_
                         /* good_user= */ UID_INVALID,
                         interactive ? POLKIT_ALLOW_INTERACTIVE : 0,
                         &m->polkit_registry,
+                        /* ret_admin= */ NULL,
                         error);
         if (r < 0)
                 return r;
@@ -3492,7 +3495,7 @@ static int method_set_reboot_to_boot_loader_entry(
                         if (unlink(RUNSTATEDIR "/systemd/reboot-to-boot-loader-entry") < 0 && errno != ENOENT)
                                 return -errno;
                 } else {
-                        r = write_string_file(RUNSTATEDIR "/systemd/reboot-boot-to-loader-entry", v, WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC|WRITE_STRING_FILE_LABEL);
+                        r = write_string_file(RUNSTATEDIR "/systemd/reboot-to-boot-loader-entry", v, WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC|WRITE_STRING_FILE_LABEL);
                         if (r < 0)
                                 return r;
                 }

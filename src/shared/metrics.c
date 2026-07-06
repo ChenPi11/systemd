@@ -58,6 +58,7 @@ static const char * const metric_family_type_table[_METRIC_FAMILY_TYPE_MAX] = {
         [METRIC_FAMILY_TYPE_COUNTER] = "counter",
         [METRIC_FAMILY_TYPE_GAUGE]   = "gauge",
         [METRIC_FAMILY_TYPE_STRING]  = "string",
+        [METRIC_FAMILY_TYPE_OBJECT]  = "object",
 };
 
 DEFINE_STRING_TABLE_LOOKUP_TO_STRING(metric_family_type, MetricFamilyType);
@@ -70,6 +71,20 @@ static int metric_family_build_json(const MetricFamily *mf, sd_json_variant **re
                         SD_JSON_BUILD_PAIR_STRING("name", mf->name),
                         SD_JSON_BUILD_PAIR_STRING("description", mf->description),
                         SD_JSON_BUILD_PAIR_STRING("type", metric_family_type_to_string(mf->type)));
+}
+
+int metric_family_describe(const MetricFamily *mf, sd_varlink *link) {
+        _cleanup_(sd_json_variant_unrefp) sd_json_variant *v = NULL;
+        int r;
+
+        assert(mf);
+        assert(link);
+
+        r = metric_family_build_json(mf, &v);
+        if (r < 0)
+                return r;
+
+        return sd_varlink_reply(link, v);
 }
 
 int metrics_method_describe(
@@ -94,15 +109,9 @@ int metrics_method_describe(
                 return r;
 
         for (const MetricFamily *mf = mfs; mf->name; mf++) {
-                _cleanup_(sd_json_variant_unrefp) sd_json_variant *v = NULL;
-
-                r = metric_family_build_json(mf, &v);
+                r = metric_family_describe(mf, link);
                 if (r < 0)
                         return log_debug_errno(r, "Failed to describe metric family '%s': %m", mf->name);
-
-                r = sd_varlink_reply(link, v);
-                if (r < 0)
-                        return log_debug_errno(r, "Failed to send varlink reply: %m");
         }
 
         return 0;
@@ -208,4 +217,39 @@ int metric_build_send_unsigned(
                 return log_debug_errno(r, "Failed to allocate JSON unsigned: %m");
 
         return metric_build_send(mf, link, object, v, fields);
+}
+
+int metric_build_send_double(
+                const MetricFamily *mf,
+                sd_varlink *link,
+                const char *object,
+                double value,
+                sd_json_variant *fields) {
+
+        _cleanup_(sd_json_variant_unrefp) sd_json_variant *v = NULL;
+        int r;
+
+        assert(mf);
+        assert(link);
+
+        r = sd_json_variant_new_real(&v, value);
+        if (r < 0)
+                return log_debug_errno(r, "Failed to allocate JSON real: %m");
+
+        return metric_build_send(mf, link, object, v, fields);
+}
+
+int metric_build_send_object(
+                const MetricFamily *mf,
+                sd_varlink *link,
+                const char *object,
+                sd_json_variant *value,
+                sd_json_variant *fields) {
+
+        assert(mf);
+        assert(link);
+        assert(value);
+        assert(sd_json_variant_is_object(value));
+
+        return metric_build_send(mf, link, object, value, fields);
 }

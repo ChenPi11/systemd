@@ -9,14 +9,17 @@ executables += [
                 'name' : 'systemd-repart',
                 'public' : true,
                 'extract' : files(
-                        'repart.c',
                         'iso9660.c',
+                        'repart.c',
+                        'repart-list-candidate-devices.c',
                 ),
                 'dependencies' : [
                         libblkid_cflags,
+                        libcryptsetup_cflags,
                         libfdisk_cflags,
                         libmount_cflags,
                         libopenssl_cflags,
+                        tpm2_cflags,
                 ],
         },
         executable_template + {
@@ -31,9 +34,11 @@ executables += [
                 ],
                 'dependencies' : [
                         libblkid_cflags,
+                        libcryptsetup_cflags,
                         libfdisk_cflags,
                         libmount_cflags,
                         libopenssl_cflags,
+                        tpm2_cflags,
                 ],
         },
 ]

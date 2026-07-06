@@ -67,6 +67,9 @@ executables += [
                 'sources' : files('fuzz-systemctl-parse-argv.c'),
                 'objects' : ['systemctl'],
                 'link_with' : systemctl_link_with,
+                'dependencies' : [
+                        libselinux_cflags,
+                ],
         },
 ]
 

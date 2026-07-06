@@ -359,7 +359,7 @@ int is_our_namespace(int fd, NamespaceType type) {
         int r;
 
         assert(fd >= 0);
-        assert(type < _NAMESPACE_TYPE_MAX);
+        assert(type >= 0 && type < _NAMESPACE_TYPE_MAX);
 
         r = fd_is_namespace(fd, type);
         if (r < 0)
@@ -805,7 +805,7 @@ int process_is_owned_by_uid(const PidRef *pidref, uid_t uid) {
         uid_t process_uid;
         r = pidref_get_uid(pidref, &process_uid);
         if (r < 0)
-                return log_debug_errno(r, "Failed to get UID of process " PID_FMT ": %m", pidref->pid);
+                return log_debug_errno(r, "Failed to get UID of process " PID_FMT ": %m", pidref ? pidref->pid : 0);
         if (process_uid == uid)
                 return true;
 

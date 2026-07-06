@@ -45,6 +45,7 @@
 #include "tmpfile-util.h"
 #include "umask-util.h"
 #include "utf8.h"
+#include "varlink-util.h"
 
 typedef enum InstallOperation {
         INSTALL_NEW,
@@ -210,6 +211,8 @@ static int install_context_from_cmdline(
                 if (r < 0)
                         return log_oom();
         }
+
+        b.touch_variables = arg_touch_variables;
 
         *ret = TAKE_GENERIC(b, InstallContext, INSTALL_CONTEXT_NULL);
 
@@ -1090,8 +1093,7 @@ static int install_secure_boot_auto_enroll(InstallContext *c) {
         int dercertsz;
         dercertsz = sym_i2d_X509(c->secure_boot_certificate, &dercert);
         if (dercertsz < 0)
-                return log_error_errno(SYNTHETIC_ERRNO(EIO), "Failed to convert X.509 certificate to DER: %s",
-                                       sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                return log_openssl_errors(LOG_ERR, "Failed to convert X.509 certificate to DER");
 
         if (c->esp_fd < 0)
                 return c->esp_fd;
@@ -1148,33 +1150,31 @@ static int install_secure_boot_auto_enroll(InstallContext *c) {
 
                 /* Don't count the trailing NUL terminator. */
                 if (sym_BIO_write(bio, db16, char16_strsize(db16) - sizeof(char16_t)) < 0)
-                        return log_error_errno(SYNTHETIC_ERRNO(EIO), "Failed to write variable name to bio");
+                        return log_openssl_errors(LOG_ERR, "Failed to write variable name to bio");
 
                 EFI_GUID *guid = STR_IN_SET(db, "PK", "KEK") ? &(EFI_GUID) EFI_GLOBAL_VARIABLE : &(EFI_GUID) EFI_IMAGE_SECURITY_DATABASE_GUID;
 
                 if (sym_BIO_write(bio, guid, sizeof(*guid)) < 0)
-                        return log_error_errno(SYNTHETIC_ERRNO(EIO), "Failed to write variable GUID to bio");
+                        return log_openssl_errors(LOG_ERR, "Failed to write variable GUID to bio");
 
                 if (sym_BIO_write(bio, &attrs, sizeof(attrs)) < 0)
-                        return log_error_errno(SYNTHETIC_ERRNO(EIO), "Failed to write variable attributes to bio");
+                        return log_openssl_errors(LOG_ERR, "Failed to write variable attributes to bio");
 
                 if (sym_BIO_write(bio, &timestamp, sizeof(timestamp)) < 0)
-                        return log_error_errno(SYNTHETIC_ERRNO(EIO), "Failed to write timestamp to bio");
+                        return log_openssl_errors(LOG_ERR, "Failed to write timestamp to bio");
 
                 if (sym_BIO_write(bio, siglist, siglistsz) < 0)
-                        return log_error_errno(SYNTHETIC_ERRNO(EIO), "Failed to write signature list to bio");
+                        return log_openssl_errors(LOG_ERR, "Failed to write signature list to bio");
 
                 _cleanup_(PKCS7_freep) PKCS7 *p7 = NULL;
                 p7 = sym_PKCS7_sign(c->secure_boot_certificate, c->secure_boot_private_key, /* certs= */ NULL, bio, PKCS7_DETACHED|PKCS7_NOATTR|PKCS7_BINARY|PKCS7_NOSMIMECAP);
                 if (!p7)
-                        return log_error_errno(SYNTHETIC_ERRNO(EIO), "Failed to calculate PKCS7 signature: %s",
-                                               sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                        return log_openssl_errors(LOG_ERR, "Failed to calculate PKCS7 signature");
 
                 _cleanup_free_ uint8_t *sig = NULL;
                 int sigsz = sym_i2d_PKCS7(p7, &sig);
                 if (sigsz < 0)
-                        return log_error_errno(SYNTHETIC_ERRNO(EIO), "Failed to convert PKCS7 signature to DER: %s",
-                                               sym_ERR_error_string(sym_ERR_get_error(), NULL));
+                        return log_openssl_errors(LOG_ERR, "Failed to convert PKCS7 signature to DER");
 
                 size_t authsz = offsetof(EFI_VARIABLE_AUTHENTICATION_2, AuthInfo.CertData) + sigsz;
                 _cleanup_free_ EFI_VARIABLE_AUTHENTICATION_2 *auth = malloc(authsz);
@@ -2085,12 +2085,16 @@ static JSON_DISPATCH_ENUM_DEFINE(json_dispatch_boot_entry_token_type, BootEntryT
 typedef struct InstallParameters {
         InstallContext context;
         unsigned root_fd_index;
+        char *esp_path;
+        char *xbootldr_path;
 } InstallParameters;
 
 static void install_parameters_done(InstallParameters *p) {
         assert(p);
 
         install_context_done(&p->context);
+        free(p->esp_path);
+        free(p->xbootldr_path);
 }
 
 int vl_method_install(
@@ -2109,17 +2113,24 @@ int vl_method_install(
         };
 
         static const sd_json_dispatch_field dispatch_table[] = {
-                { "operation",          SD_JSON_VARIANT_STRING,        json_dispatch_install_operation,     voffsetof(p, context.operation),        SD_JSON_MANDATORY },
-                { "graceful",           SD_JSON_VARIANT_BOOLEAN,       sd_json_dispatch_stdbool,            voffsetof(p, context.graceful),         0                 },
-                { "rootFileDescriptor", _SD_JSON_VARIANT_TYPE_INVALID, sd_json_dispatch_uint,               voffsetof(p, root_fd_index),            0                 },
-                { "rootDirectory",      SD_JSON_VARIANT_STRING,        json_dispatch_path,                  voffsetof(p, context.root),             0                 },
-                { "bootEntryTokenType", SD_JSON_VARIANT_STRING,        json_dispatch_boot_entry_token_type, voffsetof(p, context.entry_token_type), 0                 },
-                { "touchVariables",     SD_JSON_VARIANT_BOOLEAN,       sd_json_dispatch_tristate,           voffsetof(p, context.touch_variables),  0                 },
+                { "operation",          SD_JSON_VARIANT_STRING,        json_dispatch_install_operation,     voffsetof(p, context.operation),            SD_JSON_MANDATORY },
+                { "graceful",           SD_JSON_VARIANT_BOOLEAN,       sd_json_dispatch_stdbool,            voffsetof(p, context.graceful),             0                 },
+                { "rootFileDescriptor", _SD_JSON_VARIANT_TYPE_INVALID, sd_json_dispatch_uint,               voffsetof(p, root_fd_index),                0                 },
+                { "rootDirectory",      SD_JSON_VARIANT_STRING,        json_dispatch_path,                  voffsetof(p, context.root),                 0                 },
+                { "espPath",            SD_JSON_VARIANT_STRING,        json_dispatch_path,                  voffsetof(p, esp_path),                     0                 },
+                { "xbootldrPath",       SD_JSON_VARIANT_STRING,        json_dispatch_path,                  voffsetof(p, xbootldr_path),                0                 },
+                { "bootEntryTokenType", SD_JSON_VARIANT_STRING,        json_dispatch_boot_entry_token_type, voffsetof(p, context.entry_token_type),     0                 },
+                { "makeEntryDirectory", SD_JSON_VARIANT_BOOLEAN,       sd_json_dispatch_tristate,           voffsetof(p, context.make_entry_directory), 0                 },
+                { "touchVariables",     SD_JSON_VARIANT_BOOLEAN,       sd_json_dispatch_tristate,           voffsetof(p, context.touch_variables),      0                 },
                 {},
         };
 
         r = sd_varlink_dispatch(link, parameters, dispatch_table, &p);
         if (r != 0)
+                return r;
+
+        r = varlink_check_privileged_peer(link);
+        if (r < 0)
                 return r;
 
         if (!IN_SET(p.context.operation, INSTALL_NEW, INSTALL_UPDATE))
@@ -2158,7 +2169,7 @@ int vl_method_install(
 
         r = find_esp_and_warn_at_full(
                         p.context.root_fd,
-                        /* path= */ NULL,
+                        p.esp_path,
                         /* unprivileged_mode= */ false,
                         &p.context.esp_path,
                         &p.context.esp_fd,
@@ -2174,7 +2185,7 @@ int vl_method_install(
 
         r = find_xbootldr_and_warn_at(
                         p.context.root_fd,
-                        /* path= */ NULL,
+                        p.xbootldr_path,
                         /* unprivileged_mode= */ false,
                         &p.context.xbootldr_path,
                         &p.context.xbootldr_fd);

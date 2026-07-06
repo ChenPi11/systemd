@@ -45,12 +45,14 @@
 #include "emergency-action.h"
 #include "env-util.h"
 #include "escape.h"
+#include "executor.h"
 #include "extract-word.h"
 #include "fd-util.h"
 #include "fdset.h"
 #include "fileio.h"
 #include "format-table.h"
 #include "format-util.h"
+#include "fs-util.h"
 #include "glyph-util.h"
 #include "hash-funcs.h"
 #include "hashmap.h"
@@ -93,6 +95,7 @@
 #include "proc-cmdline.h"
 #include "process-util.h"
 #include "random-util.h"
+#include "reboot-util.h"
 #include "rlimit-util.h"
 #include "rm-rf.h"
 #include "seccomp-util.h"
@@ -542,8 +545,10 @@ static int parse_proc_cmdline_item(const char *key, const char *value, void *dat
                         return 0;
 
                 r = unbase64mem(value, &p, &sz);
-                if (r < 0)
+                if (r < 0) {
                         log_warning_errno(r, "Failed to parse systemd.random_seed= argument, ignoring: %s", value);
+                        return 0;
+                }
 
                 free(arg_random_seed);
                 arg_random_seed = sz > 0 ? p : mfree(p);
@@ -1038,12 +1043,18 @@ static int parse_argv(int argc, char *argv[]) {
         assert(argv);
 
         int log_level_shift = getpid_cached() == 1 ? LOG_DEBUG - LOG_ERR : 0;
-        OptionParser opts = { argc, argv, .log_level_shift = log_level_shift };
+        OptionParser opts = {
+                argc, argv,
+                .namespace = "systemd",
+                .log_level_shift = log_level_shift,
+        };
 
         /* Note: when new options are added here, also add them to the exclusion list in proc-cmdline.c! */
 
         FOREACH_OPTION(c, &opts)
                 switch (c) {
+
+                OPTION_NAMESPACE("systemd"): {}
 
                 OPTION_COMMON_HELP:
                         arg_action = ACTION_HELP;
@@ -1279,7 +1290,7 @@ static int help(void) {
         _cleanup_(table_unrefp) Table *options = NULL;
         int r;
 
-        r = option_parser_get_help_table(&options);
+        r = option_parser_get_help_table_ns("systemd", &options);
         if (r < 0)
                 return r;
 
@@ -1851,6 +1862,52 @@ static int become_shutdown(int objective, int retval) {
         return -errno;
 }
 
+static int fallback_shutdown(ManagerObjective objective, int retval) {
+        int cmd;
+
+        /* Perform the requested shutdown operation ourselves, by issuing the matching reboot() directly.
+         * This skips the cleanup systemd-shutdown normally does (unmounting file systems, detaching storage,
+         * killing remaining processes, switching into the exitrd). */
+
+        switch (objective) {
+
+        case MANAGER_KEXEC:
+                log_info("Rebooting with kexec.");
+                (void) kexec();
+                /* If we are still here kexec didn't work, fall back to a plain reboot. */
+                _fallthrough_;
+
+        case MANAGER_REBOOT:
+                (void) reboot_with_parameter(REBOOT_LOG);
+                log_info("Rebooting.");
+                cmd = RB_AUTOBOOT;
+                break;
+
+        case MANAGER_EXIT:
+                if (detect_container() > 0) {
+                        log_info("Exiting container.");
+                        exit(retval);
+                }
+                _fallthrough_;
+
+        case MANAGER_POWEROFF:
+                log_info("Powering off.");
+                cmd = RB_POWER_OFF;
+                break;
+
+        case MANAGER_HALT:
+                log_info("Halting system.");
+                cmd = RB_HALT_SYSTEM;
+                break;
+
+        default:
+                assert_not_reached();
+        }
+
+        (void) reboot(cmd);
+        return log_error_errno(errno, "Failed to shut down: %m");
+}
+
 static void initialize_clock_timewarp(void) {
         int r;
 
@@ -2022,8 +2079,10 @@ static void update_numa_policy(bool skip_setup) {
         }
 
         r = apply_numa_policy(&arg_numa_policy);
-        if (r == -EOPNOTSUPP)
+        if (r == -ENOSYS)
                 log_debug_errno(r, "NUMA support not available, ignoring.");
+        else if (ERRNO_IS_NEG_NOT_SUPPORTED(r))
+                log_warning_errno(r, "NUMA policy not supported by kernel, ignoring.");
         else if (r < 0)
                 log_warning_errno(r, "Failed to set NUMA memory policy, ignoring: %m");
 }
@@ -2112,13 +2171,14 @@ static int do_reexecute(
                 char* argv[],
                 const struct rlimit *saved_rlimit_nofile,
                 const struct rlimit *saved_rlimit_memlock,
-                FDSet *fds,
+                FDSet *_fds, /* donated */
                 const char *switch_root_dir,
                 const char *switch_root_init,
                 uint64_t saved_capability_ambient_set,
                 const char **ret_error_message) {
 
         size_t i, args_size;
+        _cleanup_free_ char *our_exe = NULL;
         const char **args;
         int r;
 
@@ -2127,6 +2187,9 @@ static int do_reexecute(
         assert(saved_rlimit_nofile);
         assert(saved_rlimit_memlock);
         assert(ret_error_message);
+
+        /* The fdset is donated to us, take ownership so it is freed on all exit paths. */
+        _cleanup_fdset_free_ FDSet *fds = TAKE_PTR(_fds);
 
         /* Close and disarm the watchdog, so that the new instance can reinitialize it, but the machine
          * doesn't get rebooted while we do that. */
@@ -2226,14 +2289,32 @@ static int do_reexecute(
                 valgrind_summary_hack();
 
                 args[0] = SYSTEMD_BINARY_PATH;
-                (void) execv(args[0], (char* const*) args);
+                r = RET_NERRNO(execv(args[0], (char* const*) args));
 
                 if (objective == MANAGER_REEXECUTE) {
+                        /* If the binary is missing, try with our current executable too. This way things
+                         * continue to work if the binary is installed into a non-default location. Note that
+                         * we don't use chase here, the symlink the kernel gives is good enough. */
+                        if (r == -ENOENT) {
+                                int k;
+
+                                k = readlink_malloc("/proc/self/exe", &our_exe);
+                                if (k < 0)
+                                        log_warning_errno(k, "Failed to read /proc/self/exe: %m");
+                                else if (endswith(our_exe, " (deleted)"))
+                                        log_info("The current binary (/proc/self/exe) has been deleted.");
+                                else {
+                                        log_info_errno(r, "Failed to execute our own binary %s, trying /proc/self/exe: %m", args[0]);
+                                        args[0] = "/proc/self/exe";
+                                        r = RET_NERRNO(execv(args[0], (char* const*) args));
+                                }
+                        }
+
                         *ret_error_message = "Failed to execute our own binary";
-                        return log_error_errno(errno, "Failed to execute our own binary %s: %m", args[0]);
+                        return log_error_errno(r, "Failed to execute our own binary %s: %m", args[0]);
                 }
 
-                log_debug_errno(errno, "Failed to execute our own binary %s, trying fallback: %m", args[0]);
+                log_debug_errno(r, "Failed to execute our own binary %s, trying fallback: %m", args[0]);
         }
 
         /* Try the fallback, if there is any, without any serialization. We pass the original argv[] and
@@ -2269,13 +2350,12 @@ static int do_reexecute(
 
         if (switch_root_init) {
                 args[0] = switch_root_init;
-                (void) execve(args[0], (char* const*) args, saved_env);
-                log_warning_errno(errno, "Failed to execute configured init %s, trying fallback: %m", args[0]);
+                r = RET_NERRNO(execve(args[0], (char* const*) args, saved_env));
+                log_warning_errno(r, "Failed to execute configured init %s, trying fallback: %m", args[0]);
         }
 
         args[0] = "/sbin/init";
-        (void) execv(args[0], (char* const*) args);
-        r = -errno;
+        r = RET_NERRNO(execv(args[0], (char* const*) args));
         *ret_error_message = "Failed to execute /sbin/init";
 
         if (r == -ENOENT) {
@@ -2287,8 +2367,7 @@ static int do_reexecute(
 
                 args[0] = "/bin/sh";
                 args[1] = NULL;
-                (void) execve(args[0], (char* const*) args, saved_env);
-                r = -errno;
+                r = RET_NERRNO(execve(args[0], (char* const*) args, saved_env));
                 *ret_error_message = "Failed to execute fallback shell";
         }
 
@@ -2331,9 +2410,14 @@ static int invoke_main_loop(
                            MANAGER_REBOOT,
                            MANAGER_KEXEC,
                            MANAGER_HALT,
-                           MANAGER_POWEROFF) &&
-                    !dual_timestamp_is_set(m->timestamps + MANAGER_TIMESTAMP_SHUTDOWN_START))
-                        dual_timestamp_now(m->timestamps + MANAGER_TIMESTAMP_SHUTDOWN_START);
+                           MANAGER_POWEROFF)) {
+                        dual_timestamp ts;
+
+                        dual_timestamp_now(&ts);
+                        if (!dual_timestamp_is_set(m->timestamps + MANAGER_TIMESTAMP_SHUTDOWN_START))
+                                m->timestamps[MANAGER_TIMESTAMP_SHUTDOWN_START] = ts;
+                        m->timestamps[MANAGER_TIMESTAMP_SHUTDOWN_FINISH] = ts;
+                }
 
                 switch (objective) {
 
@@ -2746,21 +2830,31 @@ static int do_queue_default_job(
         else
                 unit = SPECIAL_DEFAULT_TARGET;
 
+        /* When no unit was explicitly requested, failures to load the default unit are not fatal,
+         * since we fall back to other targets below. Log them at a lower level in that case. */
+        int log_level = arg_default_unit ? LOG_ERR : LOG_INFO;
+
         log_debug("Activating default unit: %s", unit);
+        r = manager_load_startable_unit_or_warn(m, unit, /* path= */ NULL, log_level, &target);
+        if (r == -ENOENT && !arg_default_unit) {
+                if (in_initrd())
+                        /* Fall back to default.target, which we used to always use by default.
+                         * Only do this if no explicit configuration was given. */
+                        unit = SPECIAL_DEFAULT_TARGET;
+                else
+                        /* The default.target symlink was not found on disk and the target was not
+                         * explicitly specified. Fall back to the target configured at build time
+                         * via -Ddefault-target=. */
+                        unit = FALLBACK_DEFAULT_TARGET;
 
-        r = manager_load_startable_unit_or_warn(m, unit, NULL, &target);
-        if (r < 0 && in_initrd() && !arg_default_unit) {
-                /* Fall back to default.target, which we used to always use by default. Only do this if no
-                 * explicit configuration was given. */
-
-                log_info("Falling back to %s.", SPECIAL_DEFAULT_TARGET);
-
-                r = manager_load_startable_unit_or_warn(m, SPECIAL_DEFAULT_TARGET, NULL, &target);
+                log_info("Falling back to %s.", unit);
+                r = manager_load_startable_unit_or_warn(m, unit, /* path= */ NULL, log_level, &target);
         }
         if (r < 0) {
+                /* We failed. Activate rescue mode. */
                 log_info("Falling back to %s.", SPECIAL_RESCUE_TARGET);
 
-                r = manager_load_startable_unit_or_warn(m, SPECIAL_RESCUE_TARGET, NULL, &target);
+                r = manager_load_startable_unit_or_warn(m, SPECIAL_RESCUE_TARGET, /* path= */ NULL, log_level, &target);
                 if (r < 0) {
                         *ret_error_message = r == -ERFKILL ? SPECIAL_RESCUE_TARGET " masked"
                                                            : "Failed to load " SPECIAL_RESCUE_TARGET;
@@ -3424,7 +3518,7 @@ static int save_env(void) {
         return 0;
 }
 
-int main(int argc, char *argv[]) {
+static int run_systemd(int argc, char *argv[]) {
         dual_timestamp
                 initrd_timestamp = DUAL_TIMESTAMP_NULL,
                 userspace_timestamp = DUAL_TIMESTAMP_NULL,
@@ -3839,7 +3933,7 @@ finish:
                                  argc, argv,
                                  &saved_rlimit_nofile,
                                  &saved_rlimit_memlock,
-                                 fds,
+                                 TAKE_PTR(fds),
                                  switch_root_dir,
                                  switch_root_init,
                                  saved_ambient_set,
@@ -3894,9 +3988,20 @@ finish:
          * If we failed above, we want to freeze after finishing cleanup. */
         if (arg_runtime_scope == RUNTIME_SCOPE_SYSTEM &&
             IN_SET(r, MANAGER_EXIT, MANAGER_REBOOT, MANAGER_POWEROFF, MANAGER_HALT, MANAGER_KEXEC)) {
-                r = become_shutdown(r, retval);
-                log_error_errno(r, "Failed to execute shutdown binary, %s: %m", getpid_cached() == 1 ? "freezing" : "quitting");
-                error_message = "Failed to execute shutdown binary";
+                ManagerObjective objective = r;
+
+                r = become_shutdown(objective, retval);
+                assert(r < 0);
+                log_full_errno(r == -ENOENT ? LOG_DEBUG : LOG_WARNING, r,
+                               "Failed to execute shutdown binary: %m");
+
+                /* As PID 1, carry out the requested operation ourselves rather than relying on the shutdown
+                 * binary. This only returns if that didn't work, in which case we freeze/exit/reboot
+                 * below. */
+                r = fallback_shutdown(objective, retval);
+                assert(r < 0);
+                log_error_errno(r, "Failed to perform shutdown: %m");
+                error_message = "Failed to perform shutdown";
         }
 
         /* This is primarily useful when running systemd in a VM, as it provides the user running the VM with
@@ -3917,4 +4022,12 @@ finish:
 
         reset_arguments();
         return retval;
+}
+
+int main(int argc, char *argv[]) {
+#if SYSTEMD_MULTICALL_BINARY
+        if (invoked_as(argv, "executor"))
+                return run_executor(argc, argv);
+#endif
+        return run_systemd(argc, argv);
 }

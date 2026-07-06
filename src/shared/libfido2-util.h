@@ -19,6 +19,10 @@ typedef enum Fido2EnrollFlags {
 int dlopen_libfido2(int log_level);
 
 #if HAVE_LIBFIDO2
+#ifndef SYSTEMD_CFLAGS_MARKER_LIBFIDO2
+#  error "missing libfido2_cflags in meson dependency."
+#endif
+
 #include <fido.h>
 
 #include "dlfcn-util.h"
@@ -57,6 +61,7 @@ extern DLSYM_PROTOTYPE(fido_dev_close);
 extern DLSYM_PROTOTYPE(fido_dev_free);
 extern DLSYM_PROTOTYPE(fido_dev_get_assert);
 extern DLSYM_PROTOTYPE(fido_dev_get_cbor_info);
+extern DLSYM_PROTOTYPE(fido_dev_get_retry_count);
 extern DLSYM_PROTOTYPE(fido_dev_info_free);
 extern DLSYM_PROTOTYPE(fido_dev_info_manifest);
 extern DLSYM_PROTOTYPE(fido_dev_info_manufacturer_string);
@@ -116,6 +121,8 @@ int fido2_generate_hmac_hash(
                 const char *user_icon,
                 const char *askpw_icon,
                 const char *askpw_credential,
+                AskPasswordFlags askpw_flags,
+                const char *pin,
                 Fido2EnrollFlags lock_with,
                 int cred_alg,
                 const struct iovec *salt,
@@ -133,5 +140,18 @@ static inline int parse_fido2_algorithm(const char *s, int *ret) {
 
 int fido2_list_devices(void);
 int fido2_find_device_auto(char **ret);
+
+typedef struct Fido2DeviceInfo {
+        char *path;
+        char *manufacturer;     /* may be NULL if the device doesn't report it */
+        char *product;          /* may be NULL if the device doesn't report it */
+} Fido2DeviceInfo;
+
+void fido2_device_info_done(Fido2DeviceInfo *d);
+void fido2_device_info_free_many(Fido2DeviceInfo *a, size_t n);
+
+/* Enumerates the FIDO2 tokens that implement the 'hmac-secret' extension (i.e. are suitable for
+ * enrollment), returning a newly allocated array. */
+int fido2_enumerate_devices(Fido2DeviceInfo **ret, size_t *ret_n);
 
 int fido2_have_device(const char *device);

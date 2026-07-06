@@ -173,7 +173,9 @@ SD_VARLINK_DEFINE_ENUM_TYPE(
                 SD_VARLINK_DEFINE_ENUM_VALUE(preferred),
                 SD_VARLINK_DEFINE_ENUM_VALUE(bind),
                 SD_VARLINK_DEFINE_ENUM_VALUE(interleave),
-                SD_VARLINK_DEFINE_ENUM_VALUE(local));
+                SD_VARLINK_DEFINE_ENUM_VALUE(local),
+                SD_VARLINK_DEFINE_ENUM_VALUE(preferred_many),
+                SD_VARLINK_DEFINE_ENUM_VALUE(weighted_interleave));
 
 SD_VARLINK_DEFINE_ENUM_TYPE(
                 MountPropagationFlag,
@@ -1429,6 +1431,8 @@ static SD_VARLINK_DEFINE_STRUCT_TYPE(
                 SD_VARLINK_DEFINE_FIELD(RestartSteps, SD_VARLINK_INT, SD_VARLINK_NULLABLE),
                 SD_VARLINK_FIELD_COMMENT("https://www.freedesktop.org/software/systemd/man/"PROJECT_VERSION_STR"/systemd.service.html#RestartMaxDelaySec="),
                 SD_VARLINK_DEFINE_FIELD(RestartMaxDelayUSec, SD_VARLINK_INT, SD_VARLINK_NULLABLE),
+                SD_VARLINK_FIELD_COMMENT("https://www.freedesktop.org/software/systemd/man/"PROJECT_VERSION_STR"/systemd.service.html#RestartRandomizedDelaySec="),
+                SD_VARLINK_DEFINE_FIELD(RestartRandomizedDelayUSec, SD_VARLINK_INT, SD_VARLINK_NULLABLE),
                 SD_VARLINK_FIELD_COMMENT("https://www.freedesktop.org/software/systemd/man/"PROJECT_VERSION_STR"/systemd.service.html#TimeoutStartSec="),
                 SD_VARLINK_DEFINE_FIELD(TimeoutStartUSec, SD_VARLINK_INT, SD_VARLINK_NULLABLE),
                 SD_VARLINK_FIELD_COMMENT("https://www.freedesktop.org/software/systemd/man/"PROJECT_VERSION_STR"/systemd.service.html#TimeoutStopSec="),

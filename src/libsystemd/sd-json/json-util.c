@@ -23,6 +23,7 @@
 #include "string-util.h"
 #include "strv.h"
 #include "syslog-util.h"
+#include "time-util.h"
 #include "unit-name.h"
 #include "user-util.h"
 
@@ -246,6 +247,85 @@ int json_dispatch_in6_addr(const char *name, sd_json_variant *variant, sd_json_d
 
         memcpy(address, iov.iov_base, iov.iov_len);
         return 0;
+}
+
+int json_dispatch_in_addr_data(const char *name, sd_json_variant *variant, sd_json_dispatch_flags_t flags, void *userdata) {
+        struct in_addr_data *ret = ASSERT_PTR(userdata), data = { .family = AF_UNSPEC, .address = IN_ADDR_NULL };
+        int r;
+
+        assert(variant);
+
+        if (sd_json_variant_is_null(variant)) {
+                *ret = data;
+                return 0;
+        }
+
+        /* We support both a more human readable string based encoding and an array based encoding */
+        if (sd_json_variant_is_string(variant)) {
+                r = in_addr_from_string_auto(sd_json_variant_string(variant), &data.family, &data.address);
+                if (r < 0)
+                        return json_log(variant, flags, r,
+                                        "JSON field '%s' is not a valid IPv4 or IPv6 address string: %s", strna(name), sd_json_variant_string(variant));
+                *ret = data;
+                return 0;
+        }
+
+        if (!sd_json_variant_is_array(variant))
+                return json_log(variant, flags, SYNTHETIC_ERRNO(EINVAL), "JSON field '%s' is not an array.", strna(name));
+
+        switch (sd_json_variant_elements(variant)) {
+        case sizeof(struct in_addr):
+                data.family = AF_INET;
+                break;
+        case sizeof(struct in6_addr):
+                data.family = AF_INET6;
+                break;
+        default:
+                return json_log(variant, flags, SYNTHETIC_ERRNO(EINVAL), "JSON field '%s' is array of unexpected size.", strna(name));
+        }
+
+        size_t k = 0;
+        sd_json_variant *i;
+        JSON_VARIANT_ARRAY_FOREACH(i, variant) {
+                if (!sd_json_variant_is_integer(i))
+                        return json_log(variant, flags, SYNTHETIC_ERRNO(EINVAL), "Element %zu of JSON field '%s' is not an integer.", k, strna(name));
+
+                int64_t b = sd_json_variant_integer(i);
+                if (b < 0 || b > 0xff)
+                        return json_log(variant, flags, SYNTHETIC_ERRNO(EINVAL),
+                                        "Element %zu of JSON field '%s' is out of range 0%s255.",
+                                        k, strna(name), glyph(GLYPH_ELLIPSIS));
+
+                data.address.bytes[k++] = (uint8_t) b;
+        }
+        assert(k == FAMILY_ADDRESS_SIZE_SAFE(data.family));
+
+        *ret = data;
+        return 0;
+}
+
+int json_dispatch_dual_timestamp(const char *name, sd_json_variant *variant, sd_json_dispatch_flags_t flags, void *userdata) {
+        dual_timestamp *ts = ASSERT_PTR(userdata);
+
+        /* The inverse of JSON_BUILD_DUAL_TIMESTAMP(): decodes a { "realtime": …, "monotonic": … } object
+         * into a dual_timestamp. */
+
+        if (sd_json_variant_is_null(variant)) {
+                *ts = DUAL_TIMESTAMP_NULL;
+                return 0;
+        }
+
+        if (!sd_json_variant_is_object(variant))
+                return json_log(variant, flags, SYNTHETIC_ERRNO(EINVAL),
+                                "JSON field '%s' is not an object.", strna(name));
+
+        static const sd_json_dispatch_field table[] = {
+                { "realtime",  _SD_JSON_VARIANT_TYPE_INVALID, sd_json_dispatch_uint64, voffsetof(*ts, realtime),  0 },
+                { "monotonic", _SD_JSON_VARIANT_TYPE_INVALID, sd_json_dispatch_uint64, voffsetof(*ts, monotonic), 0 },
+                {}
+        };
+
+        return sd_json_dispatch(variant, table, flags, ts);
 }
 
 int json_dispatch_const_path(const char *name, sd_json_variant *variant, sd_json_dispatch_flags_t flags, void *userdata) {
@@ -917,4 +997,28 @@ int json_variant_compare(sd_json_variant *a, sd_json_variant *b) {
         }
 
         return CMP(sd_json_variant_type(a), sd_json_variant_type(b));
+}
+
+int json_dispatch_address_family(const char *name, sd_json_variant *variant, sd_json_dispatch_flags_t flags, void *userdata) {
+        int *family = ASSERT_PTR(userdata), r;
+
+        assert(variant);
+
+        if (sd_json_variant_is_negative(variant))
+                return json_log(variant, flags, SYNTHETIC_ERRNO(EINVAL),
+                                "JSON field '%s' for an address family cannot be negative.", strna(name));
+
+        int k = AF_UNSPEC;
+        if (!sd_json_variant_is_null(variant)) {
+                r = sd_json_dispatch_int(name, variant, flags, &k);
+                if (r < 0)
+                        return r;
+        }
+
+        if (!IN_SET(k, AF_INET, AF_INET6) && !(FLAGS_SET(flags, SD_JSON_RELAX) && k == AF_UNSPEC))
+                return json_log(variant, flags, SYNTHETIC_ERRNO(ERANGE),
+                                "JSON field '%s' out of range for an address family.", strna(name));
+
+        *family = k;
+        return 0;
 }

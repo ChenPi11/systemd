@@ -61,6 +61,7 @@
 #include "unit-name.h"
 #include "utf8.h"
 #include "varlink-io.systemd.PCRLock.h"
+#include "varlink-io.systemd.SysUpdate.Notify.h"
 #include "varlink-util.h"
 #include "verbs.h"
 
@@ -836,7 +837,9 @@ static int event_log_record_extract_firmware_description(EventLogRecord *rec) {
                                 goto invalid;
                         }
 
-                        if (left < offsetof(packed_EFI_DEVICE_PATH, path) || left < dp->length) {
+                        if (left < offsetof(packed_EFI_DEVICE_PATH, path) ||
+                            dp->length < offsetof(packed_EFI_DEVICE_PATH, path) ||
+                            left < dp->length) {
                                 log_warning("Device path element too short, ignoring.");
                                 goto invalid;
                         }
@@ -4175,9 +4178,7 @@ static bool event_log_record_is_separator(const EventLogRecord *rec) {
 
 VERB_GROUP("Protections");
 
-VERB(verb_lock_firmware, "lock-firmware-code", NULL, VERB_ANY, 2, 0,
-     "Generate a .pcrlock file from current firmware code");
-static int verb_lock_firmware(int argc, char *argv[], uintptr_t _data, void *userdata) {
+static int lock_firmware(bool is_code) {
         _cleanup_(sd_json_variant_unrefp) sd_json_variant *array_early = NULL, *array_late = NULL;
         _cleanup_(event_log_freep) EventLog *el = NULL;
         uint32_t always_mask, separator_mask, separator_seen_mask = 0, action_seen_mask = 0;
@@ -4190,7 +4191,7 @@ static int verb_lock_firmware(int argc, char *argv[], uintptr_t _data, void *use
          * here – but the latter only until the "separator" events are seen, which tell us where transition
          * into OS boot loader happens. This reflects the fact that on some systems the firmware already
          * measures some firmware-supplied apps into PCR 4. (e.g. Thinkpad X1 Gen9) */
-        if (endswith(argv[0], "firmware-code")) {
+        if (is_code) {
                 always_mask = (UINT32_C(1) << TPM2_PCR_PLATFORM_CODE) |      /* → 0 */
                         (UINT32_C(1) << TPM2_PCR_EXTERNAL_CODE);             /* → 2 */
 
@@ -4199,7 +4200,6 @@ static int verb_lock_firmware(int argc, char *argv[], uintptr_t _data, void *use
                 default_pcrlock_early_path = PCRLOCK_FIRMWARE_CODE_EARLY_PATH;
                 default_pcrlock_late_path = PCRLOCK_FIRMWARE_CODE_LATE_PATH;
         } else {
-                assert(endswith(argv[0], "firmware-config"));
                 always_mask = (UINT32_C(1) << TPM2_PCR_PLATFORM_CONFIG) |    /* → 1 */
                         (UINT32_C(1) << TPM2_PCR_EXTERNAL_CONFIG);           /* → 3 */
 
@@ -4296,13 +4296,17 @@ static int verb_lock_firmware(int argc, char *argv[], uintptr_t _data, void *use
         return write_pcrlock(array_late, default_pcrlock_late_path);
 }
 
-VERB_NOARG(verb_unlock_firmware, "unlock-firmware-code",
-           "Remove .pcrlock file for firmware code");
-static int verb_unlock_firmware(int argc, char *argv[], uintptr_t _data, void *userdata) {
+VERB(verb_lock_firmware, "lock-firmware-code", NULL, VERB_ANY, 2, 0,
+     "Generate a .pcrlock file from current firmware code");
+static int verb_lock_firmware(int argc, char *argv[], uintptr_t _data, void *userdata) {
+        return lock_firmware(endswith(argv[0], "firmware-code"));
+}
+
+static int unlock_firmware(bool is_code) {
         const char *default_pcrlock_early_path, *default_pcrlock_late_path;
         int r;
 
-        if (endswith(argv[0], "firmware-code")) {
+        if (is_code) {
                 default_pcrlock_early_path = PCRLOCK_FIRMWARE_CODE_EARLY_PATH;
                 default_pcrlock_late_path = PCRLOCK_FIRMWARE_CODE_LATE_PATH;
         } else {
@@ -4324,15 +4328,19 @@ static int verb_unlock_firmware(int argc, char *argv[], uintptr_t _data, void *u
         return 0;
 }
 
+VERB_NOARG(verb_unlock_firmware, "unlock-firmware-code",
+           "Remove .pcrlock file for firmware code");
+static int verb_unlock_firmware(int argc, char *argv[], uintptr_t _data, void *userdata) {
+        return unlock_firmware(endswith(argv[0], "firmware-code"));
+}
+
 VERB(verb_lock_firmware, "lock-firmware-config", NULL, VERB_ANY, 2, 0,
      "Generate a .pcrlock file from current firmware configuration");
 
 VERB_NOARG(verb_unlock_firmware, "unlock-firmware-config",
            "Remove .pcrlock file for firmware configuration");
 
-VERB_NOARG(verb_lock_secureboot_policy, "lock-secureboot-policy",
-           "Generate a .pcrlock file from current SecureBoot policy");
-static int verb_lock_secureboot_policy(int argc, char *argv[], uintptr_t _data, void *userdata) {
+static int lock_secureboot_policy(void) {
         static const struct {
                 sd_id128_t id;
                 const char *name;
@@ -4403,6 +4411,12 @@ static int verb_lock_secureboot_policy(int argc, char *argv[], uintptr_t _data, 
         }
 
         return write_pcrlock(array, PCRLOCK_SECUREBOOT_POLICY_PATH);
+}
+
+VERB_NOARG(verb_lock_secureboot_policy, "lock-secureboot-policy",
+           "Generate a .pcrlock file from current SecureBoot policy");
+static int verb_lock_secureboot_policy(int argc, char *argv[], uintptr_t _data, void *userdata) {
+        return lock_secureboot_policy();
 }
 
 VERB_NOARG(verb_unlock_secureboot_policy, "unlock-secureboot-policy",
@@ -4528,9 +4542,7 @@ static int event_log_ensure_secureboot_consistency(EventLog *el) {
         return 0;
 }
 
-VERB_NOARG(verb_lock_secureboot_authority, "lock-secureboot-authority",
-           "Generate a .pcrlock file from current SecureBoot authority");
-static int verb_lock_secureboot_authority(int argc, char *argv[], uintptr_t _data, void *userdata) {
+static int lock_secureboot_authority(void) {
         _cleanup_(sd_json_variant_unrefp) sd_json_variant *array = NULL;
         _cleanup_(event_log_freep) EventLog *el = NULL;
         int r;
@@ -4607,6 +4619,12 @@ static int verb_lock_secureboot_authority(int argc, char *argv[], uintptr_t _dat
         }
 
         return write_pcrlock(array, PCRLOCK_SECUREBOOT_AUTHORITY_PATH);
+}
+
+VERB_NOARG(verb_lock_secureboot_authority, "lock-secureboot-authority",
+           "Generate a .pcrlock file from current SecureBoot authority");
+static int verb_lock_secureboot_authority(int argc, char *argv[], uintptr_t _data, void *userdata) {
+        return lock_secureboot_authority();
 }
 
 VERB_NOARG(verb_unlock_secureboot_authority, "unlock-secureboot-authority",
@@ -5467,6 +5485,96 @@ static int vl_method_remove_policy(sd_varlink *link, sd_json_variant *parameters
         return sd_varlink_reply(link, NULL);
 }
 
+typedef enum LockCategory {
+        LOCK_CATEGORY_FIRMWARE_CODE,
+        LOCK_CATEGORY_FIRMWARE_CONFIG,
+        LOCK_CATEGORY_SECUREBOOT_POLICY,
+        LOCK_CATEGORY_SECUREBOOT_AUTHORITY,
+        _LOCK_CATEGORY_MAX,
+        _LOCK_CATEGORY_INVALID = -EINVAL,
+} LockCategory;
+
+static const char* const lock_category_table[_LOCK_CATEGORY_MAX] = {
+        [LOCK_CATEGORY_FIRMWARE_CODE]        = "firmwareCode",
+        [LOCK_CATEGORY_FIRMWARE_CONFIG]      = "firmwareConfig",
+        [LOCK_CATEGORY_SECUREBOOT_POLICY]    = "secureBootPolicy",
+        [LOCK_CATEGORY_SECUREBOOT_AUTHORITY] = "secureBootAuthority",
+};
+
+DEFINE_PRIVATE_STRING_TABLE_LOOKUP_FROM_STRING(lock_category, LockCategory);
+static JSON_DISPATCH_ENUM_DEFINE(dispatch_lock_category, LockCategory, lock_category_from_string);
+
+typedef struct MethodLockParameters {
+        LockCategory category;
+        bool lock;
+} MethodLockParameters;
+
+static int vl_method_lock(sd_varlink *link, sd_json_variant *parameters, sd_varlink_method_flags_t flags, void *userdata) {
+        static const sd_json_dispatch_field dispatch_table[] = {
+                { "category", SD_JSON_VARIANT_STRING,  dispatch_lock_category,   offsetof(MethodLockParameters, category), SD_JSON_MANDATORY },
+                { "lock",     SD_JSON_VARIANT_BOOLEAN, sd_json_dispatch_stdbool, offsetof(MethodLockParameters, lock),     0                 },
+                {}
+        };
+        MethodLockParameters p = {
+                .category = _LOCK_CATEGORY_INVALID,
+                .lock = true,
+        };
+        int r;
+
+        assert(link);
+
+        r = sd_varlink_dispatch(link, parameters, dispatch_table, &p);
+        if (r != 0)
+                return r;
+
+        switch (p.category) {
+
+        case LOCK_CATEGORY_FIRMWARE_CODE:
+                r = p.lock ? lock_firmware(/* is_code= */ true) : unlock_firmware(/* is_code= */ true);
+                break;
+
+        case LOCK_CATEGORY_FIRMWARE_CONFIG:
+                r = p.lock ? lock_firmware(/* is_code= */ false) : unlock_firmware(/* is_code= */ false);
+                break;
+
+        case LOCK_CATEGORY_SECUREBOOT_POLICY:
+                r = p.lock ? lock_secureboot_policy() : unlink_pcrlock(PCRLOCK_SECUREBOOT_POLICY_PATH);
+                break;
+
+        case LOCK_CATEGORY_SECUREBOOT_AUTHORITY:
+                r = p.lock ? lock_secureboot_authority() : unlink_pcrlock(PCRLOCK_SECUREBOOT_AUTHORITY_PATH);
+                break;
+
+        default:
+                assert_not_reached();
+        }
+        if (r < 0)
+                return r;
+
+        return sd_varlink_reply(link, NULL);
+}
+
+static int vl_method_on_completed_update(sd_varlink *link, sd_json_variant *parameters, sd_varlink_method_flags_t flags, void *userdata) {
+        int r;
+
+        assert(link);
+
+        /* Triggered by systemd-sysupdate after an update completed. We deliberately ignore all parameters
+         * (we don't even dispatch them) and simply recompute the PCR policy unconditionally, since the set
+         * of measured components might have changed. */
+
+        /* Only honour update notifications if they come from root */
+        r = varlink_check_privileged_peer(link);
+        if (r < 0)
+                return r;
+
+        r = make_policy(/* force= */ false, /* recovery_pin_mode= */ RECOVERY_PIN_HIDE);
+        if (r < 0)
+                return r;
+
+        return sd_varlink_reply(link, NULL);
+}
+
 static int run(int argc, char *argv[]) {
         int r;
 
@@ -5496,15 +5604,20 @@ static int run(int argc, char *argv[]) {
                 if (r < 0)
                         return log_error_errno(r, "Failed to allocate Varlink server: %m");
 
-                r = sd_varlink_server_add_interface(varlink_server, &vl_interface_io_systemd_PCRLock);
+                r = sd_varlink_server_add_interface_many(
+                                varlink_server,
+                                &vl_interface_io_systemd_PCRLock,
+                                &vl_interface_io_systemd_SysUpdate_Notify);
                 if (r < 0)
-                        return log_error_errno(r, "Failed to add Varlink interface: %m");
+                        return log_error_errno(r, "Failed to add Varlink interfaces: %m");
 
                 r = sd_varlink_server_bind_method_many(
                                 varlink_server,
-                                "io.systemd.PCRLock.ReadEventLog", vl_method_read_event_log,
-                                "io.systemd.PCRLock.MakePolicy",   vl_method_make_policy,
-                                "io.systemd.PCRLock.RemovePolicy", vl_method_remove_policy);
+                                "io.systemd.PCRLock.ReadEventLog",                  vl_method_read_event_log,
+                                "io.systemd.PCRLock.MakePolicy",                    vl_method_make_policy,
+                                "io.systemd.PCRLock.RemovePolicy",                  vl_method_remove_policy,
+                                "io.systemd.PCRLock.Lock",                          vl_method_lock,
+                                "io.systemd.SysUpdate.Notify.OnCompletedUpdate",    vl_method_on_completed_update);
                 if (r < 0)
                         return log_error_errno(r, "Failed to bind Varlink methods: %m");
 

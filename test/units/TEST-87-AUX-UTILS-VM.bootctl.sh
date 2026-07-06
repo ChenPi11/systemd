@@ -425,18 +425,59 @@ remove_root_dir() {
     rm -rf "$ROOTDIR"
 }
 
+cleanup_install_varlink() {
+    if [[ -n "${FAKE_ESP:-}" ]]; then
+        rm -rf "$FAKE_ESP"
+        unset FAKE_ESP
+    fi
+    if [[ -n "${FAKE_BOOT:-}" ]]; then
+        rm -rf "$FAKE_BOOT"
+        unset FAKE_BOOT
+    fi
+    restore_esp
+}
+
 testcase_install_varlink() {
 
     varlinkctl introspect "$(type -p bootctl)"
 
     if [ $# -eq 0 ]; then
         backup_esp
-        trap restore_esp RETURN ERR
+        trap cleanup_install_varlink RETURN ERR
     fi
 
     (! bootctl is-installed )
     SYSTEMD_LOG_TARGET=console varlinkctl call "$(type -p bootctl)" io.systemd.BootControl.Install "{\"operation\":\"new\",\"touchVariables\":false}"
     bootctl is-installed
+
+    # Verify that espPath/xbootldrPath override auto-discovery: install into fresh empty
+    # directories (with relaxed checks so verify_esp()/verify_xbootldr() accept a non-vfat
+    # non-mountpoint path) and check the loader files land there. If the parameters were ignored
+    # the call would auto-discover the real partitions instead and the directories would stay
+    # empty.
+    FAKE_ESP="$(mktemp --directory /tmp/test-bootctl-esp.XXXXXXXXXX)"
+    FAKE_BOOT="$(mktemp --directory /tmp/test-bootctl-boot.XXXXXXXXXX)"
+    SYSTEMD_RELAX_ESP_CHECKS=yes SYSTEMD_RELAX_XBOOTLDR_CHECKS=yes SYSTEMD_LOG_TARGET=console \
+            varlinkctl call --quiet "$(type -p bootctl)" io.systemd.BootControl.Install \
+            "{\"operation\":\"new\",\"touchVariables\":false,\"espPath\":\"$FAKE_ESP\",\"xbootldrPath\":\"$FAKE_BOOT\",\"makeEntryDirectory\":false}"
+    test -f "$FAKE_ESP/EFI/systemd/systemd-boot$(bootctl --print-efi-architecture).efi"
+    test -f "$FAKE_BOOT/loader/entries.srel"
+    # makeEntryDirectory:false means loader.conf must not gain a "default" line and no entry
+    # token directory is created under $BOOT.
+    (! grep '^default ' "$FAKE_ESP/loader/loader.conf" >/dev/null)
+
+    # Same again into fresh directories with makeEntryDirectory:true, and check loader.conf now
+    # gets a "default <entry-token>-*" line and the entry token directory shows up under $BOOT.
+    rm -rf "$FAKE_ESP" "$FAKE_BOOT"
+    FAKE_ESP="$(mktemp --directory /tmp/test-bootctl-esp.XXXXXXXXXX)"
+    FAKE_BOOT="$(mktemp --directory /tmp/test-bootctl-boot.XXXXXXXXXX)"
+    SYSTEMD_RELAX_ESP_CHECKS=yes SYSTEMD_RELAX_XBOOTLDR_CHECKS=yes SYSTEMD_LOG_TARGET=console \
+            varlinkctl call --quiet "$(type -p bootctl)" io.systemd.BootControl.Install \
+            "{\"operation\":\"new\",\"touchVariables\":false,\"espPath\":\"$FAKE_ESP\",\"xbootldrPath\":\"$FAKE_BOOT\",\"makeEntryDirectory\":true}"
+    local TOKEN
+    TOKEN="$(sed -n 's/^default \(.*\)-\*$/\1/p' "$FAKE_ESP/loader/loader.conf")"
+    test -n "$TOKEN"
+    test -d "$FAKE_BOOT/$TOKEN"
 }
 
 cleanup_link() {
@@ -708,6 +749,164 @@ EOF
     # Invalid id characters (e.g. a glob)
     (! varlinkctl call "$BOOTCTL_BIN" io.systemd.BootControl.Unlink \
                  '{"id":"foo*.conf"}')
+}
+
+cleanup_link_auto() {
+    rm -rf /run/systemd/uki /etc/systemd/uki
+    if [[ -n "${LINK_WORKDIR:-}" ]]; then
+        rm -rf "$LINK_WORKDIR"
+        unset LINK_WORKDIR
+    fi
+    restore_esp
+}
+
+testcase_bootctl_link_auto() {
+    if ! command -v ukify >/dev/null; then
+        echo "ukify not found, skipping."
+        return 0
+    fi
+
+    backup_esp
+    LINK_WORKDIR="$(mktemp --directory /tmp/test-bootctl-link-auto.XXXXXXXXXX)"
+    trap cleanup_link_auto RETURN ERR
+
+    # Ensure loader/entries directory is present
+    bootctl install --make-entry-directory=yes
+
+    local ESP
+    ESP="$(bootctl --print-esp-path)"
+
+    cat >"$LINK_WORKDIR/os-release" <<'EOF'
+ID=testos
+NAME="Test OS"
+PRETTY_NAME="Test OS"
+EOF
+    echo "fake-kernel" >"$LINK_WORKDIR/vmlinuz"
+    echo "fake-initrd" >"$LINK_WORKDIR/initrd"
+
+    # Two distinct UKIs, so we can tell which one was picked up.
+    ukify build \
+        --linux "$LINK_WORKDIR/vmlinuz" \
+        --initrd "$LINK_WORKDIR/initrd" \
+        --os-release "@$LINK_WORKDIR/os-release" \
+        --uname "1.2.3-testkernel" \
+        --cmdline "quiet uki=a" \
+        --output "$LINK_WORKDIR/uki_a.efi"
+    ukify build \
+        --linux "$LINK_WORKDIR/vmlinuz" \
+        --initrd "$LINK_WORKDIR/initrd" \
+        --os-release "@$LINK_WORKDIR/os-release" \
+        --uname "1.2.3-testkernel" \
+        --cmdline "quiet uki=b" \
+        --output "$LINK_WORKDIR/uki_b.efi"
+
+    local TOKEN="systemdtest"
+    local BOOTCTL=(bootctl "--entry-token=literal:$TOKEN")
+    local ENTRY="$ESP/loader/entries/${TOKEN}-commit_1.conf"
+
+    # --- Test 1: link-auto picks up kernel.efi + extras.d/ from /run/systemd/uki/ ---
+    rm -rf /run/systemd/uki
+    mkdir -p /run/systemd/uki/extras.d
+    cp "$LINK_WORKDIR/uki_a.efi"     /run/systemd/uki/kernel.efi
+    echo "sysext-data"  >/run/systemd/uki/extras.d/hello.sysext.raw
+    echo "confext-data" >/run/systemd/uki/extras.d/hello.confext.raw
+    echo "cred-data"    >/run/systemd/uki/extras.d/hello.cred
+
+    "${BOOTCTL[@]}" link-auto
+
+    test -f "$ENTRY"
+    test -f "$ESP/$TOKEN/kernel.efi"
+    cmp "$LINK_WORKDIR/uki_a.efi" "$ESP/$TOKEN/kernel.efi"
+    test -f "$ESP/$TOKEN/hello.sysext.raw"
+    test -f "$ESP/$TOKEN/hello.confext.raw"
+    test -f "$ESP/$TOKEN/hello.cred"
+    grep "^uki /${TOKEN}/kernel.efi\$"          "$ENTRY" >/dev/null
+    grep "^extra /${TOKEN}/hello.sysext.raw\$"  "$ENTRY" >/dev/null
+    grep "^extra /${TOKEN}/hello.confext.raw\$" "$ENTRY" >/dev/null
+    grep "^extra /${TOKEN}/hello.cred\$"        "$ENTRY" >/dev/null
+
+    "${BOOTCTL[@]}" unlink "${TOKEN}-commit_1.conf"
+    test ! -e "$ENTRY"
+    test ! -e "$ESP/$TOKEN/kernel.efi"
+
+    # --- Test 2: versioned kernel.efi.v/ and extras .v/ are resolved via vpick ---
+    rm -rf /run/systemd/uki
+    mkdir -p /run/systemd/uki/kernel.efi.v /run/systemd/uki/extras.d/hello.sysext.raw.v
+    cp "$LINK_WORKDIR/uki_a.efi" /run/systemd/uki/kernel.efi.v/kernel_1.0.efi
+    cp "$LINK_WORKDIR/uki_a.efi" /run/systemd/uki/kernel.efi.v/kernel_2.0.efi
+    echo "sysext-1" >/run/systemd/uki/extras.d/hello.sysext.raw.v/hello_1.0.sysext.raw
+    echo "sysext-2" >/run/systemd/uki/extras.d/hello.sysext.raw.v/hello_2.0.sysext.raw
+
+    "${BOOTCTL[@]}" link-auto
+
+    test -f "$ENTRY"
+    # vpick must select the newest version
+    test -f "$ESP/$TOKEN/kernel_2.0.efi"
+    test ! -e "$ESP/$TOKEN/kernel_1.0.efi"
+    test -f "$ESP/$TOKEN/hello_2.0.sysext.raw"
+    test ! -e "$ESP/$TOKEN/hello_1.0.sysext.raw"
+    grep "^uki /${TOKEN}/kernel_2.0.efi\$"         "$ENTRY" >/dev/null
+    grep "^extra /${TOKEN}/hello_2.0.sysext.raw\$" "$ENTRY" >/dev/null
+
+    "${BOOTCTL[@]}" unlink "${TOKEN}-commit_1.conf"
+
+    # --- Test 3: priority — /etc/systemd/uki/ wins over /run/systemd/uki/ ---
+    rm -rf /run/systemd/uki /etc/systemd/uki
+    mkdir -p /run/systemd/uki/extras.d /etc/systemd/uki/extras.d
+    cp "$LINK_WORKDIR/uki_b.efi" /run/systemd/uki/kernel.efi
+    cp "$LINK_WORKDIR/uki_a.efi" /etc/systemd/uki/kernel.efi
+    echo "run-cred" >/run/systemd/uki/extras.d/hello.cred
+    echo "etc-cred" >/etc/systemd/uki/extras.d/hello.cred
+
+    "${BOOTCTL[@]}" link-auto
+
+    test -f "$ESP/$TOKEN/kernel.efi"
+    # The /etc copy (uki_a) must win over the /run copy (uki_b)
+    cmp "$LINK_WORKDIR/uki_a.efi" "$ESP/$TOKEN/kernel.efi"
+    cmp <(echo "etc-cred") "$ESP/$TOKEN/hello.cred"
+
+    "${BOOTCTL[@]}" unlink "${TOKEN}-commit_1.conf"
+    rm -rf /etc/systemd/uki
+
+    # --- Test 4: with nothing staged, link-auto is a successful no-op ---
+    rm -rf /run/systemd/uki
+    "${BOOTCTL[@]}" link-auto
+    # No entries referencing our token should remain.
+    local leftover
+    leftover="$(find "$ESP/loader/entries/" -name "*$TOKEN*" -print -quit 2>/dev/null)"
+    test -z "$leftover"
+
+    # === Varlink coverage: io.systemd.BootControl.LinkAuto ===
+    local BOOTCTL_BIN vreply vid vtoken
+    BOOTCTL_BIN="$(type -p bootctl)"
+
+    # --- Test 5: LinkAuto discovers kernel.efi + extras ---
+    rm -rf /run/systemd/uki
+    mkdir -p /run/systemd/uki/extras.d
+    cp "$LINK_WORKDIR/uki_a.efi" /run/systemd/uki/kernel.efi
+    echo "cred-data" >/run/systemd/uki/extras.d/hello.cred
+
+    vreply="$(varlinkctl call --json=short "$BOOTCTL_BIN" io.systemd.BootControl.LinkAuto '{}')"
+    vid="$(echo "$vreply" | jq -r '.ids[0]')"
+    test -n "$vid"
+    test "$vid" != "null"
+    vtoken="${vid%%-commit_*}"
+    test -n "$vtoken"
+
+    test -f "$ESP/loader/entries/$vid"
+    test -f "$ESP/$vtoken/kernel.efi"
+    test -f "$ESP/$vtoken/hello.cred"
+    grep "^uki /$vtoken/kernel.efi\$" "$ESP/loader/entries/$vid" >/dev/null
+
+    varlinkctl call --quiet "$BOOTCTL_BIN" io.systemd.BootControl.Unlink "{\"id\":\"$vid\"}"
+    test ! -e "$ESP/loader/entries/$vid"
+    test ! -e "$ESP/$vtoken/kernel.efi"
+    test ! -e "$ESP/$vtoken/hello.cred"
+
+    # --- Test 6: LinkAuto with nothing staged returns an empty id list ---
+    rm -rf /run/systemd/uki
+    vreply="$(varlinkctl call --json=short "$BOOTCTL_BIN" io.systemd.BootControl.LinkAuto '{}')"
+    assert_eq "$(echo "$vreply" | jq -r '.ids | length')" "0"
 }
 
 run_testcases

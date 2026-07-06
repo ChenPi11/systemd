@@ -261,8 +261,6 @@ int socket_address_equal_unix(const char *a, const char *b);
  * authoritative. */
 #define SOMAXCONN_DELUXE INT_MAX
 
-int vsock_get_local_cid(unsigned *ret);
-
 int netlink_socket_get_multicast_groups(int fd, size_t *ret_len, uint32_t **ret_groups);
 
 int socket_get_cookie(int fd, uint64_t *ret);
@@ -270,3 +268,5 @@ int socket_get_cookie(int fd, uint64_t *ret);
 void cmsg_close_all(struct msghdr *mh);
 
 int tos_to_priority(uint8_t tos);
+
+int socket_xattr_supported(void);

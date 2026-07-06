@@ -1,7 +1,6 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 
 #include <fcntl.h>
-#include <microhttpd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -184,9 +183,12 @@ static ssize_t request_reader_entries(
                     m->n_entries <= 0)
                         return MHD_CONTENT_READER_END_OF_STREAM;
 
-                if (m->n_skip < 0)
+                if (m->n_skip < 0) {
+                        /* request_parse_range_skip_and_n_entries() rejects INT64_MIN, so the negation
+                         * below cannot overflow. */
+                        assert(m->n_skip >= -INT64_MAX);
                         r = sd_journal_previous_skip(m->journal, (uint64_t) -m->n_skip + 1);
-                else if (m->n_skip > 0) {
+                } else if (m->n_skip > 0) {
                         r = sd_journal_next_skip(m->journal, (uint64_t) m->n_skip + 1);
                         if (r < 0) {
                                 log_error_errno(r, "Failed to skip journal entries: %m");
@@ -194,7 +196,7 @@ static ssize_t request_reader_entries(
                         }
                         /* We skipped beyond the end, make sure entries between the cursor and n_skip offset
                          * from it are not returned. */
-                        if (r < m->n_skip + 1) {
+                        if ((uint64_t) r < (uint64_t) m->n_skip + 1) {
                                 m->n_skip -= r;
 
                                 if (!m->follow)
@@ -348,6 +350,11 @@ static int request_parse_range_skip_and_n_entries(
                 r = safe_atoi64(t, &m->n_skip);
                 if (r < 0)
                         return r;
+
+                /* The consumer negates n_skip, and negating INT64_MIN in signed arithmetic is undefined
+                 * behaviour, so reject it up front. */
+                if (m->n_skip == INT64_MIN)
+                        return -ERANGE;
         }
 
         p = (colon2 ?: colon) + 1;
