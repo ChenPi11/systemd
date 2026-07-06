@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+if want_tests == 'false' or conf.get('ENABLE_SYSTEMD_CORE') != 1
+        subdir_done()
+endif
+
 generate_directives_py = files('generate-directives.py')
 
 fuzz_regression_tests = {}

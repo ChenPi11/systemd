@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-if conf.get('ENABLE_LOCALED') != 1
+if conf.get('ENABLE_LOCALED') != 1 and conf.get('ENABLE_SYSTEMD_LOCALED') != 1
         subdir_done()
 endif
 
@@ -28,6 +28,7 @@ executables += [
         libexec_template + {
                 'name' : 'systemd-localed',
                 'dbus' : true,
+                'conditions' : ['ENABLE_SYSTEMD_LOCALED'],
                 'sources' : systemd_localed_sources,
                 'extract' : systemd_localed_extract_sources,
                 'dependencies' : libxkbcommon_deps,
@@ -35,9 +36,11 @@ executables += [
         executable_template + {
                 'name' : 'localectl',
                 'public' : true,
+                'conditions' : ['ENABLE_LOCALED'],
                 'sources' : files('localectl.c'),
         },
         test_template + {
+                'conditions' : ['ENABLE_SYSTEMD_LOCALED'],
                 'sources' : files('test-localed-util.c'),
                 'objects' : ['systemd-localed'],
                 'dependencies' : libxkbcommon_deps,
@@ -50,12 +53,14 @@ executables += [
 kbd_model_map = meson.current_source_dir() / 'kbd-model-map'
 language_fallback_map = meson.current_source_dir() / 'language-fallback-map'
 
-install_data('org.freedesktop.locale1.conf',
-                install_dir : dbuspolicydir)
-install_data('org.freedesktop.locale1.service',
-                install_dir : dbussystemservicedir)
-install_data('org.freedesktop.locale1.policy',
-                install_dir : polkitpolicydir)
-install_data('kbd-model-map',
-                'language-fallback-map',
-                install_dir : pkgdatadir)
+if conf.get('ENABLE_SYSTEMD_LOCALED') == 1
+        install_data('org.freedesktop.locale1.conf',
+                     install_dir : dbuspolicydir)
+        install_data('org.freedesktop.locale1.service',
+                     install_dir : dbussystemservicedir)
+        install_data('org.freedesktop.locale1.policy',
+                     install_dir : polkitpolicydir)
+        install_data('kbd-model-map',
+                     'language-fallback-map',
+                     install_dir : pkgdatadir)
+endif

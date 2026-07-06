@@ -1,5 +1,9 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+if conf.get('ENABLE_ANALYZE') != 1
+        subdir_done()
+endif
+
 systemd_analyze_sources = files(
         'analyze-architectures.c',
         'analyze-blame.c',

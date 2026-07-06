@@ -428,7 +428,7 @@ option('ima', type : 'boolean',
 option('ipe', type : 'boolean',
        description : 'IPE support')
 
-option('libc', type : 'combo', choices : ['glibc', 'musl', 'bionic'],
+option('libc', type : 'combo', choices : ['glibc', 'musl', 'bionic', 'freebsd'],
        description : 'libc implementation to be used')
 option('acl', type : 'feature', deprecated : { 'true' : 'enabled', 'false' : 'disabled' },
        description : 'libacl support')

@@ -89,6 +89,9 @@ summary({
         'build mode' : get_option('mode'),
 })
 
+freebsd_client_only = host_machine.system() == 'freebsd'
+conf.set10('BUILD_FREEBSD_CLIENT_ONLY', freebsd_client_only)
+
 #####################################################################
 
 if get_option('split-bin') == 'auto'
@@ -1119,8 +1122,8 @@ libm = cc.find_library('m')
 # Header presence check only — dgettext itself is resolved via dlopen_libintl() at runtime, so we never
 # link against libintl. On glibc dgettext lives in libc; on musl gettext-dev provides libintl.h alongside
 # libintl.so.8 which we dlopen() if present.
-# On Android/bionic, there is no gettext/libintl — it is simply not available.
-if get_option('libc') != 'bionic' and not cc.has_header('libintl.h')
+# On Android/bionic there is no gettext/libintl, and for FreeBSD we provide a local shim header.
+if get_option('libc') not in ['bionic', 'freebsd'] and not cc.has_header('libintl.h')
         error('libintl.h not found (install gettext / gettext-dev)')
 endif
 
@@ -1793,52 +1796,52 @@ foreach tuple : [
 endforeach
 
 foreach tuple : [
-                ['analyze'],
-                ['backlight'],
-                ['binfmt'],
+                ['analyze',         not freebsd_client_only, 'FreeBSD client-only build disables it'],
+                ['backlight',      not freebsd_client_only, 'FreeBSD client-only build disables it'],
+                ['binfmt',         not freebsd_client_only, 'FreeBSD client-only build disables it'],
                 ['compat-mutable-uid-boundaries'],
                 ['compat-sysv-interfaces'],
-                ['coredump'],
+                ['coredump',       not freebsd_client_only, 'FreeBSD client-only build disables it'],
                 ['efi'],
-                ['environment-d'],
-                ['firstboot'],
-                ['gshadow',         get_option('libc') not in ['musl', 'bionic'], 'musl/bionic does not support it'],
-                ['hibernate'],
+                ['environment-d',  not freebsd_client_only, 'FreeBSD client-only build disables it'],
+                ['firstboot',      not freebsd_client_only, 'FreeBSD client-only build disables it'],
+                ['gshadow',         get_option('libc') not in ['musl', 'bionic', 'freebsd'], 'musl/bionic/freebsd does not support it'],
+                ['hibernate',      not freebsd_client_only, 'FreeBSD client-only build disables it'],
                 ['hostnamed'],
-                ['hwdb'],
+                ['hwdb',           not freebsd_client_only, 'FreeBSD client-only build disables it'],
                 ['idn',             conf.get('HAVE_NI_IDN') == 1, 'NI_IDN is not defined'],
                 ['ima'],
                 ['ipe'],
-                ['initrd'],
-                ['kernel-install'],
+                ['initrd',         not freebsd_client_only, 'FreeBSD client-only build disables it'],
+                ['kernel-install', not freebsd_client_only, 'FreeBSD client-only build disables it'],
                 ['ldconfig'],
                 ['localed'],
                 ['logind'],
                 ['machined'],
-                ['mountfsd'],
-                ['networkd'],
-                ['nsresourced'],
-                ['nss-myhostname',  get_option('libc') not in ['musl', 'bionic'], 'musl/bionic does not support it'],
-                ['nss-systemd',     get_option('libc') not in ['musl', 'bionic'], 'musl/bionic does not support it'],
-                ['oomd'],
+                ['mountfsd',       not freebsd_client_only, 'FreeBSD client-only build disables it'],
+                ['networkd',       not freebsd_client_only, 'FreeBSD client-only build disables it'],
+                ['nsresourced',    not freebsd_client_only, 'FreeBSD client-only build disables it'],
+                ['nss-myhostname',  get_option('libc') not in ['musl', 'bionic', 'freebsd'], 'musl/bionic/freebsd does not support it'],
+                ['nss-systemd',     get_option('libc') not in ['musl', 'bionic', 'freebsd'], 'musl/bionic/freebsd does not support it'],
+                ['oomd',           not freebsd_client_only, 'FreeBSD client-only build disables it'],
                 ['portabled'],
-                ['pstore'],
-                ['quotacheck'],
-                ['randomseed'],
-                ['resolve'],
-                ['rfkill'],
+                ['pstore',         not freebsd_client_only, 'FreeBSD client-only build disables it'],
+                ['quotacheck',     not freebsd_client_only, 'FreeBSD client-only build disables it'],
+                ['randomseed',     not freebsd_client_only, 'FreeBSD client-only build disables it'],
+                ['resolve',        not freebsd_client_only, 'FreeBSD client-only build disables it'],
+                ['rfkill',         not freebsd_client_only, 'FreeBSD client-only build disables it'],
                 ['smack'],
-                ['sysext'],
-                ['sysinstall'],
+                ['sysext',         not freebsd_client_only, 'FreeBSD client-only build disables it'],
+                ['sysinstall',     not freebsd_client_only, 'FreeBSD client-only build disables it'],
                 ['sysusers'],
                 ['timedated'],
-                ['timesyncd'],
+                ['timesyncd',      not freebsd_client_only, 'FreeBSD client-only build disables it'],
                 ['tmpfiles'],
                 ['tpm'],
-                ['utmp',            get_option('libc') not in ['musl', 'bionic'], 'musl/bionic does not support it'],
+                ['utmp',            get_option('libc') not in ['musl', 'bionic', 'freebsd'], 'musl/bionic/freebsd does not support it'],
                 ['userdb'],
                 ['vconsole'],
-                ['xdg-autostart'],
+                ['xdg-autostart',  not freebsd_client_only, 'FreeBSD client-only build disables it'],
         ]
 
         have = get_option(tuple[0])
@@ -1857,15 +1860,15 @@ foreach tuple : [['nss-mymachines', 'machined'],
                  ['nss-resolve',    'resolve']]
         want = get_option(tuple[0])
         if want.enabled()
-                if get_option('libc') in ['musl', 'bionic']
-                        error('@0@ is requested but musl/bionic does not support it'.format(tuple[0]))
+                if get_option('libc') in ['musl', 'bionic', 'freebsd']
+                        error('@0@ is requested but musl/bionic/freebsd does not support it'.format(tuple[0]))
                 endif
                 if not get_option(tuple[1])
                         error('@0@ is requested but @1@ is disabled'.format(tuple[0], tuple[1]))
                 endif
                 have = true
         elif want.allowed()
-                have = get_option(tuple[1]) and get_option('libc') not in ['musl', 'bionic']
+                have = get_option(tuple[1]) and get_option('libc') not in ['musl', 'bionic', 'freebsd']
         else
                 have = false
         endif
@@ -1885,6 +1888,12 @@ endforeach
 conf.set10('ENABLE_NSS', enable_nss)
 
 conf.set10('ENABLE_TIMEDATECTL', get_option('timedated') or get_option('timesyncd'))
+conf.set10('ENABLE_SYSTEMD_CORE', not freebsd_client_only)
+conf.set10('ENABLE_SYSTEMD_HOSTNAMED', conf.get('ENABLE_HOSTNAMED') == 1 and not freebsd_client_only)
+conf.set10('ENABLE_SYSTEMD_LOCALED', conf.get('ENABLE_LOCALED') == 1 and not freebsd_client_only)
+conf.set10('ENABLE_SYSTEMD_LOGIND', conf.get('ENABLE_LOGIND') == 1 and not freebsd_client_only)
+conf.set10('ENABLE_SYSTEMD_MACHINED', conf.get('ENABLE_MACHINED') == 1 and not freebsd_client_only)
+conf.set10('ENABLE_SYSTEMD_TIMEDATED', conf.get('ENABLE_TIMEDATED') == 1 and not freebsd_client_only)
 
 conf.set10('ENABLE_SSH_PROXY_CONFIG', sshconfdir != 'no')
 conf.set10('ENABLE_SSH_USERDB_CONFIG', conf.get('ENABLE_USERDB') == 1 and sshdconfdir != 'no')
@@ -2408,7 +2417,11 @@ subdir('test/fuzz')
 
 subdir('mime')
 
-alias_target('devel', libsystemd_pc, libudev_pc, systemd_pc, udev_pc)
+if conf.get('ENABLE_SYSTEMD_CORE') == 1
+        alias_target('devel', libsystemd_pc, libudev_pc, systemd_pc, udev_pc)
+else
+        alias_target('devel', libsystemd_pc, libudev_pc, udev_pc)
+endif
 
 #####################################################################
 

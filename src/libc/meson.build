@@ -22,6 +22,7 @@ libc_wrapper_sources = files(
 
 subdir('musl')
 subdir('bionic')
+subdir('freebsd')
 
 sources += libc_wrapper_sources
 

@@ -4,7 +4,7 @@ executables += [
         libexec_template + {
                 'name' : 'systemd-timedated',
                 'dbus' : true,
-                'conditions' : ['ENABLE_TIMEDATED'],
+                'conditions' : ['ENABLE_SYSTEMD_TIMEDATED'],
                 'sources' : files(
                         'timedated.c',
                         'hwclock-util.c',
@@ -20,7 +20,7 @@ executables += [
         },
 ]
 
-if conf.get('ENABLE_TIMEDATED') == 1
+if conf.get('ENABLE_SYSTEMD_TIMEDATED') == 1
         install_data('org.freedesktop.timedate1.conf',
                      install_dir : dbuspolicydir)
         install_data('org.freedesktop.timedate1.service',

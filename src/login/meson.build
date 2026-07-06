@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-if conf.get('ENABLE_LOGIND') != 1
+if conf.get('ENABLE_LOGIND') != 1 and conf.get('ENABLE_SYSTEMD_LOGIND') != 1
         subdir_done()
 endif
 
@@ -46,6 +46,7 @@ executables += [
         libexec_template + {
                 'name' : 'systemd-logind',
                 'dbus' : true,
+                'conditions' : ['ENABLE_SYSTEMD_LOGIND'],
                 'sources' : systemd_logind_sources,
                 'extract' : systemd_logind_extract_sources,
                 'dependencies' : [
@@ -55,6 +56,7 @@ executables += [
         executable_template + {
                 'name' : 'loginctl',
                 'public' : true,
+                'conditions' : ['ENABLE_LOGIND'],
                 'sources' : loginctl_sources,
                 'dependencies' : [
                         liblz4_cflags,
@@ -65,21 +67,26 @@ executables += [
         executable_template + {
                 'name' : 'systemd-inhibit',
                 'public' : true,
+                'conditions' : ['ENABLE_LOGIND'],
                 'sources' : files('inhibit.c'),
         },
         libexec_template + {
                 'name' : 'systemd-user-runtime-dir',
+                'conditions' : ['ENABLE_SYSTEMD_LOGIND'],
                 'sources' : files('user-runtime-dir.c'),
         },
         test_template + {
+                'conditions' : ['ENABLE_SYSTEMD_LOGIND'],
                 'sources' : files('test-inhibit.c'),
                 'type' : 'manual',
         },
         test_template + {
+                'conditions' : ['ENABLE_SYSTEMD_LOGIND'],
                 'sources' : files('test-login-tables.c'),
                 'objects' : ['systemd-logind'],
         },
         test_template + {
+                'conditions' : ['ENABLE_SYSTEMD_LOGIND'],
                 'sources' : files('test-session-properties.c'),
                 'type' : 'manual',
         },
@@ -92,13 +99,13 @@ simple_tests += files(
 modules += [
         pam_template + {
                 'name' : 'pam_systemd',
-                'conditions' : ['HAVE_PAM'],
+                'conditions' : ['HAVE_PAM', 'ENABLE_SYSTEMD_LOGIND'],
                 'sources' : files('pam_systemd.c'),
                 'version-script' : meson.current_source_dir() / 'pam_systemd.sym',
         },
         pam_template + {
                 'name' : 'pam_systemd_loadkey',
-                'conditions' : ['HAVE_PAM'],
+                'conditions' : ['HAVE_PAM', 'ENABLE_SYSTEMD_LOGIND'],
                 'sources' : files('pam_systemd_loadkey.c'),
                 'version-script' : meson.current_source_dir() / 'pam_systemd_loadkey.sym',
         },
@@ -118,15 +125,17 @@ custom_target(
         install : pamconfdir != 'no',
         install_dir : pamconfdir)
 
-install_data(
-        'org.freedesktop.login1.conf',
-        install_dir : dbuspolicydir)
-install_data(
-        'org.freedesktop.login1.service',
-        install_dir : dbussystemservicedir)
-install_data(
-        'org.freedesktop.login1.policy',
-        install_dir : polkitpolicydir)
-install_data(
-        '10-systemd-logind-root-ignore-inhibitors.rules.example',
-        install_dir : polkitrulesdir)
+if conf.get('ENABLE_SYSTEMD_LOGIND') == 1
+        install_data(
+                'org.freedesktop.login1.conf',
+                install_dir : dbuspolicydir)
+        install_data(
+                'org.freedesktop.login1.service',
+                install_dir : dbussystemservicedir)
+        install_data(
+                'org.freedesktop.login1.policy',
+                install_dir : polkitpolicydir)
+        install_data(
+                '10-systemd-logind-root-ignore-inhibitors.rules.example',
+                install_dir : polkitrulesdir)
+endif

@@ -9,6 +9,12 @@ test_hashmap_ordered_c = custom_target(
 
 generated_sources += test_hashmap_ordered_c
 
+if conf.get('ENABLE_SYSTEMD_CORE') != 1
+        core_test_template = test_template + {
+                'conditions' : ['ENABLE_SYSTEMD_CORE'],
+        }
+endif
+
 path = run_command(sh, '-c', 'echo "$PATH"', check: true).stdout().strip()
 test_env = {
         'PATH' : meson.project_build_root() + ':' + path,
