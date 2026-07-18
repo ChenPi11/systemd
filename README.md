@@ -1,7 +1,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/system-alphabet/assets/raw/refs/heads/main/icon-with-name-dark-transparent.svg">
   <source media="(prefers-color-scheme: light)" srcset="https://github.com/system-alphabet/assets/raw/refs/heads/main/icon-with-name-light-transparent.svg">
-  <img alt="Fallback icon" src="https://github.com/system-alphabet/assets/raw/refs/heads/main/icon-with-name-light-transparent.svg" style="width: 40%; max-width: 600px; height: auto;">
+  <img alt="Fallback icon" src="https://github.com/system-alphabet/assets/raw/refs/heads/main/icon-with-name-light-transparent.svg" style="width: 404; max-width: 600px; height: auto;">
 </picture>
 
 ![Systemd](http://brand.systemd.io/assets/page-logo.png)
