@@ -20,6 +20,7 @@
 #include "copy.h"
 #include "creds-util.h"
 #include "dissect-image.h"
+#include "dlopen-note.h"
 #include "env-file.h"
 #include "errno-util.h"
 #include "fd-util.h"
@@ -383,7 +384,7 @@ static int process_locale(int rfd, sd_varlink **mute_console_link) {
                 return log_error_errno(r, "Failed to check if directory file descriptor is root: %m");
 
         if (arg_copy_locale && r == 0) {
-                r = copy_file_atomic_at(AT_FDCWD, etc_locale_conf(), pfd, f, 0644, COPY_REFLINK);
+                r = copy_file_atomic_at(AT_FDCWD, etc_locale_conf(), pfd, f, 0644, /* copy_flags= */ 0);
                 if (r != -ENOENT) {
                         if (r < 0)
                                 return log_error_errno(r, "Failed to copy host's /etc/locale.conf: %m");
@@ -525,7 +526,7 @@ static int process_keymap(int rfd, sd_varlink **mute_console_link) {
                 return log_error_errno(r, "Failed to check if directory file descriptor is root: %m");
 
         if (arg_copy_keymap && r == 0) {
-                r = copy_file_atomic_at(AT_FDCWD, etc_vconsole_conf(), pfd, f, 0644, COPY_REFLINK);
+                r = copy_file_atomic_at(AT_FDCWD, etc_vconsole_conf(), pfd, f, 0644, /* copy_flags= */ 0);
                 if (r != -ENOENT) {
                         if (r < 0)
                                 return log_error_errno(r, "Failed to copy host's /etc/vconsole.conf: %m");
@@ -1701,6 +1702,14 @@ static int run(int argc, char *argv[]) {
         _cleanup_(umount_and_freep) char *mounted_dir = NULL;
         _cleanup_close_ int rfd = -EBADF;
         int r;
+
+        LIBBLKID_NOTE(recommended);
+        LIBCRYPT_NOTE(recommended);
+        LIBCRYPTO_NOTE(suggested);
+        LIBCRYPTSETUP_NOTE(suggested);
+        LIBMOUNT_NOTE(recommended);
+        LIBSELINUX_NOTE(recommended);
+        PASSWORD_NOTE(suggested);
 
         r = parse_argv(argc, argv);
         if (r <= 0)

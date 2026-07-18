@@ -406,7 +406,7 @@ static int verb_sign(int argc, char *argv[], uintptr_t _data, void *userdata) {
         _cleanup_(iovec_done) struct iovec signed_attributes_signature = {};
         int r;
 
-        r = DLOPEN_LIBCRYPTO(LOG_ERR, SD_ELF_NOTE_DLOPEN_PRIORITY_REQUIRED);
+        r = DLOPEN_LIBCRYPTO(LOG_ERR, required);
         if (r < 0)
                 return r;
 
@@ -608,7 +608,7 @@ static int verb_sign(int argc, char *argv[], uintptr_t _data, void *userdata) {
         if (!certificate_table)
                 return log_error_errno(SYNTHETIC_ERRNO(EBADMSG), "File lacks certificate table.");
 
-        r = copy_bytes(srcfd, dstfd, UINT64_MAX, COPY_REFLINK);
+        r = copy_bytes(srcfd, dstfd, UINT64_MAX, /* copy_flags= */ 0);
         if (r < 0)
                 return log_error_errno(r, "Failed to copy %s to %s: %m", argv[1], tmp);
 
@@ -633,7 +633,7 @@ static int verb_sign(int argc, char *argv[], uintptr_t _data, void *userdata) {
                    &(WIN_CERTIFICATE_HEADER) {
                            .wRevision = htole16(0x200),
                            .wCertificateType = htole16(0x0002), /* PKCS7 signedData */
-                           .dwLength = htole32(ROUND_UP(certsz, 8)),
+                           .dwLength = htole32(certsz),
                    },
                    sizeof(WIN_CERTIFICATE_HEADER),
                    end);

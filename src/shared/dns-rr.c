@@ -1466,6 +1466,15 @@ int dns_resource_record_to_wire_format(DnsResourceRecord *rr, bool canonical) {
         return 0;
 }
 
+void dns_resource_record_clear_wire_format(DnsResourceRecord *rr) {
+        assert(rr);
+
+        rr->wire_format = mfree(rr->wire_format);
+        rr->wire_format_size = 0;
+        rr->wire_format_rdata_offset = 0;
+        rr->wire_format_canonical = false;
+}
+
 int dns_resource_record_signer(DnsResourceRecord *rr, const char **ret) {
         const char *n;
         int r;
@@ -1977,6 +1986,7 @@ int dns_resource_record_clamp_ttl(DnsResourceRecord **rr, uint32_t max_ttl) {
         if (old_rr->n_ref == 1) {
                 /* Patch in place */
                 old_rr->ttl = new_ttl;
+                dns_resource_record_clear_wire_format(old_rr);
                 return 1;
         }
 
@@ -2374,7 +2384,8 @@ int dns_resource_record_to_json(DnsResourceRecord *rr, sd_json_variant **ret) {
                                 SD_JSON_BUILD_PAIR_STRING("rname", rr->soa.rname),
                                 SD_JSON_BUILD_PAIR_UNSIGNED("serial", rr->soa.serial),
                                 SD_JSON_BUILD_PAIR_UNSIGNED("refresh", rr->soa.refresh),
-                                SD_JSON_BUILD_PAIR_UNSIGNED("expire", rr->soa.retry),
+                                SD_JSON_BUILD_PAIR_UNSIGNED("retry", rr->soa.retry),
+                                SD_JSON_BUILD_PAIR_UNSIGNED("expire", rr->soa.expire),
                                 SD_JSON_BUILD_PAIR_UNSIGNED("minimum", rr->soa.minimum));
 
         case DNS_TYPE_MX:

@@ -12,24 +12,14 @@ shutdown_detach_sources = files(
 executables += [
         libexec_template + {
                 'name' : 'systemd-shutdown',
-                'extract' : files(
+                'export' : files(
                         'detach-dm.c',
                         'detach-loopback.c',
                         'detach-md.c',
                         'shutdown.c',
                 ) + shutdown_detach_sources,
                 'dependencies' : libmount_cflags,
-        },
-        libexec_template + {
-                'name' : 'systemd-shutdown.standalone',
-                'objects' : ['systemd-shutdown'],
-                'link_with' : [
-                        libc_wrapper_static,
-                        libbasic_static,
-                        libshared_static,
-                        libsystemd_static,
-                ],
-                'dependencies' : libmount_cflags,
+                'install' : have_standalone_binaries ? 'both' : 'yes',
         },
         test_template + {
                 'sources' : files('test-umount.c') +

@@ -2,7 +2,7 @@
 #pragma once
 
 #include <endian.h>
-#include "basic-forward.h"
+#include "forward.h"
 
 #define UTF8_REPLACEMENT_CHARACTER "\xef\xbf\xbd"
 #define UTF8_BYTE_ORDER_MARK "\xef\xbb\xbf"

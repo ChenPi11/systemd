@@ -8,7 +8,7 @@
 #include <sys/keyctl.h>
 #include <sys/mount.h>
 #include <sys/personality.h>
-#include <sys/prctl.h>
+#include <sys/prctl.h> /* IWYU pragma: keep */
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -20,9 +20,11 @@
 #include "sd-path.h"
 #include "sd-varlink.h"
 
+#include "acl-util.h"
 #include "alloc-util.h"
 #include "barrier.h"
 #include "base-filesystem.h"
+#include "blkid-util.h"
 #include "btrfs-util.h"
 #include "build.h"
 #include "bus-error.h"
@@ -36,12 +38,13 @@
 #include "constants.h"
 #include "copy.h"
 #include "cpu-set-util.h"
+#include "crypto-util.h"
+#include "cryptsetup-util.h"
 #include "daemon-util.h"
 #include "dev-setup.h"
 #include "devnum-util.h"
 #include "discover-image.h"
 #include "dissect-image.h"
-#include "dlfcn-util.h"
 #include "env-util.h"
 #include "escape.h"
 #include "ether-addr-util.h"
@@ -76,6 +79,7 @@
 #include "namespace-util.h"
 #include "netlink-internal.h"
 #include "notify-recv.h"
+#include "nspawn.h"
 #include "nspawn-bind-user.h"
 #include "nspawn-cgroup.h"
 #include "nspawn-expose-ports.h"
@@ -87,14 +91,13 @@
 #include "nspawn-settings.h"
 #include "nspawn-setuid.h"
 #include "nspawn-stub-pid1.h"
-#include "nspawn.h"
 #include "nsresource.h"
-#include "os-util.h"
-#include "parse-helpers.h"
-#include "osc-context.h"
 #include "options.h"
+#include "os-util.h"
+#include "osc-context.h"
 #include "pager.h"
 #include "parse-argument.h"
+#include "parse-helpers.h"
 #include "parse-util.h"
 #include "path-lookup.h"
 #include "path-util.h"
@@ -1874,7 +1877,7 @@ static int setup_timezone(const char *dest) {
 
         case TIMEZONE_COPY:
                 /* If mounting failed, try to copy */
-                r = copy_file_atomic("/etc/localtime", where, 0644, COPY_REFLINK|COPY_REPLACE);
+                r = copy_file_atomic("/etc/localtime", where, 0644, COPY_REPLACE);
                 if (r < 0) {
                         log_full_errno(ERRNO_IS_NEG_FS_WRITE_REFUSED(r) ? LOG_DEBUG : LOG_WARNING, r,
                                        "Failed to copy /etc/localtime to %s, ignoring: %m", where);
@@ -2002,9 +2005,9 @@ static int setup_resolv_conf(const char *dest) {
         }
 
         if (IN_SET(m, RESOLV_CONF_REPLACE_HOST, RESOLV_CONF_REPLACE_STATIC, RESOLV_CONF_REPLACE_UPLINK, RESOLV_CONF_REPLACE_STUB))
-                r = copy_file_atomic(what, where, 0644, COPY_REFLINK|COPY_REPLACE);
+                r = copy_file_atomic(what, where, 0644, COPY_REPLACE);
         else
-                r = copy_file(what, where, O_TRUNC|O_NOFOLLOW, 0644, COPY_REFLINK);
+                r = copy_file(what, where, O_TRUNC|O_NOFOLLOW, 0644, /* copy_flags= */ 0);
         if (r < 0) {
                 /* If the file already exists as symlink, let's suppress the warning, under the assumption that
                  * resolved or something similar runs inside and the symlink points there.
@@ -2229,9 +2232,9 @@ static int make_extra_nodes(const char *dest) {
         FOREACH_ARRAY(node, arg_extra_nodes, arg_n_extra_nodes) {
                 _cleanup_free_ char *path = NULL;
 
-                path = path_join(dest, node->path);
-                if (!path)
-                        return log_oom();
+                r = chase(node->path, dest, CHASE_PREFIX_ROOT|CHASE_NONEXISTENT|CHASE_NOFOLLOW, &path, /* ret_fd= */ NULL);
+                if (r < 0)
+                        return log_error_errno(r, "Failed to resolve device node path '%s': %m", node->path);
 
                 dev_t dev = S_ISCHR(node->mode) || S_ISBLK(node->mode) ? makedev(node->major, node->minor) : 0;
                 if (mknod(path, node->mode, dev) < 0)
@@ -3576,8 +3579,9 @@ static int inner_child(
 
         /* Make sure we keep the caps across the uid/gid dropping, so that we can retain some selected caps
          * if we need to later on. */
-        if (prctl(PR_SET_KEEPCAPS, 1) < 0)
-                return log_error_errno(errno, "Failed to set PR_SET_KEEPCAPS: %m");
+        r = prctl_safe(PR_SET_KEEPCAPS, 1, 0, 0, 0);
+        if (r < 0)
+                return log_error_errno(r, "Failed to set PR_SET_KEEPCAPS: %m");
 
         if (uid_is_valid(arg_uid) || gid_is_valid(arg_gid))
                 r = change_uid_gid_raw(arg_uid, arg_gid, arg_supplementary_gids, arg_n_supplementary_gids, arg_console_mode != CONSOLE_PIPE);
@@ -3590,9 +3594,11 @@ static int inner_child(
         if (r < 0)
                 return log_error_errno(r, "Dropping capabilities failed: %m");
 
-        if (arg_no_new_privileges)
-                if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0)
-                        return log_error_errno(errno, "Failed to disable new privileges: %m");
+        if (arg_no_new_privileges) {
+                r = proc_set_nnp();
+                if (r < 0)
+                        return log_error_errno(r, "Failed to disable new privileges: %m");
+        }
 
         /* LXC sets container=lxc, so follow the scheme here */
         envp[n_env++] = strjoina("container=", arg_container_service_name);
@@ -3958,8 +3964,9 @@ static int outer_child(
         if (r < 0)
                 log_debug_errno(r, "Failed to read os-release from host for container, ignoring: %m");
 
-        if (prctl(PR_SET_PDEATHSIG, SIGKILL) < 0)
-                return log_error_errno(errno, "PR_SET_PDEATHSIG failed: %m");
+        r = prctl_safe(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
+        if (r < 0)
+                return log_error_errno(r, "PR_SET_PDEATHSIG failed: %m");
 
         r = reset_audit_loginuid();
         if (r < 0)
@@ -6141,9 +6148,13 @@ static int run(int argc, char *argv[]) {
         if (arg_cleanup)
                 return do_cleanup();
 
-        (void) DLOPEN_LIBMOUNT(LOG_DEBUG, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
-        (void) DLOPEN_LIBSECCOMP(LOG_DEBUG, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
-        (void) DLOPEN_LIBSELINUX(LOG_DEBUG, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
+        (void) DLOPEN_CRYPTSETUP(LOG_DEBUG, suggested);
+        (void) DLOPEN_LIBACL(LOG_DEBUG, recommended);
+        (void) DLOPEN_LIBBLKID(LOG_DEBUG, recommended);
+        (void) DLOPEN_LIBCRYPTO(LOG_WARNING, recommended);
+        (void) DLOPEN_LIBMOUNT(LOG_DEBUG, recommended);
+        (void) DLOPEN_LIBSECCOMP(LOG_DEBUG, recommended);
+        (void) DLOPEN_LIBSELINUX(LOG_DEBUG, recommended);
 
         r = cg_has_legacy();
         if (r < 0)
@@ -6463,7 +6474,7 @@ static int run(int argc, char *argv[]) {
                         {
                                 BLOCK_SIGNALS(SIGINT);
                                 r = copy_file(arg_image, np, O_EXCL, arg_read_only ? 0400 : 0600,
-                                              COPY_REFLINK|COPY_CRTIME|COPY_SIGINT|COPY_NOCOW_AFTER);
+                                              COPY_CRTIME|COPY_SIGINT|COPY_NOCOW_AFTER);
                         }
                         if (r == -EINTR) {
                                 log_error_errno(r, "Interrupted while copying image file to %s, removed again.", np);

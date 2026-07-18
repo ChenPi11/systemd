@@ -130,6 +130,15 @@ SPDX-License-Identifier: LGPL-2.1-or-later
 
 ## Features
 
+- cryptsetup: add a new switch which makes it wait for the keyfile to
+  appear. use inotify/mount watching for that. usecase: system waits at boot
+  for some key to be supplied, possibly delivered via confext or so. This could
+  be useful in particular in CoCo scenarios where a disk encryption key is only
+  handed out once an attestation run completed, and might be delivered to the
+  node asynchronously.
+
+- acquire a TSA from time stamping server, include it in report
+
 - **report:**
   - implement signer for TPM2 that adds a quote + event log excerpt as signing
     object. should include a TPM timestamp, and some "generation ID" provided
@@ -252,15 +261,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
   reloading confext/sysext, and out-band with other configuration changes.
 
 - sysupdate: go through all components, and update them all, one by one.
-
-- sysupdate: add concept for enabling/disabling specific components explicitly,
-  just like features.
-
-- sysupdate: add conditions to transfer files, copying what we have for unit
-  files and .network files
-
-- pid1,sysupdate,network: add support for a new "tags" condition, that checks
-  all of the above.
 
 - pcrextend: we probably should measure /etc/machine-info during boot somehow
 
@@ -2655,7 +2655,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
   - download multiple arbitrary patterns from same source
   - SHA256SUMS format with bearer tokens for each resource to download
   - decrypt SHA256SUMS with key from tpm
-  - clean up stuff on disk that disappears from SHA256SUMS
   - turn http backend stuff int plugin via varlink
   - for each transfer support looking at multiple sources,
     pick source with newest entry. If multiple sources have the same entry, use

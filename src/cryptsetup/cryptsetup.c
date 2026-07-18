@@ -18,6 +18,7 @@
 #include "cryptsetup-pkcs11.h"
 #include "cryptsetup-tpm2.h"
 #include "cryptsetup-util.h"
+#include "dlopen-note.h"
 #include "efi-api.h"
 #include "efi-loader.h"
 #include "efivars.h"
@@ -538,7 +539,7 @@ static int parse_one_option(const char *option) {
 #if HAVE_OPENSSL
                 _cleanup_strv_free_ char **l = NULL;
 
-                r = DLOPEN_LIBCRYPTO(LOG_ERR, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
+                r = DLOPEN_LIBCRYPTO(LOG_ERR, recommended);
                 if (r < 0)
                         return r;
 
@@ -1137,20 +1138,15 @@ static int measure_keyslot(
         if (!s)
                 return log_oom();
 
-        r = tpm2_nvpcr_extend_bytes(c, /* session= */ NULL, arg_tpm2_measure_keyslot_nvpcr, &IOVEC_MAKE_STRING(s), /* secret= */ NULL, TPM2_EVENT_KEYSLOT, s);
-        if (r == -ENETDOWN) {
-                /* NvPCR is not initialized yet. Do so now. */
-                _cleanup_(iovec_done_erase) struct iovec anchor_secret = {};
-                r = tpm2_nvpcr_acquire_anchor_secret(&anchor_secret, /* sync_secondary= */ false);
-                if (r < 0)
-                        return r;
-
-                r = tpm2_nvpcr_initialize(c, /* session= */ NULL, arg_tpm2_measure_keyslot_nvpcr, &anchor_secret);
-                if (r < 0)
-                        return log_error_errno(r, "Failed to extend NvPCR index '%s' with anchor secret: %m", name);
-
-                r = tpm2_nvpcr_extend_bytes(c, /* session= */ NULL, arg_tpm2_measure_keyslot_nvpcr, &IOVEC_MAKE_STRING(s), /* secret= */ NULL, TPM2_EVENT_KEYSLOT, s);
-        }
+        r = tpm2_nvpcr_extend_bytes(
+                        c,
+                        /* session= */ NULL,
+                        arg_tpm2_measure_keyslot_nvpcr,
+                        &IOVEC_MAKE_STRING(s),
+                        /* secret= */ NULL,
+                        /* sync_secondary_anchor= */ false,
+                        TPM2_EVENT_KEYSLOT,
+                        s);
         if (r < 0)
                 return log_error_errno(r, "Could not extend NvPCR: %m");
 
@@ -2069,6 +2065,7 @@ static int attach_luks_or_plain_or_bitlk_by_tpm2(
                                         until,
                                         "cryptsetup.tpm2-pin",
                                         arg_ask_password_flags,
+                                        /* argon2id_params= */ NULL,
                                         &decrypted_key);
                         if (r >= 0)
                                 break;
@@ -2114,6 +2111,7 @@ static int attach_luks_or_plain_or_bitlk_by_tpm2(
                                 uint32_t hash_pcr_mask, pubkey_pcr_mask;
                                 size_t n_blobs = 0, n_policy_hash = 0;
                                 uint16_t pcr_bank, primary_alg;
+                                Argon2IdParameters argon2id_params = {};
                                 TPM2Flags tpm2_flags;
 
                                 CLEANUP_ARRAY(blobs, n_blobs, iovec_array_free);
@@ -2138,7 +2136,8 @@ static int attach_luks_or_plain_or_bitlk_by_tpm2(
                                                 &pcrlock_nv,
                                                 &tpm2_flags,
                                                 &keyslot,
-                                                &token);
+                                                &token,
+                                                &argon2id_params);
                                 if (r == -ENXIO)
                                         /* No further TPM2 tokens found in the LUKS2 header. */
                                         return log_full_errno(found_some ? LOG_NOTICE : LOG_DEBUG,
@@ -2178,10 +2177,14 @@ static int attach_luks_or_plain_or_bitlk_by_tpm2(
                                                 until,
                                                 "cryptsetup.tpm2-pin",
                                                 arg_ask_password_flags,
+                                                &argon2id_params,
                                                 &decrypted_key);
                                 if (IN_SET(r, -EACCES, -ENOLCK))
                                         return log_notice_errno(SYNTHETIC_ERRNO(EAGAIN), "TPM2 PIN unlock failed, falling back to traditional unlocking.");
-                                if (r != -EPERM)
+                                /* Stop unless we should keep iterating to next token because the tried one
+                                 * does not match boot state. For now without -EUCLEAN because currently the
+                                 * only error it reports won't be solved by moving to another token. */
+                                if (!ERRNO_IS_NEG_TPM2_TOKEN_MISMATCH(r))
                                         break;
 
                                 token++; /* try a different token next time */
@@ -2881,6 +2884,12 @@ static int verb_detach(int argc, char *argv[], uintptr_t _data, void *userdata) 
 static int run(int argc, char *argv[]) {
         int r;
 
+        LIBBLKID_NOTE(recommended);
+        LIBFIDO2_NOTE(suggested);
+        LIBMOUNT_NOTE(recommended);
+        LIBP11KIT_NOTE(suggested);
+        TPM2_NOTE(suggested);
+
         log_setup();
 
         umask(0022);
@@ -2890,7 +2899,7 @@ static int run(int argc, char *argv[]) {
         if (r <= 0)
                 return r;
 
-        r = DLOPEN_CRYPTSETUP(LOG_ERR, SD_ELF_NOTE_DLOPEN_PRIORITY_REQUIRED);
+        r = DLOPEN_CRYPTSETUP(LOG_ERR, required);
         if (r < 0)
                 return r;
 

@@ -7,6 +7,7 @@
 
 #include "build.h"
 #include "dissect-image.h"
+#include "dlopen-note.h"
 #include "extract-word.h"
 #include "format-table.h"
 #include "glob-util.h"
@@ -16,6 +17,7 @@
 #include "journalctl.h"
 #include "journalctl-authenticate.h"
 #include "journalctl-catalog.h"
+#include "journalctl-filter.h"
 #include "journalctl-metrics.h"
 #include "journalctl-misc.h"
 #include "journalctl-show.h"
@@ -69,6 +71,7 @@ bool arg_merge = false;
 int arg_boot = -1; /* tristate */
 sd_id128_t arg_boot_id = {};
 int arg_boot_offset = 0;
+bool arg_boot_filter = false;
 bool arg_dmesg = false;
 bool arg_no_hostname = false;
 char *arg_cursor = NULL;
@@ -334,6 +337,11 @@ static int vl_server(void) {
         if (r < 0)
                 return log_error_errno(r, "Failed to bind Varlink methods: %m");
 
+        /* tears down the streaming state of GetEntries follow=true calls when the client goes away */
+        r = sd_varlink_server_bind_disconnect(varlink_server, vl_on_disconnect);
+        if (r < 0)
+                return log_error_errno(r, "Failed to bind Varlink disconnect handler: %m");
+
         r = sd_varlink_server_loop_auto(varlink_server);
         if (r < 0)
                 return log_error_errno(r, "Failed to run Varlink event loop: %m");
@@ -526,6 +534,7 @@ static int parse_argv(int argc, char *argv[], char ***remaining_args) {
 
                 OPTION_LONG("this-boot", NULL, /* help= */ NULL):
                         arg_boot = true;
+                        arg_boot_filter = true;
                         arg_boot_id = SD_ID128_NULL;
                         arg_boot_offset = 0;
                         break;
@@ -533,6 +542,7 @@ static int parse_argv(int argc, char *argv[], char ***remaining_args) {
                 OPTION_FULL(OPTION_OPTIONAL_ARG, 'b', "boot", "ID",
                             "Show current boot or the specified boot"):
                         arg_boot = true;
+                        arg_boot_filter = true;
                         arg_boot_id = SD_ID128_NULL;
                         arg_boot_offset = 0;
 
@@ -542,6 +552,7 @@ static int parse_argv(int argc, char *argv[], char ***remaining_args) {
                                         return log_error_errno(r, "Failed to parse boot descriptor '%s'", opts.arg);
 
                                 arg_boot = r;
+                                arg_boot_filter = r > 0;
 
                         } else {
                                 /* Hmm, no argument? Maybe the next word on the command line is supposed to
@@ -552,6 +563,7 @@ static int parse_argv(int argc, char *argv[], char ***remaining_args) {
                                         r = parse_id_descriptor(peek, &arg_boot_id, &arg_boot_offset);
                                         if (r >= 0) {
                                                 arg_boot = r;
+                                                arg_boot_filter = r > 0;
                                                 (void) option_parser_consume_next_arg(&opts);
                                         }
                                 }
@@ -970,6 +982,10 @@ static int parse_argv(int argc, char *argv[], char ***remaining_args) {
                                        "Extraneous arguments starting with '%s'",
                                        args[0]);
 
+        if (IN_SET(arg_action, ACTION_LIST_FIELDS, ACTION_LIST_FIELD_NAMES) && field_list_has_scope_options())
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
+                                       "-F/--field= and -N/--fields cannot be combined with options that limit the journal.");
+
         if ((arg_boot || arg_action == ACTION_LIST_BOOTS) && arg_merge)
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
                                        "Using --boot or --list-boots with --merge is not supported.");
@@ -1015,6 +1031,14 @@ static int run(int argc, char *argv[]) {
         _cleanup_(umount_and_freep) char *mounted_dir = NULL;
         _cleanup_strv_free_ char **args = NULL;
         int r;
+
+        COMPRESS_JOURNAL_NOTE;
+        LIBACL_NOTE(recommended);
+        LIBBLKID_NOTE(recommended);
+        LIBCRYPTSETUP_NOTE(suggested);
+        LIBMOUNT_NOTE(recommended);
+        LIBPCRE2_NOTE(suggested);
+        LIBQRENCODE_NOTE(suggested);
 
         setlocale(LC_ALL, "");
         log_setup();

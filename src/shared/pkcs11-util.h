@@ -11,8 +11,9 @@
 
 #include "ask-password-api.h"
 #include "dlfcn-util.h"
+#include "dlopen-note.h"
+#include "forward.h"
 #include "pkcs11-padding.h"
-#include "shared-forward.h"
 
 bool pkcs11_uri_valid(const char *uri);
 
@@ -107,7 +108,7 @@ int pkcs11_crypt_device_callback(
 
 #endif
 
-int dlopen_p11kit(int log_level);
+int dlopen_p11kit(int log_level) _dlopen_loader_;
 
 typedef struct {
         const char *friendly_name;

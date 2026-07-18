@@ -37,4 +37,6 @@ __pycache__/
 /pkg/
 .aider*
 /worktrees
+.envrc
+.direnv/
 a.out

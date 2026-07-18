@@ -25,6 +25,7 @@
 #include "devnum-util.h"
 #include "dirent-util.h"
 #include "dissect-image.h"
+#include "dlopen-note.h"
 #include "env-util.h"
 #include "errno-util.h"
 #include "escape.h"
@@ -1270,7 +1271,7 @@ static int parse_acl_cond_exec(
         assert(cond_exec);
         assert(ret);
 
-        r = DLOPEN_LIBACL(LOG_DEBUG, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
+        r = DLOPEN_LIBACL(LOG_DEBUG, recommended);
         if (r < 0)
                 return r;
 
@@ -1389,7 +1390,7 @@ static int path_set_acl(
 
         assert(c);
 
-        r = DLOPEN_LIBACL(LOG_DEBUG, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
+        r = DLOPEN_LIBACL(LOG_DEBUG, recommended);
         if (r < 0)
                 return r;
 
@@ -2235,7 +2236,7 @@ static int copy_files(Context *c, Item *i) {
                          dfd, bn,
                          i->uid_set ? i->uid : UID_INVALID,
                          i->gid_set ? i->gid : GID_INVALID,
-                         COPY_REFLINK | ((i->append_or_force) ? COPY_MERGE : COPY_MERGE_EMPTY) | COPY_MAC_CREATE | COPY_HARDLINKS,
+                         ((i->append_or_force) ? COPY_MERGE : COPY_MERGE_EMPTY) | COPY_MAC_CREATE | COPY_HARDLINKS,
                          NULL, NULL);
 
         fd = openat(dfd, bn, O_NOFOLLOW|O_CLOEXEC|O_PATH);
@@ -2897,10 +2898,9 @@ static int glob_item_recursively(
                 /* Make sure we won't trigger/follow file object (such as device nodes, automounts, ...)
                  * pointed out by 'fn' with O_PATH. Note, when O_PATH is used, flags other than
                  * O_CLOEXEC, O_DIRECTORY, and O_NOFOLLOW are ignored. */
-
-                fd = open(*fn, O_CLOEXEC|O_NOFOLLOW|O_PATH);
+                fd = path_open_safe(*fn);
                 if (fd < 0) {
-                        RET_GATHER(r, log_error_errno(errno, "Failed to open '%s': %m", *fn));
+                        RET_GATHER(r, fd);
                         continue;
                 }
 
@@ -4853,6 +4853,12 @@ static int run(int argc, char *argv[]) {
                 _PHASE_MAX
         } phase;
         int r;
+
+        LIBBLKID_NOTE(recommended);
+        LIBCRYPTSETUP_NOTE(suggested);
+        LIBCRYPTO_NOTE(suggested);
+        LIBMOUNT_NOTE(recommended);
+        LIBSELINUX_NOTE(recommended);
 
         char **args = NULL;
         r = parse_argv(argc, argv, &args);

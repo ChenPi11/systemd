@@ -16,6 +16,17 @@ CHANGES WITH 262:
           have been provided. This clears the way for a new
           "systemd-sysupdate@.service" unit for varlink activation of sysupdate.
 
+        * TPM-sealed credentials are now pinned to the TPM's SRK. This prevents
+          MITM interposer attacks from stealing the decrypted credentials by
+          ensuring that communication with the TPM is protected by a private key
+          only known to the same TPM the credential was sealed to. Additionally,
+          this allows usage of TPM-sealed credentials when the TPM's owner
+          hierarchy is protected with a PIN.
+
+          TPM-bound credentials minted after this change are not recognized by
+          older systemd versions, however systemd continues to accept TPM-sealed
+          credentials that were created before this change.
+
         Changes in the system and service manager:
 
         * The manager now embeds a basic set of unit files (basic.target,
@@ -35,6 +46,15 @@ CHANGES WITH 262:
           via credentials). This is useful for unattended installations that
           should be provisioned as far as possible without ever blocking on a
           prompt.
+
+        Changes in systemd-networkd:
+
+        * A new IPv4ProxyARPAddress= setting has been added to the [Network]
+          section of .network files. It is the IPv4 counterpart to
+          IPv6ProxyNDPAddress= and allows manual entries to be added to the
+          kernel's IPv4 neighbor proxy table. The setting implies
+          IPv4ProxyARP=yes but has no effect if IPv4ProxyARP= has been set to
+          false. This mirrors the behavior of IPv6ProxyNDPAddress=.
 
 CHANGES WITH 261:
 

@@ -3,7 +3,7 @@
 
 /* IWYU pragma: always_keep */
 
-#include "sd-forward.h"         /* IWYU pragma: export */
+#include "../libsystemd/forward.h"      /* IWYU pragma: export */
 
 typedef int (*copy_progress_bytes_t)(uint64_t n_bytes, uint64_t bytes_per_second, void *userdata);
 typedef int (*copy_progress_path_t)(const char *path, const struct stat *st, void *userdata);
@@ -19,6 +19,7 @@ typedef enum BusPrintPropertyFlags BusPrintPropertyFlags;
 typedef enum BusTransport BusTransport;
 typedef enum CatFlags CatFlags;
 typedef enum CertificateSourceType CertificateSourceType;
+typedef enum ConditionType ConditionType;
 typedef enum DnsAnswerFlags DnsAnswerFlags;
 typedef enum DnsCacheMode DnsCacheMode;
 typedef enum DnsOverTlsMode DnsOverTlsMode;
@@ -34,6 +35,7 @@ typedef enum OutputFlags OutputFlags;
 typedef enum OutputMode OutputMode;
 typedef enum PagerFlags PagerFlags;
 typedef enum PatternCompileCase PatternCompileCase;
+typedef enum PolkitFlags PolkitFlags;
 typedef enum RemoveFlags RemoveFlags;
 typedef enum ResolveSupport ResolveSupport;
 typedef enum TPM2Flags TPM2Flags;
@@ -46,6 +48,7 @@ typedef enum UserDBFlags UserDBFlags;
 typedef enum UserRecordLoadFlags UserRecordLoadFlags;
 typedef enum UserStorage UserStorage;
 
+typedef struct Argon2IdParameters Argon2IdParameters;
 typedef struct AskPasswordRequest AskPasswordRequest;
 typedef struct Bitmap Bitmap;
 typedef struct BootConfig BootConfig;

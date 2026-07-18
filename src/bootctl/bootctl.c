@@ -22,6 +22,7 @@
 #include "crypto-util.h"
 #include "devnum-util.h"
 #include "dissect-image.h"
+#include "dlopen-note.h"
 #include "efi-loader.h"
 #include "efivars.h"
 #include "escape.h"
@@ -694,7 +695,7 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
                                 break;
                         }
 
-                        if (!version_is_valid_versionspec(opts.arg))
+                        if (!version_is_valid(opts.arg, /* flags= */ 0))
                                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Not a valid boot menu entry version: %s", opts.arg);
 
                         r = free_and_strdup_warn(&arg_entry_version, opts.arg);
@@ -857,6 +858,13 @@ static int run(int argc, char *argv[]) {
         _cleanup_(loop_device_unrefp) LoopDevice *loop_device = NULL;
         _cleanup_(umount_and_freep) char *mounted_dir = NULL;
         int r;
+
+        LIBBLKID_NOTE(recommended);
+        LIBCRYPTSETUP_NOTE(suggested);
+        LIBMOUNT_NOTE(recommended);
+        LIBTSS2_ESYS_NOTE(suggested);
+        LIBTSS2_MU_NOTE(suggested);
+        LIBTSS2_RC_NOTE(suggested);
 
         log_setup();
 

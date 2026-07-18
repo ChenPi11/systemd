@@ -7,6 +7,7 @@
 #include "alloc-util.h"
 #include "build.h"
 #include "crypto-util.h"
+#include "dlopen-note.h"
 #include "efi-loader.h"
 #include "escape.h"
 #include "format-table.h"
@@ -90,7 +91,7 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
                 OPTION_LONG("bank", "DIGEST", "Select TPM PCR bank (SHA1, SHA256)"): {
                         const EVP_MD *implementation;
 
-                        r = DLOPEN_LIBCRYPTO(LOG_ERR, SD_ELF_NOTE_DLOPEN_PRIORITY_REQUIRED);
+                        r = DLOPEN_LIBCRYPTO(LOG_ERR, required);
                         if (r < 0)
                                 return r;
 
@@ -372,23 +373,17 @@ static int extend_nvpcr_now(
 
         log_debug("Measuring '%s' into NvPCR index '%s'.", safe, name);
 
-        r = tpm2_nvpcr_extend_bytes(c, /* session= */ NULL, name, &IOVEC_MAKE(data, size), /* secret= */ NULL, event, safe);
-        if (r == -ENETDOWN) {
-                /* NvPCR is not initialized yet. Let's do this now. */
-
-                _cleanup_(iovec_done_erase) struct iovec anchor_secret = {};
-                r = tpm2_nvpcr_acquire_anchor_secret(&anchor_secret, /* sync_secondary= */ !arg_early);
-                if (r < 0)
-                        return r;
-
-                r = tpm2_nvpcr_initialize(c, /* session= */ NULL, name, &anchor_secret);
-                if (r == -ENOBUFS)
-                        return r; /* NV space exhausted; let caller handle gracefully */
-                if (r < 0)
-                        return log_error_errno(r, "Failed to extend NvPCR index '%s' with anchor secret: %m", name);
-
-                r = tpm2_nvpcr_extend_bytes(c, /* session= */ NULL, name, &IOVEC_MAKE(data, size), /* secret= */ NULL, event, safe);
-        }
+        r = tpm2_nvpcr_extend_bytes(
+                        c,
+                        /* session= */ NULL,
+                        name,
+                        &IOVEC_MAKE(data, size),
+                        /* secret= */ NULL,
+                        /* sync_secondary_anchor= */ !arg_early,
+                        event,
+                        safe);
+        if (r == -ENOBUFS)
+                return r; /* NV space exhausted; let caller handle gracefully */
         if (r < 0)
                 return log_error_errno(r, "Could not extend NvPCR: %m");
 
@@ -511,6 +506,9 @@ static int run(int argc, char *argv[]) {
         _cleanup_free_ char *word = NULL;
         Tpm2UserspaceEventType event = _TPM2_USERSPACE_EVENT_TYPE_INVALID;
         int r;
+
+        LIBBLKID_NOTE(recommended);
+        TPM2_NOTE(suggested);
 
         log_setup();
 

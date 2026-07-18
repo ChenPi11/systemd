@@ -9,6 +9,7 @@
 #include "build.h"
 #include "copy.h"
 #include "discover-image.h"
+#include "dlopen-note.h"
 #include "fd-util.h"
 #include "format-table.h"
 #include "format-util.h"
@@ -228,7 +229,6 @@ static int verb_import_fs(int argc, char *argv[], uintptr_t _data, void *userdat
                                         AT_FDCWD, dest,
                                         /* override_uid= */ UID_INVALID,
                                         /* override_gid= */ GID_INVALID,
-                                        COPY_REFLINK|
                                         COPY_SAME_MOUNT|
                                         COPY_HARDLINKS|
                                         COPY_SIGINT|
@@ -391,6 +391,8 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
 
 static int run(int argc, char *argv[]) {
         int r;
+
+        LIBSELINUX_NOTE(recommended);
 
         setlocale(LC_ALL, "");
         log_setup();

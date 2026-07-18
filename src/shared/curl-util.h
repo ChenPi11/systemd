@@ -1,9 +1,8 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 #pragma once
 
-#include "sd-dlopen.h"
-
-#include "shared-forward.h"
+#include "dlopen-note.h"
+#include "forward.h"
 
 #if HAVE_LIBCURL
 #ifndef SYSTEMD_CFLAGS_MARKER_LIBCURL
@@ -76,20 +75,12 @@ int curl_append_to_header(struct curl_slist **list, char **headers);
 
 DEFINE_TRIVIAL_CLEANUP_FUNC_FULL_RENAME(CURL*, sym_curl_easy_cleanup, curl_easy_cleanupp, NULL);
 DEFINE_TRIVIAL_CLEANUP_FUNC_FULL_RENAME(struct curl_slist*, sym_curl_slist_free_all, curl_slist_free_allp, NULL);
+#endif
 
-#define CURL_NOTE(priority)                                             \
-        SD_ELF_NOTE_DLOPEN("curl",                                      \
-                           "Support for downloading and uploading files over HTTP", \
-                           priority,                                    \
-                           "libcurl.so.4")
+int dlopen_curl(int log_level) _dlopen_loader_;
 
 #define DLOPEN_CURL(log_level, priority)                                \
         ({                                                              \
-                CURL_NOTE(priority);                                    \
+                LIBCURL_NOTE(priority);                                 \
                 dlopen_curl(log_level);                                 \
         })
-#else
-#define DLOPEN_CURL(log_level, priority) dlopen_curl(log_level)
-#endif
-
-int dlopen_curl(int log_level);

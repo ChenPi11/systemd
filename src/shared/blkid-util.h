@@ -1,9 +1,8 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 #pragma once
 
-#include "sd-dlopen.h"
-
-#include "shared-forward.h"
+#include "dlopen-note.h"
+#include "forward.h"
 
 #if HAVE_BLKID
 #  ifndef SYSTEMD_CFLAGS_MARKER_LIBBLKID
@@ -68,20 +67,12 @@ enum {
 
 int blkid_probe_lookup_value_id128(blkid_probe b, const char *field, sd_id128_t *ret);
 int blkid_probe_lookup_value_u64(blkid_probe b, const char *field, uint64_t *ret);
+#endif
 
-#define LIBBLKID_NOTE(priority)                                         \
-        SD_ELF_NOTE_DLOPEN("blkid",                                     \
-                           "Support for block device identification",   \
-                           priority,                                    \
-                           "libblkid.so.1")
+int dlopen_libblkid(int log_level) _dlopen_loader_;
 
 #define DLOPEN_LIBBLKID(log_level, priority)                            \
         ({                                                              \
                 LIBBLKID_NOTE(priority);                                \
                 dlopen_libblkid(log_level);                             \
         })
-#else
-#define DLOPEN_LIBBLKID(log_level, priority) dlopen_libblkid(log_level)
-#endif
-
-int dlopen_libblkid(int log_level);

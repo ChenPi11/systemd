@@ -9,10 +9,14 @@
 
 #include "build.h"
 #include "bus-polkit.h"
+#include "condition.h"
 #include "conf-files.h"
+#include "conf-parser.h"
 #include "constants.h"
 #include "discover-image.h"
 #include "dissect-image.h"
+#include "dlopen-note.h"
+#include "dropin.h"
 #include "env-util.h"
 #include "errno-util.h"
 #include "fd-util.h"
@@ -31,13 +35,18 @@
 #include "pager.h"
 #include "parse-argument.h"
 #include "parse-util.h"
+#include "path-util.h"
 #include "pretty-print.h"
 #include "runtime-scope.h"
+#include "set.h"
+#include "siphash24.h"
 #include "sort-util.h"
+#include "stdio-util.h"
 #include "string-util.h"
 #include "strv.h"
 #include "sysupdate.h"
 #include "sysupdate-cleanup.h"
+#include "sysupdate-config.h"
 #include "sysupdate-feature.h"
 #include "sysupdate-instance.h"
 #include "sysupdate-target.h"
@@ -58,8 +67,9 @@ static char *arg_root = NULL;
 static char *arg_image = NULL;
 static bool arg_reboot = false;
 static int arg_cleanup = -1;
+static SelectMode arg_feature_select = SELECT_EXPLICIT;
 static char *arg_component = NULL;
-static bool arg_component_all = false;
+static SelectMode arg_component_select = SELECT_EXPLICIT;
 static int arg_verify = -1;
 static ImagePolicy *arg_image_policy = NULL;
 static bool arg_offline = false;
@@ -75,12 +85,14 @@ STATIC_DESTRUCTOR_REGISTER(arg_transfer_source, freep);
 
 #define CONTEXT_NULL                                              \
         (Context) {                                               \
+                .component_enabled = true,                        \
                 .sync = true,                                     \
                 .instances_max = UINT64_MAX,                      \
                 .verify = -1,                                     \
                 .cleanup = -1,                                    \
                 .installdb_fd = -EBADF,                           \
                 .target_identifier.class = _TARGET_CLASS_INVALID, \
+                .component_suggest = -1,                          \
         }
 
 void context_done(Context *c) {
@@ -114,10 +126,13 @@ void context_done(Context *c) {
         c->root = mfree(c->root);
         c->image = mfree(c->image);
         c->component = mfree(c->component);
+        c->component_description = mfree(c->component_description);
+        c->component_documentation = strv_free(c->component_documentation);
         c->image_policy = image_policy_free(c->image_policy);
         c->transfer_source = mfree(c->transfer_source);
 
         target_identifier_done(&c->target_identifier);
+        condition_free_list(c->component_suggest_on);
 }
 
 static int context_from_cmdline(Context *ret) {
@@ -131,7 +146,8 @@ static int context_from_cmdline(Context *ret) {
         context.verify = arg_verify;
         context.offline = arg_offline;
         context.cleanup = arg_cleanup;
-        context.component_all = arg_component_all;
+        context.component_select = arg_component_select;
+        context.feature_select = arg_feature_select;
 
         if (strdup_to(&context.definitions, arg_definitions) < 0)
                 return log_oom();
@@ -153,6 +169,51 @@ static int context_from_cmdline(Context *ret) {
                 if (!context.image_policy)
                         return log_oom();
         }
+
+        *ret = TAKE_GENERIC(context, Context, CONTEXT_NULL);
+        return 0;
+}
+
+static int context_from_base_with_component(const Context *base, const char *component, Context *ret) {
+        assert(base);
+        assert(component);
+        assert(ret);
+
+        /* Copies the specified context, but changes the component to the specified one */
+
+        _cleanup_(context_done) Context context = CONTEXT_NULL;
+
+        context.instances_max = base->instances_max;
+        context.sync = base->sync;
+        context.reboot = base->reboot;
+        context.verify = base->verify;
+        context.offline = base->offline;
+        context.cleanup = base->cleanup;
+        context.feature_select = base->feature_select;
+
+        if (strdup_to(&context.root, base->root) < 0)
+                return log_oom();
+
+        if (strdup_to(&context.image, base->image) < 0)
+                return log_oom();
+
+        if (strdup_to(&context.transfer_source, base->transfer_source) < 0)
+                return log_oom();
+
+        if (base->image_policy) {
+                context.image_policy = image_policy_copy(base->image_policy);
+                if (!context.image_policy)
+                        return log_oom();
+        }
+
+        if (strdup_to(&context.component, component) < 0)
+                return log_oom();
+
+        /* NB: we do not copy .loop_device/.mounted_dir here, since that's for lifetime tracking only, and
+         * not needed for access (we only need to copy .root/.image) for that. Under the assumption that the
+         * contexts initialized via context_from_base_with_component() have a shorter lifetime than the
+         * contexts they are copied from we don't bother with lifetime tracking of the loopback device/mount
+         * point here. */
 
         *ret = TAKE_GENERIC(context, Context, CONTEXT_NULL);
         return 0;
@@ -280,9 +341,58 @@ static int read_transfers(
         return 0;
 }
 
+static int read_component(Context *c) {
+        int r;
+
+        assert(c);
+
+        /* Read a component description file, but only if we actually operate on a component */
+        if (c->definitions || !c->component)
+                return 0;
+
+        _cleanup_free_ char *j = strjoin("sysupdate.", c->component, ".component");
+        if (!j)
+                return log_oom();
+
+        ConfigTableItem table[] = {
+                { "Component", "Description",                config_parse_string,              0,                             &c->component_description   },
+                { "Component", "Documentation",              config_parse_url_specifiers_many, 0,                             &c->component_documentation },
+                { "Component", "Enabled",                    config_parse_bool,                0,                             &c->component_enabled       },
+                { "Component", "Suggest",                    config_parse_tristate,            0,                             &c->component_suggest       },
+                { "Component", "SuggestOnArchitecture",      config_parse_condition,           CONDITION_ARCHITECTURE,        &c->component_suggest_on    },
+                { "Component", "SuggestOnFirmware",          config_parse_condition,           CONDITION_FIRMWARE,            &c->component_suggest_on    },
+                { "Component", "SuggestOnVirtualization",    config_parse_condition,           CONDITION_VIRTUALIZATION,      &c->component_suggest_on    },
+                { "Component", "SuggestOnHost",              config_parse_condition,           CONDITION_HOST,                &c->component_suggest_on    },
+                { "Component", "SuggestOnFraction",          config_parse_condition,           CONDITION_FRACTION,            &c->component_suggest_on    },
+                { "Component", "SuggestOnKernelCommandLine", config_parse_condition,           CONDITION_KERNEL_COMMAND_LINE, &c->component_suggest_on    },
+                { "Component", "SuggestOnVersion",           config_parse_condition,           CONDITION_VERSION,             &c->component_suggest_on    },
+                { "Component", "SuggestOnCredential",        config_parse_condition,           CONDITION_CREDENTIAL,          &c->component_suggest_on    },
+                { "Component", "SuggestOnSecurity",          config_parse_condition,           CONDITION_SECURITY,            &c->component_suggest_on    },
+                { "Component", "SuggestOnOSRelease",         config_parse_condition,           CONDITION_OS_RELEASE,          &c->component_suggest_on    },
+                { "Component", "SuggestOnMachineTag",        config_parse_condition,           CONDITION_MACHINE_TAG,         &c->component_suggest_on    },
+                {}
+        };
+
+        r = config_parse_standard_file_with_dropins_full(
+                        c->root,
+                        /* root_fd= */ -EBADF,
+                        j,
+                        "Component\0",
+                        config_item_table_lookup, table,
+                        CONFIG_PARSE_WARN,
+                        /* userdata= */ (void *) c->root,
+                        /* ret_stats_by_path= */ NULL,
+                        /* ret_dropin_files= */ NULL);
+        if (r < 0)
+                return r;
+
+        return 0;
+}
+
 typedef enum ReadDefinitionsFlags {
-        READ_DEFINITIONS_REQUIRES_ENABLED_TRANSFERS = 1 << 0,
-        READ_DEFINITIONS_REQUIRES_ANY_TRANSFERS     = 1 << 1,
+        READ_DEFINITIONS_REQUIRES_ENABLED_TRANSFERS = 1 << 0, /* fail unless there's at least one enabled transfer */
+        READ_DEFINITIONS_REQUIRES_ANY_TRANSFERS     = 1 << 1, /* fail unless there's at least one transfer */
+        READ_DEFINITIONS_REQUIRES_ENABLED_COMPONENT = 1 << 2, /* fail if component is disabled */
 } ReadDefinitionsFlags;
 
 static int context_read_definitions(Context *c, const char* node, ReadDefinitionsFlags flags) {
@@ -315,6 +425,10 @@ static int context_read_definitions(Context *c, const char* node, ReadDefinition
         if (!dirs)
                 return log_oom();
 
+        r = read_component(c);
+        if (r < 0)
+                return r;
+
         r = read_features(c, (const char**) dirs);
         if (r < 0)
                 return r;
@@ -344,6 +458,9 @@ static int context_read_definitions(Context *c, const char* node, ReadDefinition
                                        "No transfer definitions found.");
         }
 
+        if (FLAGS_SET(flags, READ_DEFINITIONS_REQUIRES_ENABLED_COMPONENT) && !c->component_enabled)
+                return log_error_errno(SYNTHETIC_ERRNO(EHOSTDOWN), "Component is disabled.");
+
         return 0;
 }
 
@@ -352,7 +469,7 @@ static int context_load_installed_instances(Context *c) {
 
         assert(c);
 
-        log_info("Discovering installed instances%s", glyph(GLYPH_ELLIPSIS));
+        log_debug("Discovering installed instances%s", glyph(GLYPH_ELLIPSIS));
 
         FOREACH_ARRAY(tr, c->transfers, c->n_transfers) {
                 Transfer *t = *tr;
@@ -436,7 +553,7 @@ static int context_discover_update_sets_by_flag(Context *c, UpdateSetFlags flags
                                 if (boundary && strverscmp_improved(i->metadata.version, boundary) >= 0)
                                         continue; /* Not older than the boundary */
 
-                                if (cursor && strverscmp(i->metadata.version, cursor) <= 0)
+                                if (cursor && strverscmp_improved(i->metadata.version, cursor) <= 0)
                                         break; /* Not newer than the cursor. The same will be true for all
                                                 * subsequent instances (due to sorting) so let's skip to the
                                                 * next transfer. */
@@ -696,21 +813,6 @@ static int context_show_version(Context *c, const char *version) {
 
         if (arg_json_format_flags & (SD_JSON_FORMAT_OFF|SD_JSON_FORMAT_PRETTY|SD_JSON_FORMAT_PRETTY_AUTO))
                 pager_open(arg_pager_flags);
-
-        if (!sd_json_format_enabled(arg_json_format_flags))
-                printf("%s%s%s Version: %s\n"
-                       "    State: %s%s%s\n"
-                       "Installed: %s%s%s%s\n"
-                       "Available: %s%s\n"
-                       "Protected: %s%s%s\n"
-                       " Obsolete: %s%s%s\n\n",
-                       strempty(update_set_flags_to_color(us->flags)), update_set_flags_to_glyph(us->flags), ansi_normal(), us->version,
-                       strempty(update_set_flags_to_color(us->flags)), update_set_flags_to_string(us->flags), ansi_normal(),
-                       yes_no(us->flags & UPDATE_INSTALLED), FLAGS_SET(us->flags, UPDATE_INSTALLED|UPDATE_NEWEST) ? " (newest)" : "",
-                       FLAGS_SET(us->flags, UPDATE_INSTALLED|UPDATE_PENDING) ? " (pending)" : "", FLAGS_SET(us->flags, UPDATE_INSTALLED|UPDATE_PARTIAL) ? " (partial)" : "",
-                       yes_no(us->flags & UPDATE_AVAILABLE), (us->flags & (UPDATE_INSTALLED|UPDATE_AVAILABLE|UPDATE_NEWEST)) == (UPDATE_AVAILABLE|UPDATE_NEWEST) ? " (newest)" : "",
-                       FLAGS_SET(us->flags, UPDATE_INSTALLED|UPDATE_PROTECTED) ? ansi_highlight() : "", yes_no(FLAGS_SET(us->flags, UPDATE_INSTALLED|UPDATE_PROTECTED)), ansi_normal(),
-                       us->flags & UPDATE_OBSOLETE ? ansi_highlight_red() : "", yes_no(us->flags & UPDATE_OBSOLETE), ansi_normal());
 
         t = table_new("type", "path", "ptuuid", "ptflags", "mtime", "mode", "size", "tries-done", "tries-left", "noauto", "ro", "growfs", "sha256");
         if (!t)
@@ -1029,10 +1131,9 @@ static int context_process_image(
 
         assert(c);
 
-        if (!c->image)
+        if (c->root || !c->image) /* Idempotent or nothing to do */
                 return 0;
 
-        assert(!c->root);
         assert(!c->mounted_dir);
         assert(!c->loop_device);
 
@@ -1094,7 +1195,9 @@ static int context_load_offline(
 
 static int context_load_online(
                 Context *context,
-                ProcessImageFlags process_image_flags) {
+                ProcessImageFlags process_image_flags,
+                ReadDefinitionsFlags read_definitions_flags) {
+
         int r;
 
         assert(context);
@@ -1105,7 +1208,7 @@ static int context_load_online(
         r = context_load_offline(
                         context,
                         process_image_flags,
-                        READ_DEFINITIONS_REQUIRES_ENABLED_TRANSFERS|READ_DEFINITIONS_REQUIRES_ANY_TRANSFERS);
+                        read_definitions_flags);
         if (r < 0)
                 return r;
 
@@ -1152,11 +1255,146 @@ static int context_load_paths_from_image(Context *context, Image *image) {
         }
 }
 
-/* Load a Context to point to the target given by the TargetIdentifier. The TargetIdentifier will have been
- * syntactically validated by dispatch_target_identifier(), but might still point to components which don’t
- * exist, images which the user isn’t privileged to access, etc. This function validates the TargetIdentifier
- * against an enumerated list of known targets, which are safe to update without additional permissions. */
-static int context_load_online_from_target(Context *context, ProcessImageFlags process_image_flags) {
+static void target_identifier_hash_func(const TargetIdentifier *t, struct siphash *state) {
+        assert(t);
+
+        siphash24_compress_typesafe(t->class, state);
+        siphash24_compress_string(t->name, state);
+}
+
+static int target_identifier_compare_func(const TargetIdentifier *x, const TargetIdentifier *y) {
+        int r;
+
+        assert(x);
+        assert(y);
+
+        r = CMP(x->class, y->class);
+        if (r != 0)
+                return r;
+
+        return strcmp(x->name, y->name);
+}
+
+DEFINE_PRIVATE_HASH_OPS_WITH_VALUE_DESTRUCTOR(target_identifier_hash_ops,
+                                              TargetIdentifier, target_identifier_hash_func, target_identifier_compare_func,
+                                              TargetIdentifier, target_identifier_free);
+
+static int enumerate_image_class(RuntimeScope runtime_scope, TargetClass class, Set **targets) {
+        _cleanup_hashmap_free_ Hashmap *images = NULL;
+        Image *image;
+        int r;
+
+        r = image_discover(runtime_scope, (ImageClass) class, NULL, &images);
+        if (r < 0)
+                return r;
+
+        HASHMAP_FOREACH(image, images) {
+                _cleanup_(target_identifier_freep) TargetIdentifier *t = NULL;
+                bool have = false;
+                _cleanup_(context_done) Context image_context = CONTEXT_NULL;
+
+                if (image_is_host(image))
+                        continue; /* We already enroll the host ourselves */
+
+                if (!image_type_can_sysupdate(image->type))
+                        continue;
+
+                r = context_load_paths_from_image(&image_context, image);
+                if (r < 0)
+                        return r;
+
+                /* Load the components in a separate Context specific to the given Image before
+                 * committing to loading that state to the main Context. */
+                r = context_load_offline(
+                                &image_context,
+                                PROCESS_IMAGE_READ_ONLY,
+                                /* read_definitions_flags= */ 0);
+                if (r < 0)
+                        return r;
+
+                r = context_list_components(&image_context, /* ret_component_names= */ NULL, &have);
+                if (r < 0)
+                        return r;
+                if (!have) {
+                        log_debug("Skipping %s because it has no default component", image->path);
+                        continue;
+                }
+
+                r = target_identifier_new(class, image->name, &t);
+                if (r < 0)
+                        return r;
+
+                r = set_ensure_consume(targets, &target_identifier_hash_ops, TAKE_PTR(t));
+                if (r < 0)
+                        return r;
+        }
+
+        return 0;
+}
+
+static int context_enumerate_components(Context *context, Set **targets) {
+        _cleanup_strv_free_ char **component_names = NULL;
+        bool have_default_component;
+        int r;
+
+        assert(context);
+
+        r = context_list_components(context, &component_names, &have_default_component);
+        if (r < 0)
+                return r;
+
+        if (have_default_component) {
+                _cleanup_(target_identifier_freep) TargetIdentifier *t = NULL;
+
+                r = target_identifier_new(TARGET_HOST, "host", &t);
+                if (r < 0)
+                        return r;
+
+                r = set_ensure_consume(targets, &target_identifier_hash_ops, TAKE_PTR(t));
+                if (r < 0)
+                        return r;
+        }
+
+        STRV_FOREACH(component, component_names) {
+                _cleanup_(target_identifier_freep) TargetIdentifier *t = NULL;
+
+                r = target_identifier_new(TARGET_COMPONENT, *component, &t);
+                if (r < 0)
+                        return r;
+
+                r = set_ensure_consume(targets, &target_identifier_hash_ops, TAKE_PTR(t));
+                if (r < 0)
+                        return r;
+        }
+
+        return 0;
+}
+
+static int context_enumerate_targets(Context *context, Set **targets) {
+        static const TargetClass discoverable_classes[] = {
+                TARGET_MACHINE,
+                TARGET_PORTABLE,
+                TARGET_SYSEXT,
+                TARGET_CONFEXT,
+        };
+        int r;
+
+        assert(context);
+
+        FOREACH_ARRAY(class, discoverable_classes, ELEMENTSOF(discoverable_classes)) {
+                r = enumerate_image_class(RUNTIME_SCOPE_SYSTEM, *class, targets);
+                if (r < 0)
+                        return r;
+        }
+
+        r = context_enumerate_components(context, targets);
+        if (r < 0)
+                return r;
+
+        return 0;
+}
+
+static int context_load_paths_from_target(Context *context) {
         int r;
 
         assert(context);
@@ -1247,7 +1485,43 @@ static int context_load_online_from_target(Context *context, ProcessImageFlags p
                 assert_not_reached();
         }
 
-        return context_load_online(context, process_image_flags);
+        return 0;
+}
+
+/* Load a Context to point to the target given by the TargetIdentifier. The TargetIdentifier will have been
+ * syntactically validated by dispatch_target_identifier(), but might still point to components which don’t
+ * exist, images which the user isn’t privileged to access, etc. This function validates the TargetIdentifier
+ * against an enumerated list of known targets, which are safe to update without additional permissions. */
+static int context_load_online_from_target(
+                Context *context,
+                ProcessImageFlags process_image_flags,
+                ReadDefinitionsFlags read_definitions_flags) {
+        int r;
+
+        assert(context);
+        assert(context->target_identifier.class != _TARGET_CLASS_INVALID);
+
+        r = context_load_paths_from_target(context);
+        if (r < 0)
+                return r;
+
+        return context_load_online(context, process_image_flags, read_definitions_flags);
+}
+
+static int context_load_offline_from_target(
+                Context *context,
+                ProcessImageFlags process_image_flags,
+                ReadDefinitionsFlags read_definitions_flags) {
+        int r;
+
+        assert(context);
+        assert(context->target_identifier.class != _TARGET_CLASS_INVALID);
+
+        r = context_load_paths_from_target(context);
+        if (r < 0)
+                return r;
+
+        return context_load_offline(context, process_image_flags, read_definitions_flags);
 }
 
 static int context_on_acquire_progress(const Transfer *t, const Instance *inst, unsigned percentage) {
@@ -1584,6 +1858,37 @@ static int context_install(
         return 1;
 }
 
+static int context_get_transfers_for_feature(Context *context, const char *feature_id, char ***ret_transfers) {
+        int r;
+
+        assert(context);
+        assert(feature_id);
+
+        FOREACH_ARRAY(tr, context->transfers, context->n_transfers) {
+                Transfer *t = *tr;
+
+                if (!strv_contains(t->features, feature_id) && !strv_contains(t->requisite_features, feature_id))
+                        continue;
+
+                r = strv_extend(ret_transfers, t->id);
+                if (r < 0)
+                        return log_oom();
+        }
+
+        FOREACH_ARRAY(tr, context->disabled_transfers, context->n_disabled_transfers) {
+                Transfer *t = *tr;
+
+                if (!strv_contains(t->features, feature_id) && !strv_contains(t->requisite_features, feature_id))
+                        continue;
+
+                r = strv_extend(ret_transfers, t->id);
+                if (r < 0)
+                        return log_oom();
+        }
+
+        return 0;
+}
+
 static JSON_DISPATCH_ENUM_DEFINE(dispatch_target_class, TargetClass, target_class_from_string);
 
 static int dispatch_target_identifier(const char *name, sd_json_variant *variant, sd_json_dispatch_flags_t flags, void *userdata) {
@@ -1647,10 +1952,16 @@ static int verb_list(int argc, char *argv[], uintptr_t _data, void *userdata) {
         if (r < 0)
                 return r;
 
-        if (context.component_all)
-                return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP), "--component-all currently not supported for '%s'.", argv[0]);
+        if (context.feature_select != SELECT_EXPLICIT)
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "--feature-all/--feature-suggested is not supported for '%s'.", argv[0]);
+        if (context.component_select != SELECT_EXPLICIT)
+                return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP), "--component-all/--component-suggested currently not supported for '%s'.", argv[0]);
 
-        r = context_load_online(&context, PROCESS_IMAGE_READ_ONLY);
+        r = context_load_online(
+                        &context,
+                        PROCESS_IMAGE_READ_ONLY,
+                        READ_DEFINITIONS_REQUIRES_ENABLED_TRANSFERS|
+                        READ_DEFINITIONS_REQUIRES_ANY_TRANSFERS);
         if (r < 0)
                 return r;
 
@@ -1719,8 +2030,10 @@ static int verb_features(int argc, char *argv[], uintptr_t _data, void *userdata
         if (r < 0)
                 return r;
 
-        if (context.component_all)
-                return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP), "--component-all currently not supported for '%s'.", argv[0]);
+        if (context.feature_select != SELECT_EXPLICIT)
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "--feature-all/--feature-suggested is not supported for '%s'.", argv[0]);
+        if (context.component_select != SELECT_EXPLICIT)
+                return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP), "--component-all/--component-suggested currently not supported for '%s'.", argv[0]);
 
         r = context_load_offline(
                         &context,
@@ -1742,33 +2055,29 @@ static int verb_features(int argc, char *argv[], uintptr_t _data, void *userdata
                 if (!table)
                         return log_oom();
 
-                FOREACH_ARRAY(tr, context.transfers, context.n_transfers) {
-                        Transfer *t = *tr;
-
-                        if (!strv_contains(t->features, f->id) && !strv_contains(t->requisite_features, f->id))
-                                continue;
-
-                        r = strv_extend(&transfers, t->id);
-                        if (r < 0)
-                                return log_oom();
-                }
-
-                FOREACH_ARRAY(tr, context.disabled_transfers, context.n_disabled_transfers) {
-                        Transfer *t = *tr;
-
-                        if (!strv_contains(t->features, f->id) && !strv_contains(t->requisite_features, f->id))
-                                continue;
-
-                        r = strv_extend(&transfers, t->id);
-                        if (r < 0)
-                                return log_oom();
-                }
+                r = context_get_transfers_for_feature(&context, f->id, &transfers);
+                if (r < 0)
+                        return r;
 
                 r = table_add_many(table,
                                    TABLE_FIELD, "Name",
                                    TABLE_STRING, f->id,
                                    TABLE_FIELD, "Enabled",
                                    TABLE_BOOLEAN, f->enabled);
+                if (r < 0)
+                        return table_log_add_error(r);
+
+                r = feature_is_suggested(f);
+                if (r < 0) {
+                        errno = -r; /* Let's make %m below show this error */
+                        _cleanup_free_ char *k = asprintf_safe("error (%m)");
+                        r = table_add_many(table,
+                                           TABLE_FIELD, "Suggested",
+                                           TABLE_STRING, k);
+                } else
+                        r = table_add_many(table,
+                                           TABLE_FIELD, "Suggested",
+                                           TABLE_BOOLEAN, r);
                 if (r < 0)
                         return table_log_add_error(r);
 
@@ -1804,14 +2113,28 @@ static int verb_features(int argc, char *argv[], uintptr_t _data, void *userdata
 
                 return table_print_with_pager(table, arg_json_format_flags, arg_pager_flags, arg_legend);
         } else if (FLAGS_SET(arg_json_format_flags, SD_JSON_FORMAT_OFF)) {
-                table = table_new("", "feature", "description", "documentation");
+                table = table_new("enabled", "suggested", "feature", "description", "documentation");
                 if (!table)
                         return log_oom();
+
+                table_set_ersatz_string(table, TABLE_ERSATZ_DASH);
 
                 HASHMAP_FOREACH(f, context.features) {
                         r = table_add_many(table,
                                            TABLE_BOOLEAN_CHECKMARK, f->enabled,
-                                           TABLE_SET_COLOR, ansi_highlight_green_red(f->enabled),
+                                           TABLE_SET_COLOR, ansi_highlight_green_red(f->enabled));
+                        if (r < 0)
+                                return table_log_add_error(r);
+
+                        r = feature_is_suggested(f);
+                        if (r < 0)
+                                r = table_add_many(table, TABLE_EMPTY);
+                        else
+                                r = table_add_many(table, TABLE_BOOLEAN_CHECKMARK, r);
+                        if (r < 0)
+                                return table_log_add_error(r);
+
+                        r = table_add_many(table,
                                            TABLE_STRING, f->id,
                                            TABLE_STRING, f->description,
                                            TABLE_STRING, f->documentation,
@@ -1820,7 +2143,16 @@ static int verb_features(int argc, char *argv[], uintptr_t _data, void *userdata
                                 return table_log_add_error(r);
                 }
 
-                return table_print_with_pager(table, arg_json_format_flags, arg_pager_flags, arg_legend);
+                r = table_print_with_pager(table, arg_json_format_flags, arg_pager_flags, arg_legend);
+                if (r < 0)
+                        return r;
+
+                if (arg_legend) {
+                        if (table_isempty(table))
+                                log_info("No features.");
+                        else
+                                printf("\n%zu features listed.\n", table_get_rows(table) - 1);
+                }
         } else {
                 _cleanup_(sd_json_variant_unrefp) sd_json_variant *json = NULL;
                 _cleanup_strv_free_ char **features = NULL;
@@ -1843,24 +2175,339 @@ static int verb_features(int argc, char *argv[], uintptr_t _data, void *userdata
         return 0;
 }
 
-VERB_NOARG(verb_check_new, "check-new",
-           "Check if there's a new version available");
-static int verb_check_new(int argc, char *argv[], uintptr_t _data, void *userdata) {
-        _cleanup_(context_done) Context context = CONTEXT_NULL;
+static int make_dropin_dir(Context *c, char **ret) {
+        _cleanup_free_ char *dir = NULL;
+
+        assert(c);
+        assert(ret);
+
+        /* Returns the (writable) directory where feature definitions live, so that we can drop our
+         * 'Enabled=' override right next to them. This mirrors the directory logic in
+         * context_read_definitions(), but settles on a single writable location below /etc. */
+
+        if (c->definitions)
+                dir = strdup(c->definitions); /* --root= is not supported for this for now */
+        else if (c->component) {
+                _cleanup_free_ char *n = strjoin("sysupdate.", c->component, ".d");
+                if (!n)
+                        return log_oom();
+
+                dir = path_join(c->root, SYSCONF_DIR, n);
+        } else
+                dir = path_join(c->root, SYSCONF_DIR "/sysupdate.d");
+        if (!dir)
+                return log_oom();
+
+        *ret = TAKE_PTR(dir);
+        return 0;
+}
+
+static const char *context_component_display(const Context *c) {
+        assert(c);
+
+        return c->component ?: "<default>";
+}
+
+static int context_enable_feature(
+                Context *c,
+                const char *argv0,
+                bool enable,
+                char **features) {
+
         int r;
 
-        assert(argc <= 1);
+        assert(c);
+        assert(argv0);
 
+        _cleanup_free_ char **l = NULL;
+        switch (c->feature_select) {
+
+        case SELECT_EXPLICIT:
+                break;
+
+        case SELECT_ALL: {
+                assert(!features);
+
+                Feature *f;
+                HASHMAP_FOREACH(f, c->features)
+                        if (strv_push(&l, f->id) < 0)
+                                return log_oom();
+
+                features = l;
+                break;
+        }
+
+        case SELECT_SUGGESTED: {
+                assert(!features);
+
+                Feature *f;
+                HASHMAP_FOREACH(f, c->features) {
+                        r = feature_is_suggested(f);
+                        if (r < 0)
+                                return log_error_errno(r, "Failed to determine if feature '%s' of component '%s' shall be enabled: %m", f->id, context_component_display(c));
+                        if (!!r != !!enable) {
+                                log_debug("Skipping feature '%s' of component '%s'.", f->id, context_component_display(c));
+                                continue;
+                        }
+
+                        log_info("%s feature '%s' of component '%s'.", enable ? "Enabling" : "Disabling", f->id, context_component_display(c));
+
+                        if (strv_push(&l, f->id) < 0)
+                                return log_oom();
+                }
+
+                features = l;
+                break;
+        }
+
+        default:
+                assert_not_reached();
+        }
+
+        if (strv_isempty(features)) {
+                log_debug("No features selected.");
+                return 0;
+        }
+
+        _cleanup_free_ char *dropin_dir = NULL;
+        r = make_dropin_dir(c, &dropin_dir);
+        if (r < 0)
+                return r;
+
+        int ret = 0;
+        STRV_FOREACH(name, features) {
+                if (!hashmap_contains(c->features, *name)) {
+                        RET_GATHER(ret, log_error_errno(SYNTHETIC_ERRNO(ENOENT), "Optional feature not found in component '%s': %s", context_component_display(c), *name));
+                        continue;
+                }
+
+                _cleanup_free_ char *fname = strjoin(*name, ".feature");
+                if (!fname)
+                        return log_oom();
+
+                /* We assume that no sysadmin will name their config 50-systemd-sysupdate-enabled.conf */
+                r = write_drop_in_format(
+                                dropin_dir,
+                                fname,
+                                50,
+                                "systemd-sysupdate-enabled",
+                                "# Generated via 'systemd-sysupdate %s'\n\n"
+                                "[Feature]\n"
+                                "Enabled=%s\n",
+                                argv0,
+                                yes_no(enable));
+                if (r < 0) {
+                        RET_GATHER(ret, log_error_errno(r, "Failed to write drop-in for feature '%s': %m", *name));
+                        continue;
+                }
+
+                log_info("Feature '%s' %s.", *name, enabled_disabled(enable));
+        }
+
+        return ret;
+}
+
+VERB(verb_enable_feature, "enable-feature", "FEATURE…", 1, VERB_ANY, 0,
+     "Enable optional feature");
+VERB(verb_enable_feature, "disable-feature", "FEATURE…", 1, VERB_ANY, 0,
+     "Disable optional feature");
+static int verb_enable_feature(int argc, char *argv[], uintptr_t _data, void *userdata) {
+        bool enable = streq(argv[0], "enable-feature");
+        int r;
+
+        _cleanup_(context_done) Context context = CONTEXT_NULL;
         r = context_from_cmdline(&context);
         if (r < 0)
                 return r;
 
-        if (context.component_all)
-                return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP), "--component-all currently not supported for '%s'.", argv[0]);
+        if (!IN_SET(context.component_select, SELECT_EXPLICIT, SELECT_ALL))
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "--component-suggested is not supported for '%s'.", argv[0]);
+        if (context.definitions)
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
+                                       "The --definitions= switch may not be combined with '%s'.", argv[0]);
+
+        char **features;
+        if (argc > 1 && context.feature_select == SELECT_EXPLICIT) {
+                features = strv_skip(argv, 1);
+
+                STRV_FOREACH(name, features)
+                        if (!feature_name_valid(*name))
+                                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Feature name invalid: %s", *name);
+
+        } else if (argc <= 1 && context.feature_select != SELECT_EXPLICIT)
+                features = NULL;
+        else
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Either specify features as positional parameter or via --feature-all/--feature-suggested, not both.");
+
+        r = context_load_offline(
+                        &context,
+                        /* process_image_flags= */ 0,
+                        /* read_definitions_flags= */ 0);
+        if (r < 0)
+                return r;
+
+        switch (context.component_select) {
+
+        case SELECT_EXPLICIT:
+                return context_enable_feature(&context, argv[0], enable, features);
+
+        case SELECT_ALL: {
+                _cleanup_strv_free_ char **component_names = NULL;
+                bool has_default_component;
+                r = context_list_components(&context, &component_names, &has_default_component);
+                if (r < 0)
+                        return r;
+
+                if (strv_isempty(component_names) && !has_default_component) {
+                        log_debug("No components selected.");
+                        return 0;
+                }
+
+                int ret = 0;
+                if (has_default_component)
+                        RET_GATHER(ret, context_enable_feature(&context, argv[0], enable, features));
+
+                STRV_FOREACH(name, component_names) {
+                        _cleanup_(context_done) Context cc = CONTEXT_NULL;
+
+                        r = context_from_base_with_component(&context, *name, &cc);
+                        if (r < 0) {
+                                RET_GATHER(ret, r);
+                                continue;
+                        }
+
+                        r = context_load_offline(
+                                        &cc,
+                                        /* process_image_flags= */ 0,
+                                        /* read_definitions_flags= */ 0);
+                        if (r < 0) {
+                                RET_GATHER(ret, r);
+                                continue;
+                        }
+
+                        RET_GATHER(ret, context_enable_feature(&cc, argv[0], enable, features));
+                }
+
+                return ret;
+        }
+
+        default:
+                assert_not_reached();
+        }
+}
+
+static int feature_to_json(Context *context, const Feature *f, sd_json_variant **ret) {
+        _cleanup_(sd_json_variant_unrefp) sd_json_variant *v = NULL;
+        _cleanup_strv_free_ char **transfers = NULL;
+        const char *documentation_strv[2] = { NULL, };
+        int r;
+
+        assert(context);
+        assert(f);
+        assert(ret);
+
+        r = context_get_transfers_for_feature(context, f->id, &transfers);
+        if (r < 0)
+                return r;
+
+        /* FIXME: Long term we’d like to support an array of documentation, but currently the D-Bus interface
+         * doesn’t support that and neither do the internals of sysupdate. So just expose 0 or 1 URLs for now. */
+        documentation_strv[0] = f->documentation;
+
+        r = sd_json_variant_merge_objectbo(
+                        &v,
+                        SD_JSON_BUILD_PAIR_STRING("id", f->id),
+                        JSON_BUILD_PAIR_STRING_NON_EMPTY("description", f->description),
+                        JSON_BUILD_PAIR_STRV_NON_EMPTY("documentation", (char **) documentation_strv),
+                        JSON_BUILD_PAIR_STRING_NON_EMPTY("appstream", f->appstream),
+                        SD_JSON_BUILD_PAIR_BOOLEAN("isEnabled", f->enabled),
+                        JSON_BUILD_PAIR_STRV_NON_EMPTY("transfers", transfers));
+        if (r < 0)
+                return log_oom();
+
+        *ret = TAKE_PTR(v);
+        return 1;
+}
+
+static int vl_method_list_features(sd_varlink *link, sd_json_variant *parameters, sd_varlink_method_flags_t flags, void *userdata) {
+        _cleanup_(context_done) Context context = CONTEXT_NULL;
+        Feature *f;
+        int r;
+
+        assert(link);
+
+        static const sd_json_dispatch_field dispatch_table[] = {
+                { "target", SD_JSON_VARIANT_OBJECT, dispatch_target_identifier, voffsetof(context, target_identifier), SD_JSON_MANDATORY },
+                {},
+        };
+
+        r = sd_varlink_dispatch(link, parameters, dispatch_table, &context);
+        if (r != 0)
+                return r;
+
+        /* Listing features doesn’t require a polkit check */
+
+        if (getenv_bool("SYSTEMD_SYSUPDATE_NO_VERIFY") > 0)
+                context.verify = 0;
+
+        /* ListFeatures is always offline */
+        context.offline = true;
+
+        r = context_load_offline_from_target(
+                        &context,
+                        PROCESS_IMAGE_READ_ONLY,
+                        READ_DEFINITIONS_REQUIRES_ANY_TRANSFERS);
+        if (r == -ENOENT)
+                return sd_varlink_error(link, "io.systemd.SysUpdate.NoSuchTarget", NULL);
+        if (r < 0)
+                return r;
+
+        _cleanup_(sd_json_variant_unrefp) sd_json_variant *l = NULL;
+
+        HASHMAP_FOREACH(f, context.features) {
+                _cleanup_(sd_json_variant_unrefp) sd_json_variant *v = NULL;
+
+                r = feature_to_json(&context, f, &v);
+                if (r < 0)
+                        return r;
+
+                r = sd_json_variant_append_array(&l, v);
+                if (r < 0)
+                        return r;
+        }
+
+        if (!l) {
+                r = sd_json_variant_new_array(&l, NULL, 0);
+                if (r < 0)
+                        return r;
+        }
+
+        return sd_varlink_replybo(link,
+                        SD_JSON_BUILD_PAIR_VARIANT("features", l));
+}
+
+VERB_NOARG(verb_check_new, "check-new",
+           "Check if there's a new version available");
+static int verb_check_new(int argc, char *argv[], uintptr_t _data, void *userdata) {
+        int r;
+
+        assert(argc <= 1);
+
+        _cleanup_(context_done) Context context = CONTEXT_NULL;
+        r = context_from_cmdline(&context);
+        if (r < 0)
+                return r;
+
+        if (context.feature_select != SELECT_EXPLICIT)
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "--feature-all/--feature-suggested is not supported for '%s'.", argv[0]);
+        if (context.component_select != SELECT_EXPLICIT)
+                return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP), "--component-all/--component-suggested currently not supported for '%s'.", argv[0]);
 
         r = context_load_online(
                         &context,
-                        PROCESS_IMAGE_READ_ONLY);
+                        PROCESS_IMAGE_READ_ONLY,
+                        READ_DEFINITIONS_REQUIRES_ENABLED_TRANSFERS|
+                        READ_DEFINITIONS_REQUIRES_ANY_TRANSFERS);
         if (r < 0)
                 return r;
 
@@ -1919,7 +2566,11 @@ static int vl_method_check_new(sd_varlink *link, sd_json_variant *parameters, sd
         /* CheckNew is always online */
         context.offline = false;
 
-        r = context_load_online_from_target(&context, PROCESS_IMAGE_READ_ONLY);
+        r = context_load_online_from_target(
+                        &context,
+                        PROCESS_IMAGE_READ_ONLY,
+                        READ_DEFINITIONS_REQUIRES_ENABLED_TRANSFERS|
+                        READ_DEFINITIONS_REQUIRES_ANY_TRANSFERS);
         if (r == -ENOENT)
                 return sd_varlink_error(link, "io.systemd.SysUpdate.NoSuchTarget", NULL);
         if (r < 0)
@@ -1940,43 +2591,24 @@ typedef enum {
         UPDATE_ACTION_INSTALL = 1 << 1,
 } UpdateActionFlags;
 
-static int verb_update_impl(int argc, char **argv, UpdateActionFlags action_flags) {
-        _cleanup_(context_done) Context context = CONTEXT_NULL;
-        _cleanup_free_ char *booted_version = NULL;
+static int context_update(
+                Context *c,
+                const char *version,
+                const char *booted_version,
+                UpdateActionFlags action_flags) {
+
         UpdateSet *applied = NULL;
-        const char *version;
-        int r;
-
-        assert(argc <= 2);
-        version = argc >= 2 ? argv[1] : NULL;
-
-        r = context_from_cmdline(&context);
-        if (r < 0)
-                return r;
-
-        if (context.component_all)
-                return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP), "--component-all currently not supported for '%s'.", argv[0]);
-
-        if (context.instances_max < 2)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
-                                      "The --instances-max argument must be >= 2 while updating");
-
-        if (context.reboot) {
-                /* If automatic reboot on completion is requested, let's first determine the currently booted image */
-
-                r = parse_os_release(context.root, "IMAGE_VERSION", &booted_version);
-                if (r < 0)
-                        return log_error_errno(r, "Failed to parse /etc/os-release: %m");
-                if (!booted_version)
-                        return log_error_errno(SYNTHETIC_ERRNO(ENODATA), "/etc/os-release lacks IMAGE_VERSION field.");
-        }
-
         bool installed = false;
-        int ret = 0;
+        int r, ret = 0;
+
+        assert(c);
 
         r = context_load_online(
-                        &context,
-                        /* process_image_flags= */ 0);
+                        c,
+                        /* process_image_flags= */ 0,
+                        READ_DEFINITIONS_REQUIRES_ENABLED_TRANSFERS|
+                        READ_DEFINITIONS_REQUIRES_ANY_TRANSFERS|
+                        READ_DEFINITIONS_REQUIRES_ENABLED_COMPONENT);
         if (r < 0) {
                 if (r != -ENOENT)
                         return r;
@@ -1984,15 +2616,15 @@ static int verb_update_impl(int argc, char **argv, UpdateActionFlags action_flag
                 /* No transfer files found. In that case, still do the installdb cleanup below */
                 RET_GATHER(ret, r);
         } else {
-                if (action_flags & UPDATE_ACTION_ACQUIRE)
-                        r = context_acquire(&context, version);
+                if (FLAGS_SET(action_flags, UPDATE_ACTION_ACQUIRE))
+                        r = context_acquire(c, version);
                 else
-                        r = context_process_partial_and_pending(&context, version);
+                        r = context_process_partial_and_pending(c, version);
                 if (r < 0)
                         return r;
 
                 if (FLAGS_SET(action_flags, UPDATE_ACTION_INSTALL) && r > 0) { /* installation of update indicated */
-                        r = context_install(&context, version, &applied);
+                        r = context_install(c, version, &applied);
                         if (r < 0)
                                 return r;
 
@@ -2002,22 +2634,22 @@ static int verb_update_impl(int argc, char **argv, UpdateActionFlags action_flag
                 /* context_install() returns > 0 (and emits a notification) only if it actually applied an update. If
                  * nothing was applied but SYSTEMD_SYSUPDATE_FORCE_NOTIFY=1 is set, still notify subscribers (without a
                  * resource list), so e.g. a kernel/policy refresh can be triggered unconditionally. */
-                if ((action_flags & UPDATE_ACTION_INSTALL) && !installed) {
+                if (FLAGS_SET(action_flags, UPDATE_ACTION_INSTALL) && !installed) {
                         int f = secure_getenv_bool("SYSTEMD_SYSUPDATE_FORCE_NOTIFY");
                         if (f < 0 && f != -ENXIO)
                                 log_debug_errno(f, "Failed to parse $SYSTEMD_SYSUPDATE_FORCE_NOTIFY, ignoring: %m");
                         if (f > 0)
-                                (void) context_notify_subscribers(&context, /* us= */ NULL);
+                                (void) context_notify_subscribers(c, /* us= */ NULL);
                 }
         }
 
-        if (context.cleanup > 0)
-                RET_GATHER(ret, installdb_cleanup_component(&context));
+        if (c->cleanup > 0)
+                RET_GATHER(ret, installdb_cleanup_component(c));
 
         if (installed) {
                 /* We installed something, yay */
 
-                if (context.reboot) {
+                if (c->reboot) {
                         assert(applied);
                         assert(booted_version);
 
@@ -2034,6 +2666,89 @@ static int verb_update_impl(int argc, char **argv, UpdateActionFlags action_flag
         }
 
         return ret;
+}
+
+static int verb_update_impl(int argc, char **argv, UpdateActionFlags action_flags) {
+        const char *version;
+        int r;
+
+        assert(argc <= 2);
+        version = argc >= 2 ? argv[1] : NULL;
+
+        _cleanup_(context_done) Context context = CONTEXT_NULL;
+        r = context_from_cmdline(&context);
+        if (r < 0)
+                return r;
+
+        if (context.feature_select != SELECT_EXPLICIT)
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "--feature-all/--feature-suggested is not supported for '%s'.", argv[0]);
+        if (!IN_SET(context.component_select, SELECT_EXPLICIT, SELECT_ALL))
+                return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP), "--component-suggested currently not supported for '%s'.", argv[0]);
+
+        if (context.instances_max < 2)
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
+                                      "The --instances-max= argument must be >= 2 while updating");
+
+        _cleanup_free_ char *booted_version = NULL;
+        if (context.reboot) {
+                /* We already checked in parse_argv() that --component=/--component-all/--component-suggested
+                 * are not combined with --reboot */
+                assert(!context.component);
+                assert(context.component_select == SELECT_EXPLICIT);
+
+                /* If automatic reboot on completion is requested, let's first determine the currently booted image */
+
+                r = parse_os_release(context.root, "IMAGE_VERSION", &booted_version);
+                if (r < 0)
+                        return log_error_errno(r, "Failed to parse /etc/os-release: %m");
+                if (!booted_version)
+                        return log_error_errno(SYNTHETIC_ERRNO(ENODATA), "/etc/os-release lacks IMAGE_VERSION field.");
+        }
+
+        switch (context.component_select) {
+
+        case SELECT_EXPLICIT:
+                return context_update(&context, version, booted_version, action_flags);
+
+        case SELECT_ALL: {
+                int ret = 0;
+
+                /* Update the default, component-less installation first (if any). Running it before the
+                 * enumeration below also ensures the image (if any) is mounted and context.root is set, so
+                 * that we enumerate the components inside the image rather than on the host. A missing
+                 * default installation (ENOENT) is not an error in this mode. */
+                r = context_update(&context, version, booted_version, action_flags);
+                if (r != -ENOENT)
+                        RET_GATHER(ret, r);
+
+                _cleanup_strv_free_ char **component_names = NULL;
+                r = context_list_components(&context, &component_names, /* ret_has_default_component= */ NULL);
+                if (r < 0) {
+                        RET_GATHER(ret, r);
+                        return ret;
+                }
+
+                STRV_FOREACH(name, component_names) {
+                        _cleanup_(context_done) Context cc = CONTEXT_NULL;
+
+                        r = context_from_base_with_component(&context, *name, &cc);
+                        if (r < 0) {
+                                RET_GATHER(ret, r);
+                                continue;
+                        }
+
+                        r = context_update(&cc, version, booted_version, action_flags);
+                        if (r == -EHOSTDOWN) /* Component disabled → skip it in the "all" case. */
+                                continue;
+                        RET_GATHER(ret, r);
+                }
+
+                return ret;
+        }
+
+        default:
+                assert_not_reached();
+        }
 }
 
 VERB(verb_update, "update", "[VERSION]", VERB_ANY, 2, 0,
@@ -2065,12 +2780,14 @@ static int verb_vacuum(int argc, char *argv[], uintptr_t _data, void *userdata) 
         if (r < 0)
                 return r;
 
-        if (context.component_all)
-                return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP), "--component-all currently not supported for '%s'.", argv[0]);
+        if (context.feature_select != SELECT_EXPLICIT)
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "--feature-all/--feature-suggested is not supported for '%s'.", argv[0]);
+        if (context.component_select != SELECT_EXPLICIT)
+                return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP), "--component-all/--component-suggested currently not supported for '%s'.", argv[0]);
 
         if (context.instances_max < 1)
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
-                                      "The --instances-max argument must be >= 1 while vacuuming");
+                                      "The --instances-max= argument must be >= 1 while vacuuming");
 
         r = context_load_offline(
                         &context,
@@ -2080,6 +2797,68 @@ static int verb_vacuum(int argc, char *argv[], uintptr_t _data, void *userdata) 
                 return r;
 
         return context_vacuum(&context, 0, NULL);
+}
+
+VERB_NOARG(verb_cleanup, "cleanup", "Clean up orphaned files");
+static int verb_cleanup(int argc, char *argv[], uintptr_t _data, void *userdata) {
+        _cleanup_(context_done) Context context = CONTEXT_NULL;
+        int r;
+
+        assert(argc <= 1);
+
+        r = context_from_cmdline(&context);
+        if (r < 0)
+                return r;
+
+        if (context.cleanup == 0)
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Invocation of 'cleanup' with --cleanup=no is contradictory, refusing.");
+
+        if (context.feature_select != SELECT_EXPLICIT)
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "--feature-all/--feature-suggested is not supported for '%s'.", argv[0]);
+        if (!IN_SET(context.component_select, SELECT_EXPLICIT, SELECT_ALL))
+                return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP), "--component-suggested currently not supported for '%s'.", argv[0]);
+
+        r = context_load_offline(
+                        &context,
+                        /* process_image_flags= */ 0,
+                        /* read_definitions_flags= */ 0);
+        if (r < 0)
+                return r;
+
+        int ret = 0;
+        RET_GATHER(ret, installdb_cleanup_component(&context));
+
+        if (context.component_select == SELECT_ALL) {
+                _cleanup_strv_free_ char **z = NULL;
+                r = installdb_list_components(&context, &z);
+                if (r < 0)
+                        return log_error_errno(r, "Failed to enumerate components: %m");
+
+                STRV_FOREACH(i, z) {
+                        _cleanup_(context_done) Context component_context = CONTEXT_NULL;
+
+                        r = context_from_cmdline(&component_context);
+                        if (r < 0)
+                                return r;
+
+                        /* Override the component with our iter. This needs to be done in a fresh Context
+                         * as the installdb_fd and other state are specific to the component. */
+                        r = free_and_strdup_warn(&component_context.component, *i);
+                        if (r < 0)
+                                return r;
+
+                        r = context_load_offline(
+                                        &component_context,
+                                        /* process_image_flags= */ 0,
+                                        /* read_definitions_flags= */ 0);
+                        if (r < 0)
+                                return r;
+
+                        RET_GATHER(ret, installdb_cleanup_component(&component_context));
+                }
+        }
+
+        return ret;
 }
 
 VERB(verb_pending_or_reboot, "pending", NULL, 1, 1, 0,
@@ -2101,14 +2880,18 @@ static int verb_pending_or_reboot(int argc, char *argv[], uintptr_t _data, void 
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
                                        "The --root=/--image= switches may not be combined with the '%s' operation.", argv[0]);
 
-        if (context.component || context.component_all)
+        if (context.feature_select != SELECT_EXPLICIT)
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "--feature-all/--feature-suggested is not supported for '%s'.", argv[0]);
+        if (context.component || context.component_select != SELECT_EXPLICIT)
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
-                                       "The --component= and --component-all switches may not be combined with the '%s' operation, which only applies to the booted OS version.", argv[0]);
+                                       "The --component=, --component-all and --component-suggested switches may not be combined with the '%s' operation, which only applies to the booted OS version.", argv[0]);
 
         r = context_load_offline(
                         &context,
                         /* process_image_flags= */ 0,
-                        READ_DEFINITIONS_REQUIRES_ENABLED_TRANSFERS|READ_DEFINITIONS_REQUIRES_ANY_TRANSFERS);
+                        READ_DEFINITIONS_REQUIRES_ENABLED_TRANSFERS|
+                        READ_DEFINITIONS_REQUIRES_ANY_TRANSFERS|
+                        READ_DEFINITIONS_REQUIRES_ENABLED_COMPONENT);
         if (r < 0)
                 return r;
 
@@ -2176,22 +2959,41 @@ static int context_list_components(Context *context, char ***ret_component_names
         return 0;
 }
 
+static int context_component_is_suggested(Context *c) {
+        assert(c);
+
+        /* Only applies to components, not to the main system */
+        if (!c->component)
+                return -ENOTTY;
+
+        if (c->component_suggest >= 0)
+                return c->component_suggest;
+
+        if (!c->component_suggest_on) /* no condition → false */
+                return false;
+
+        return condition_test_list(c->component_suggest_on, environ, suggest_on_type_to_string, /* logger= */ NULL, /* userdata= */ NULL);
+}
+
 VERB_NOARG(verb_components, "components",
            "Show list of components");
 static int verb_components(int argc, char *argv[], uintptr_t _data, void *userdata) {
-        _cleanup_(context_done) Context context = CONTEXT_NULL;
-        _cleanup_strv_free_ char **component_names = NULL;
-        bool has_default_component = false;
         int r;
 
         assert(argc <= 1);
 
+        _cleanup_(context_done) Context context = CONTEXT_NULL;
         r = context_from_cmdline(&context);
         if (r < 0)
                 return r;
 
-        if (context.component_all)
-                return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP), "--component-all currently not supported for '%s'.", argv[0]);
+        if (context.feature_select != SELECT_EXPLICIT)
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "--feature-all/--feature-suggested is not supported for '%s'.", argv[0]);
+        if (context.component_select != SELECT_EXPLICIT)
+                return log_error_errno(SYNTHETIC_ERRNO(EOPNOTSUPP), "--component-all/--component-suggested currently not supported for '%s'.", argv[0]);
+        if (context.definitions)
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
+                                       "The --definitions= switch may not be combined with '%s'.", argv[0]);
 
         r = context_load_offline(
                         &context,
@@ -2200,6 +3002,8 @@ static int verb_components(int argc, char *argv[], uintptr_t _data, void *userda
         if (r < 0)
                 return r;
 
+        _cleanup_strv_free_ char **component_names = NULL;
+        bool has_default_component = false;
         r = context_list_components(&context, &component_names, &has_default_component);
         if (r < 0)
                 return log_error_errno(r, "Failed to enumerate components: %m");
@@ -2210,12 +3014,72 @@ static int verb_components(int argc, char *argv[], uintptr_t _data, void *userda
                         return 0;
                 }
 
-                if (has_default_component)
-                        printf("%s<default>%s\n",
-                               ansi_highlight(), ansi_normal());
+                _cleanup_(table_unrefp) Table *t = table_new("enabled", "suggested", "component", "description", "documentation");
+                if (!t)
+                        return log_oom();
 
-                STRV_FOREACH(i, component_names)
-                        puts(*i);
+                table_set_ersatz_string(t, TABLE_ERSATZ_DASH);
+
+                if (has_default_component) {
+                        r = table_add_many(
+                                        t,
+                                        TABLE_EMPTY,
+                                        TABLE_EMPTY,
+                                        TABLE_STRING, "<default>",
+                                        TABLE_SET_COLOR, ansi_highlight(),
+                                        TABLE_STRING, "Default Component",
+                                        TABLE_EMPTY);
+                        if (r < 0)
+                                return table_log_add_error(r);
+                }
+
+                STRV_FOREACH(i, component_names) {
+                        _cleanup_(context_done) Context cc = CONTEXT_NULL;
+
+                        r = context_from_base_with_component(
+                                        &context,
+                                        *i,
+                                        &cc);
+                        if (r < 0)
+                                return r;
+
+                        r = context_load_offline(
+                                        &cc,
+                                        /* process_image_flags= */ 0,
+                                        /* read_definitions_flags= */ 0);
+                        if (r == -ENOMEM)
+                                return r;
+                        if (r < 0)
+                                continue;
+
+                        r = table_add_many(
+                                        t,
+                                        TABLE_BOOLEAN_CHECKMARK, cc.component_enabled,
+                                        TABLE_SET_COLOR, ansi_highlight_green_red(cc.component_enabled));
+                        if (r < 0)
+                                return table_log_add_error(r);
+
+                        r = context_component_is_suggested(&cc);
+                        if (r < 0)
+                                r = table_add_many(t, TABLE_EMPTY);
+                        else
+                                r = table_add_many(t, TABLE_BOOLEAN_CHECKMARK, r);
+                        if (r < 0)
+                                return table_log_add_error(r);
+
+                        const char *doc = cc.component_documentation ? cc.component_documentation[0] : NULL;
+
+                        r = table_add_many(
+                                        t,
+                                        TABLE_STRING, *i,
+                                        TABLE_STRING, cc.component_description,
+                                        TABLE_STRING, doc,
+                                        TABLE_SET_URL, doc);
+                        if (r < 0)
+                                return table_log_add_error(r);
+                }
+
+                return table_print_with_pager(t, arg_json_format_flags, arg_pager_flags, arg_legend);
         } else {
                 _cleanup_(sd_json_variant_unrefp) sd_json_variant *json = NULL;
 
@@ -2232,19 +3096,108 @@ static int verb_components(int argc, char *argv[], uintptr_t _data, void *userda
         return 0;
 }
 
-VERB_NOARG(verb_cleanup, "cleanup", "Clean up orphaned files");
-static int verb_cleanup(int argc, char *argv[], uintptr_t _data, void *userdata) {
+static int vl_method_list_targets(sd_varlink *link, sd_json_variant *parameters, sd_varlink_method_flags_t flags, void *userdata) {
         _cleanup_(context_done) Context context = CONTEXT_NULL;
+        _cleanup_set_free_ Set *targets = NULL;
         int r;
 
-        assert(argc <= 1);
+        assert(link);
 
+        r = sd_varlink_dispatch(link, parameters, NULL, NULL);
+        if (r != 0)
+                return r;
+
+        /* Listing targets doesn’t require a polkit check */
+
+        if (getenv_bool("SYSTEMD_SYSUPDATE_NO_VERIFY") > 0)
+                context.verify = 0;
+
+        /* ListTargets is always offline */
+        context.offline = true;
+
+        r = context_load_offline(
+                        &context,
+                        PROCESS_IMAGE_READ_ONLY,
+                        /* read_definitions_flags= */ 0);
+        if (r < 0)
+                return r;
+
+        _cleanup_(sd_json_variant_unrefp) sd_json_variant *l = NULL;
+
+        r = context_enumerate_targets(&context, &targets);
+        if (r < 0)
+                return r;
+
+        /* Sort to ensure consistent ordering */
+        size_t n;
+        _cleanup_free_ TargetIdentifier **sorted = NULL;
+        r = set_dump_sorted(targets, (void***) &sorted, &n);
+        if (r < 0)
+                return log_oom();
+
+        FOREACH_ARRAY(p, sorted, n) {
+                TargetIdentifier *target_identifier = *p;
+                const char *name = (target_identifier->class != TARGET_HOST) ? target_identifier->name : NULL;
+
+                r = sd_json_variant_append_arraybo(&l,
+                                SD_JSON_BUILD_PAIR_OBJECT("id",
+                                                JSON_BUILD_PAIR_ENUM("class", target_class_to_string(target_identifier->class)),
+                                                SD_JSON_BUILD_PAIR_STRING("name", name)));
+                if (r < 0)
+                        return r;
+        }
+
+        if (!l) {
+                r = sd_json_variant_new_array(&l, NULL, 0);
+                if (r < 0)
+                        return r;
+        }
+
+        return sd_varlink_replybo(link,
+                        SD_JSON_BUILD_PAIR_VARIANT("targets", l));
+}
+
+VERB(verb_enable_component, "enable-component", "COMPONENT…", 1, VERB_ANY, 0,
+     "Enable component");
+VERB(verb_enable_component, "disable-component", "COMPONENT…", 1, VERB_ANY, 0,
+     "Disable component");
+static int verb_enable_component(int argc, char *argv[], uintptr_t _data, void *userdata) {
+        bool enable = streq(argv[0], "enable-component");
+        int r;
+
+        _cleanup_(context_done) Context context = CONTEXT_NULL;
         r = context_from_cmdline(&context);
         if (r < 0)
                 return r;
 
-        if (context.cleanup == 0)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Invocation of 'cleanup' with --cleanup=no is contradictory, refusing.");
+        if (context.feature_select != SELECT_EXPLICIT)
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "--feature-all/--feature-suggested is not supported for '%s'.", argv[0]);
+        if (context.definitions)
+                return log_error_errno(SYNTHETIC_ERRNO(EINVAL),
+                                       "The --definitions= switch may not be combined with '%s'.", argv[0]);
+
+        char **arguments, *array[2];
+        if (argc > 1) {
+                if (context.component || context.component_select != SELECT_EXPLICIT)
+                        return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Either specify component names as positional parameter or via --component=/--component-all/--component-suggested, not both.");
+
+                arguments = strv_skip(argv, 1);
+
+        } else if (context.component_select == SELECT_EXPLICIT) {
+                if (!context.component)
+                        return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "No component specified.");
+
+                array[0] = context.component;
+                array[1] = NULL;
+                arguments = array;
+        } else {
+                assert(!context.component);
+                arguments = NULL;
+        }
+
+        STRV_FOREACH(name, arguments)
+                if (!component_name_valid(*name))
+                        return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Component name invalid: %s", *name);
 
         r = context_load_offline(
                         &context,
@@ -2253,40 +3206,102 @@ static int verb_cleanup(int argc, char *argv[], uintptr_t _data, void *userdata)
         if (r < 0)
                 return r;
 
-        int ret = 0;
-        RET_GATHER(ret, installdb_cleanup_component(&context));
+        _cleanup_strv_free_ char **component_names = NULL;
+        r = context_list_components(&context, &component_names, /* ret_has_default_component= */ NULL);
+        if (r < 0)
+                return r;
 
-        if (context.component_all) {
-                _cleanup_strv_free_ char **z = NULL;
-                r = installdb_list_components(&context, &z);
-                if (r < 0)
-                        return log_error_errno(r, "Failed to enumerate components: %m");
+        _cleanup_strv_free_ char **suggested = NULL;
 
-                STRV_FOREACH(i, z) {
-                        _cleanup_(context_done) Context component_context = CONTEXT_NULL;
+        switch (context.component_select) {
 
-                        r = context_from_cmdline(&component_context);
-                        if (r < 0)
-                                return r;
+        case SELECT_EXPLICIT:
+                STRV_FOREACH(name, arguments)
+                        if (!strv_contains(component_names, *name))
+                                return log_error_errno(SYNTHETIC_ERRNO(ENOENT), "Component not found: %s", *name);
+                break;
 
-                        /* Override the component with our iter. This needs to be done in a fresh Context
-                         * as the installdb_fd and other state are specific to the component. */
-                        r = free_and_strdup_warn(&component_context.component, *i);
+        case SELECT_ALL:
+                assert(!arguments);
+                arguments = component_names;
+                break;
+
+        case SELECT_SUGGESTED:
+                assert(!arguments);
+                STRV_FOREACH(name, component_names) {
+                        _cleanup_(context_done) Context cc = CONTEXT_NULL;
+
+                        r = context_from_base_with_component(&context, *name, &cc);
                         if (r < 0)
                                 return r;
 
                         r = context_load_offline(
-                                        &component_context,
+                                        &cc,
                                         /* process_image_flags= */ 0,
                                         /* read_definitions_flags= */ 0);
                         if (r < 0)
-                                return r;
+                                continue;
 
-                        RET_GATHER(ret, installdb_cleanup_component(&component_context));
+                        r = context_component_is_suggested(&cc);
+                        if (r < 0) {
+                                log_warning_errno(r, "Failed to determine whether '%s' shall be enabled, skipping: %m", *name);
+                                continue;
+                        }
+
+                        /* This reconciles the system with the suggestions: on 'enable-component' we act on
+                         * the components that are suggested, on 'disable-component' we act on the ones that
+                         * are not. Hence pick the components whose suggestion state matches the operation. */
+                        if (!!r != !!enable) {
+                                log_debug("Skipping '%s'.", *name);
+                                continue;
+                        }
+
+                        log_info("%s '%s'.", enable ? "Enabling" : "Disabling", *name);
+
+                        if (strv_extend(&suggested, *name) < 0)
+                                return log_oom();
                 }
+
+                arguments = suggested;
+                break;
+
+        default:
+                assert_not_reached();
         }
 
-        return ret;
+        if (strv_isempty(arguments)) {
+                log_info("No components selected.");
+                return 0;
+        }
+
+        /* Component definition files live directly below the configuration directories, hence the drop-in
+         * goes right next to them below /etc. */
+        _cleanup_free_ char *dropin_dir = path_join(context.root, SYSCONF_DIR);
+        if (!dropin_dir)
+                return log_oom();
+
+        STRV_FOREACH(name, arguments) {
+                _cleanup_free_ char *fname = strjoin("sysupdate.", *name, ".component");
+                if (!fname)
+                        return log_oom();
+
+                /* We assume that no sysadmin will name their config 50-systemd-sysupdate-enabled.conf */
+                r = write_drop_in_format(
+                                dropin_dir,
+                                fname,
+                                50, "systemd-sysupdate-enabled",
+                                "# Generated via 'systemd-sysupdate %s'\n\n"
+                                "[Component]\n"
+                                "Enabled=%s\n",
+                                argv[0],
+                                yes_no(enable));
+                if (r < 0)
+                        return log_error_errno(r, "Failed to write drop-in for component '%s': %m", *name);
+
+                log_info("Component '%s' %s.", *name, enable ? "enabled" : "disabled");
+        }
+
+        return 0;
 }
 
 static int help(void) {
@@ -2354,7 +3369,7 @@ static int parse_argv(int argc, char *argv[], char ***remaining_args) {
                        "Select component to update"):
                         if (isempty(opts.arg)) {
                                 arg_component = mfree(arg_component);
-                                arg_component_all = false;
+                                arg_component_select = SELECT_EXPLICIT;
                                 break;
                         }
 
@@ -2365,13 +3380,25 @@ static int parse_argv(int argc, char *argv[], char ***remaining_args) {
                         if (r < 0)
                                 return r;
 
-                        arg_component_all = false;
+                        arg_component_select = SELECT_EXPLICIT;
                         break;
 
-                OPTION('A', "component-all", NULL, "Process all components"):
-
+                OPTION('A', "component-all", NULL, "Select all components"):
                         arg_component = mfree(arg_component);
-                        arg_component_all = true;
+                        arg_component_select = SELECT_ALL;
+                        break;
+
+                OPTION('S', "component-suggested", NULL, "Select all suggested components"):
+                        arg_component = mfree(arg_component);
+                        arg_component_select = SELECT_SUGGESTED;
+                        break;
+
+                OPTION('a', "feature-all", NULL, "Select all features"):
+                        arg_feature_select = SELECT_ALL;
+                        break;
+
+                OPTION('s', "feature-suggested", NULL, "Select all suggested features"):
+                        arg_feature_select = SELECT_SUGGESTED;
                         break;
 
                 OPTION_LONG("definitions", "DIR",
@@ -2477,14 +3504,21 @@ static int parse_argv(int argc, char *argv[], char ***remaining_args) {
         if (arg_image && arg_root)
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "Please specify either --root= or --image=, the combination of both is not supported.");
 
-        if ((arg_image || arg_root) && arg_reboot)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "The --reboot switch may not be combined with --root= or --image=.");
+        if (arg_image || arg_root) {
+                if (arg_reboot)
+                        return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "The --reboot switch may not be combined with --root= or --image=.");
 
-        if (arg_reboot && arg_component)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "The --reboot switch may not be combined with --component=, as automatic reboots only apply to the booted OS version.");
+                if (arg_definitions)
+                        return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "The --definitions= switch may not be combined with --root= or --image=.");
+        }
 
-        if (arg_definitions && arg_component)
-                return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "The --definitions= and --component= switches may not be combined.");
+        if ((arg_component || arg_component_select != SELECT_EXPLICIT)) {
+                if (arg_reboot)
+                        return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "The --reboot switch may not be combined with --component=/--component-all/--component-suggested, as automatic reboots only apply to the booted OS version.");
+
+                if (arg_definitions)
+                        return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "The --definitions= and --component=/--component-all/--component-suggested switches may not be combined.");
+        }
 
         r = sd_varlink_invocation(SD_VARLINK_ALLOW_ACCEPT);
         if (r < 0)
@@ -2513,7 +3547,9 @@ static int vl_server(void) {
 
         r = sd_varlink_server_bind_method_many(
                         varlink_server,
-                        "io.systemd.SysUpdate.CheckNew", vl_method_check_new);
+                        "io.systemd.SysUpdate.CheckNew",     vl_method_check_new,
+                        "io.systemd.SysUpdate.ListFeatures", vl_method_list_features,
+                        "io.systemd.SysUpdate.ListTargets",  vl_method_list_targets);
         if (r < 0)
                 return log_error_errno(r, "Failed to bind Varlink method: %m");
 
@@ -2526,6 +3562,17 @@ static int vl_server(void) {
 
 static int run(int argc, char *argv[]) {
         int r;
+
+        LIBAPPARMOR_NOTE(recommended);
+        LIBAUDIT_NOTE(recommended);
+        LIBBLKID_NOTE(recommended);
+        LIBCRYPTO_NOTE(suggested);
+        LIBCRYPTSETUP_NOTE(suggested);
+        LIBMOUNT_NOTE(recommended);
+        LIBSELINUX_NOTE(recommended);
+        LIBTSS2_ESYS_NOTE(suggested);
+        LIBTSS2_MU_NOTE(suggested);
+        LIBTSS2_RC_NOTE(suggested);
 
         log_setup();
 

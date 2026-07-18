@@ -306,7 +306,7 @@ static int manager_dispatch_ask_password_fd(sd_event_source *source,
         m->have_ask_password = have_ask_password();
         if (m->have_ask_password < 0)
                 /* Log error but continue. Negative have_ask_password is treated as unknown status. */
-                log_warning_errno(m->have_ask_password, "Failed to list /run/systemd/ask-password/, ignoring: %m");
+                log_warning_errno(m->have_ask_password, "Failed to list " RUNSTATEDIR "/systemd/ask-password/, ignoring: %m");
 
         return 0;
 }
@@ -347,11 +347,11 @@ static int manager_check_ask_password(Manager *m) {
                                 manager_dispatch_ask_password_fd,
                                 m);
                 if (r < 0)
-                        return log_error_errno(r, "Failed to add event source for /run/systemd/ask-password/: %m");
+                        return log_error_errno(r, "Failed to add event source for " RUNSTATEDIR "/systemd/ask-password/: %m");
 
                 r = sd_event_source_set_io_fd_own(event_source, true);
                 if (r < 0)
-                        return log_error_errno(r, "Failed to pass ownership of /run/systemd/ask-password/ inotify fd to event source: %m");
+                        return log_error_errno(r, "Failed to pass ownership of " RUNSTATEDIR "/systemd/ask-password/ inotify fd to event source: %m");
                 TAKE_FD(inotify_fd);
 
                 (void) sd_event_source_set_description(event_source, "manager-ask-password");
@@ -1520,7 +1520,7 @@ static int manager_ratelimit_check_and_queue(Unit *u) {
         r = sd_event_add_time(
                         u->manager->event,
                         &u->auto_start_stop_event_source,
-                        CLOCK_MONOTONIC,
+                        CLOCK_BOOTTIME,
                         ratelimit_end(&u->auto_start_stop_ratelimit),
                         0,
                         manager_ratelimit_requeue,
@@ -4848,19 +4848,30 @@ fail:
 }
 
 void manager_set_first_boot(Manager *m, bool b) {
+        int r;
+
         assert(m);
 
         if (!MANAGER_IS_SYSTEM(m))
                 return;
 
         if (m->first_boot != (int) b) {
-                if (b)
-                        (void) touch(RUNSTATEDIR "/systemd/first-boot");
-                else
-                        (void) unlink(RUNSTATEDIR "/systemd/first-boot");
+                r = update_first_boot_file(b);
+                if (r < 0)
+                        log_warning_errno(r, "Failed to update the first-boot file, ignoring: %m");
         }
 
         m->first_boot = b;
+}
+
+int update_first_boot_file(bool b) {
+        if (b)
+                return touch(RUNSTATEDIR "/systemd/first-boot");
+
+        if (unlink(RUNSTATEDIR "/systemd/first-boot") < 0 && errno != ENOENT)
+                return -errno;
+
+        return 0;
 }
 
 void manager_disable_confirm_spawn(void) {

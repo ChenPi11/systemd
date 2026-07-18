@@ -20,6 +20,10 @@ fi
 unsquashfs -force -no-xattrs -d /tmp/minimal_0 /usr/share/minimal_0.raw
 unsquashfs -force -no-xattrs -d /tmp/minimal_1 /usr/share/minimal_1.raw
 
+rm -rf /tmp/mismatched-name
+cp -a /tmp/minimal_0 /tmp/mismatched-name
+portablectl inspect /tmp/mismatched-name | grep -F "minimal-app0.service" >/dev/null
+
 portablectl "${ARGS[@]}" attach --copy=symlink --now --runtime /tmp/minimal_0 minimal-app0
 
 systemctl is-active minimal-app0.service
@@ -144,9 +148,17 @@ portablectl detach --now --runtime --extension /tmp/app0 /tmp/rootdir app0
 # Provides coverage for https://github.com/systemd/systemd/issues/23481
 portablectl "${ARGS[@]}" attach --copy=symlink --now --runtime /tmp/rootdir minimal-app0
 portablectl detach --now --runtime --enable /tmp/rootdir minimal-app0
-# attach and detach again to check if all drop-in configs are removed even if the main unit files are removed
+# Attach and detach again to check if drop-in-only leftovers are still recognized and removed.
 portablectl "${ARGS[@]}" attach --copy=symlink --now --runtime /tmp/rootdir minimal-app0
+rm /run/systemd/system.attached/minimal-app0*.service
+status="$(portablectl is-attached --runtime /tmp/rootdir)"
+[[ "${status}" == "running-runtime" ]]
+systemctl stop minimal-app0.service minimal-app0-foo.service
+status="$(portablectl is-attached --runtime /tmp/rootdir)"
+[[ "${status}" == "attached-runtime" ]]
 portablectl detach --now --runtime --enable /tmp/rootdir minimal-app0
+[[ ! -d /run/systemd/system.attached/minimal-app0.service.d ]]
+[[ ! -d /run/systemd/system.attached/minimal-app0-foo.service.d ]]
 
 # The wrong file should be ignored, given the right one has the xattr set
 trap 'rm -rf /var/cache/wrongext' EXIT

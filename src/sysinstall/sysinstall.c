@@ -15,6 +15,7 @@
 #include "chase.h"
 #include "conf-files.h"
 #include "constants.h"
+#include "dlopen-note.h"
 #include "efi-loader.h"
 #include "efivars.h"
 #include "env-file.h"
@@ -1875,6 +1876,12 @@ static int vl_method_list_candidate_devices(
         if (r < 0)
                 return r;
 
+        /* Disable connection timeout so that the connection to repart doesn't close before the link is
+         * disconnected */
+        r = sd_varlink_set_relative_timeout(context->repart_link, UINT64_MAX);
+        if (r < 0)
+                return r;
+
         /* The context is freed in vl_on_disconnect() */
         sd_varlink_set_userdata(context->repart_link, context);
         sd_varlink_set_userdata(link, TAKE_PTR(context));
@@ -2061,6 +2068,11 @@ static void end_marker(void) {
 
 static int run(int argc, char *argv[]) {
         int r;
+
+        LIBBLKID_NOTE(recommended);
+        LIBCRYPTO_NOTE(suggested);
+        LIBCRYPTSETUP_NOTE(suggested);
+        LIBMOUNT_NOTE(recommended);
 
         setlocale(LC_ALL, "");
 

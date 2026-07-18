@@ -3,7 +3,7 @@
 #pragma once
 
 #include <endian.h>
-#include "basic-forward.h"
+#include "forward.h"
 
 struct siphash {
         uint64_t v0;

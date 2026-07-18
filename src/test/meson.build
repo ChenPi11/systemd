@@ -17,6 +17,7 @@ test_env = {
         'SYSTEMD_SLOW_TESTS' : want_slow_tests ? '1' : '0',
         'PYTHONDONTWRITEBYTECODE' : '1',
         'SYSTEMD_LIBC' : get_option('libc'),
+        'SYSTEMD_BUILD_MODE' : get_option('mode'),
 }
 if conf.get('ENABLE_LOCALED') == 1
         test_env += {'SYSTEMD_LANGUAGE_FALLBACK_MAP' : language_fallback_map}
@@ -299,7 +300,10 @@ executables += [
         },
         test_template + {
                 'sources' : files('test-creds.c'),
-                'dependencies' : tpm2_cflags,
+                'dependencies' : [
+                        libopenssl_cflags,
+                        tpm2_cflags,
+                ],
         },
         test_template + {
                 'sources' : files('test-crypto-util.c'),
@@ -350,7 +354,7 @@ executables += [
                         libbasic_static,
                 ],
                 'dependencies' : libintl,
-                'install' : false,
+                'install' : 'no',
                 'type' : 'manual',
         },
         test_template + {
@@ -439,14 +443,14 @@ executables += [
         },
         test_template + {
                 'sources' : files('test-nss-hosts.c'),
-                'extract' : files('nss-test-util.c'),
+                'export' : files('nss-test-util.c'),
                 'dependencies' : libseccomp_cflags,
                 'conditions' : ['ENABLE_NSS'],
                 'timeout' : 120,
         },
         test_template + {
                 'sources' : files('test-nss-users.c'),
-                'objects' : ['test-nss-hosts'],
+                'import' : ['test-nss-hosts'],
                 'conditions' : ['ENABLE_NSS'],
         },
         test_template + {
@@ -464,7 +468,7 @@ executables += [
         },
         test_template + {
                 'sources' : files('test-qmp-client-qemu.c'),
-                'objects' : ['systemd-vmspawn'],
+                'import' : ['systemd-vmspawn'],
                 'conditions' : ['ENABLE_VMSPAWN'],
         },
         test_template + {
@@ -519,12 +523,12 @@ executables += [
         },
         test_template + {
                 'sources' : files('test-varlink-idl-machine.c'),
-                'objects' : ['systemd-machined'],
+                'import' : ['systemd-machined'],
                 'conditions' : ['ENABLE_MACHINED'],
         },
         test_template + {
                 'sources' : files('test-varlink-idl-login.c'),
-                'objects' : ['systemd-logind'],
+                'import' : ['systemd-logind'],
                 'conditions' : ['ENABLE_LOGIND'],
         },
         test_template + {
@@ -725,7 +729,7 @@ if static_libsystemd != 'false'
                         'sources' : [test_libsystemd_sym_c],
                         'link_with' : install_libsystemd_static,
                         'build_by_default' : want_tests != 'false',
-                        'install' : install_tests,
+                        'install' : install_tests ? 'yes' : 'no',
                         'suite' : 'libsystemd',
                 },
         ]
@@ -740,7 +744,7 @@ if static_libudev != 'false'
                         'c_args' : ['-Wno-deprecated-declarations'] + test_cflags,
                         'link_with' : install_libudev_static,
                         'build_by_default' : want_tests != 'false',
-                        'install' : install_tests,
+                        'install' : install_tests ? 'yes' : 'no',
                         'suite' : 'libudev',
                 },
         ]

@@ -10,6 +10,7 @@
 #include "copy.h"
 #include "creds-util.h"
 #include "dirent-util.h"
+#include "dlopen-note.h"
 #include "errno-list.h"
 #include "errno-util.h"
 #include "escape.h"
@@ -1504,7 +1505,7 @@ static int load_credential_one(
                                 return log_error_errno(errno, "Failed to chown %s: %m", hd);
 
                         r = copy_tree(user_record_skeleton_directory(ur), hd, ur->uid, user_record_gid(ur),
-                                      COPY_REFLINK|COPY_MERGE, /* denylist= */ NULL, /* subvolumes= */ NULL);
+                                      COPY_MERGE, /* denylist= */ NULL, /* subvolumes= */ NULL);
                         if (r < 0 && r != -ENOENT)
                                 return log_error_errno(r, "Failed to copy skeleton directory to %s: %m", hd);
                 }
@@ -1852,6 +1853,8 @@ static int parse_argv(int argc, char *argv[], char ***remaining_args) {
 static int run(int argc, char *argv[]) {
         _cleanup_strv_free_ char **args = NULL;
         int r;
+
+        LIBSELINUX_NOTE(recommended);
 
         log_setup();
 

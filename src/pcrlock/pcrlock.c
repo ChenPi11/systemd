@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "sd-device.h"
@@ -17,8 +18,10 @@
 #include "chase.h"
 #include "color-util.h"
 #include "conf-files.h"
+#include "copy.h"
 #include "creds-util.h"
 #include "crypto-util.h"
+#include "dlopen-note.h"
 #include "efi-api.h"
 #include "efivars.h"
 #include "env-util.h"
@@ -55,6 +58,7 @@
 #include "string-util.h"
 #include "strv.h"
 #include "time-util.h"
+#include "tmpfile-util.h"
 #include "tpm2-pcr.h"
 #include "tpm2-util.h"
 #include "unaligned.h"
@@ -110,6 +114,7 @@ STATIC_DESTRUCTOR_REGISTER(arg_entry_token, freep);
 #define PCRLOCK_MACHINE_ID_PATH             "/var/lib/pcrlock.d/820-machine-id.pcrlock"
 #define PCRLOCK_ROOT_FILE_SYSTEM_PATH       "/var/lib/pcrlock.d/830-root-file-system.pcrlock"
 #define PCRLOCK_FILE_SYSTEM_PATH_PREFIX     "/var/lib/pcrlock.d/840-file-system-"
+#define PCRLOCK_PE_INPUT_MAX                (2U * U64_GB)
 
 /* The default set of PCRs to lock to */
 #define DEFAULT_PCR_MASK                                     \
@@ -1174,6 +1179,7 @@ static int event_log_load_userspace(EventLog *el) {
         _cleanup_free_ char *b = NULL;
         bool beginning = true;
         const char *path;
+        struct stat st;
         size_t bn = 0;
         int r;
 
@@ -1191,6 +1197,13 @@ static int event_log_load_userspace(EventLog *el) {
 
         if (flock(fileno(f), LOCK_SH) < 0)
                 return log_error_errno(errno, "Failed to lock userspace TPM measurement log file: %m");
+
+        /* The sticky bit marks the log as incomplete: a writer died between updating a PCR and appending
+         * the matching record. Load the log anyway, the affected PCRs will simply fail validation. */
+        if (fstat(fileno(f), &st) < 0)
+                log_warning_errno(errno, "Failed to stat userspace TPM measurement log file, cannot determine whether it is complete, ignoring: %m");
+        else if (FLAGS_SET(st.st_mode, S_ISVTX))
+                log_warning("Userspace TPM measurement log file is marked as incomplete, PCR validation may fail.");
 
         for (;;) {
                 _cleanup_(sd_json_variant_unrefp) sd_json_variant *j = NULL;
@@ -2674,17 +2687,11 @@ static int verb_show_cel(int argc, char *argv[], uintptr_t _data, void *userdata
         return 0;
 }
 
-VERB_NOARG(verb_list_components, "list-components",
-           "List defined .pcrlock components");
-static int verb_list_components(int argc, char *argv[], uintptr_t _data, void *userdata) {
+static int event_log_load_and_process_components(EventLog **ret) {
         _cleanup_(event_log_freep) EventLog *el = NULL;
-        _cleanup_(table_unrefp) Table *table = NULL;
-        enum {
-                BEFORE_LOCATION,
-                BETWEEN_LOCATION,
-                AFTER_LOCATION,
-        } loc = BEFORE_LOCATION;
         int r;
+
+        assert(ret);
 
         el = event_log_new();
         if (!el)
@@ -2699,6 +2706,26 @@ static int verb_list_components(int argc, char *argv[], uintptr_t _data, void *u
                 return r;
 
         r = event_log_load_components(el);
+        if (r < 0)
+                return r;
+
+        *ret = TAKE_PTR(el);
+        return 0;
+}
+
+VERB_NOARG(verb_list_components, "list-components",
+           "List defined .pcrlock components");
+static int verb_list_components(int argc, char *argv[], uintptr_t _data, void *userdata) {
+        _cleanup_(event_log_freep) EventLog *el = NULL;
+        _cleanup_(table_unrefp) Table *table = NULL;
+        enum {
+                BEFORE_LOCATION,
+                BETWEEN_LOCATION,
+                AFTER_LOCATION,
+        } loc = BEFORE_LOCATION;
+        int r;
+
+        r = event_log_load_and_process_components(&el);
         if (r < 0)
                 return r;
 
@@ -4754,6 +4781,64 @@ static int verb_unlock_gpt(int argc, char *argv[], uintptr_t _data, void *userda
         return unlink_pcrlock(PCRLOCK_GPT_PATH);
 }
 
+static int pe_stdin_too_large(void) {
+        return log_error_errno(SYNTHETIC_ERRNO(EFBIG),
+                               "PE/UKI binary from stdin is larger than the maximum supported size of %s.",
+                               FORMAT_BYTES(PCRLOCK_PE_INPUT_MAX));
+}
+
+static int acquire_stdin_pe_fd(void) {
+        _cleanup_close_ int fd = -EBADF;
+        const char *td;
+        struct stat st;
+        int r;
+
+        if (fstat(STDIN_FILENO, &st) < 0)
+                return log_error_errno(errno, "Failed to stat stdin: %m");
+
+        if (S_ISREG(st.st_mode)) {
+                if ((uint64_t) st.st_size > PCRLOCK_PE_INPUT_MAX)
+                        return pe_stdin_too_large();
+
+                /* Regular stdin is already seekable. Keep it directly to avoid copying large redirected
+                 * PE/UKI files before hashing them. The size check above is a fast-path guard; a file that
+                 * grows concurrently is still hashed stream-wise with bounded memory use. */
+                fd = fcntl(STDIN_FILENO, F_DUPFD_CLOEXEC, 3);
+                if (fd < 0)
+                        return log_error_errno(errno, "Failed to duplicate stdin: %m");
+
+                return TAKE_FD(fd);
+        }
+
+        r = var_tmp_dir(&td);
+        if (r < 0)
+                return log_error_errno(r, "Failed to determine temporary directory: %m");
+
+        fd = open_tmpfile_unlinkable(td, O_RDWR|O_CLOEXEC);
+        if (fd < 0)
+                return log_error_errno(fd, "Failed to create temporary file for PE binary: %m");
+
+        r = copy_bytes(STDIN_FILENO, fd, PCRLOCK_PE_INPUT_MAX + 1, /* copy_flags= */ 0);
+        if (r < 0)
+                return log_error_errno(r, "Failed to copy PE binary from stdin to temporary file: %m");
+        if (r > 0)
+                return pe_stdin_too_large();
+
+        return TAKE_FD(fd);
+}
+
+static int acquire_pe_fd(const char *path) {
+        if (path) {
+                int fd = open(path, O_RDONLY|O_CLOEXEC);
+                if (fd < 0)
+                        return log_error_errno(errno, "Failed to open '%s': %m", path);
+
+                return fd;
+        }
+
+        return acquire_stdin_pe_fd();
+}
+
 VERB(verb_lock_pe, "lock-pe", "[BINARY]", VERB_ANY, 2, 0,
      "Generate a .pcrlock file from PE binary");
 static int verb_lock_pe(int argc, char *argv[], uintptr_t _data, void *userdata) {
@@ -4764,11 +4849,9 @@ static int verb_lock_pe(int argc, char *argv[], uintptr_t _data, void *userdata)
         // FIXME: Maybe also generate a matching EV_EFI_VARIABLE_AUTHORITY records here for each signature that
         //        covers this PE plus its hash, as alternatives under the same component name
 
-        if (argc >= 2) {
-                fd = open(argv[1], O_RDONLY|O_CLOEXEC);
-                if (fd < 0)
-                        return log_error_errno(errno, "Failed to open '%s': %m", argv[1]);
-        }
+        fd = acquire_pe_fd(argc >= 2 ? argv[1] : NULL);
+        if (fd < 0)
+                return fd;
 
         if (arg_pcr_mask == 0)
                 arg_pcr_mask = UINT32_C(1) << TPM2_PCR_BOOT_LOADER_CODE;
@@ -4788,7 +4871,7 @@ static int verb_lock_pe(int argc, char *argv[], uintptr_t _data, void *userdata)
                         assert_se(a = tpm2_hash_alg_to_string(*pa));
                         assert_se(md = sym_EVP_get_digestbyname(a));
 
-                        r = pe_hash(fd < 0 ? STDIN_FILENO : fd, md, &hash, &hash_size);
+                        r = pe_hash(fd, md, &hash, &hash_size);
                         if (r < 0)
                                 return log_error_errno(r, "Failed to hash PE binary: %m");
 
@@ -4838,11 +4921,9 @@ static int verb_lock_uki(int argc, char *argv[], uintptr_t _data, void *userdata
         if (arg_pcr_mask != 0)
                 return log_error_errno(SYNTHETIC_ERRNO(EINVAL), "PCR not configurable for UKI lock down.");
 
-        if (argc >= 2) {
-                fd = open(argv[1], O_RDONLY|O_CLOEXEC);
-                if (fd < 0)
-                        return log_error_errno(errno, "Failed to open '%s': %m", argv[1]);
-        }
+        fd = acquire_pe_fd(argc >= 2 ? argv[1] : NULL);
+        if (fd < 0)
+                return fd;
 
         for (size_t i = 0; i < TPM2_N_HASH_ALGORITHMS; i++) {
                 _cleanup_free_ void *peh = NULL;
@@ -4852,7 +4933,7 @@ static int verb_lock_uki(int argc, char *argv[], uintptr_t _data, void *userdata
                 assert_se(a = tpm2_hash_alg_to_string(tpm2_hash_algorithms[i]));
                 assert_se(md = sym_EVP_get_digestbyname(a));
 
-                r = pe_hash(fd < 0 ? STDIN_FILENO : fd, md, &peh, hash_sizes + i);
+                r = pe_hash(fd, md, &peh, hash_sizes + i);
                 if (r < 0)
                         return log_error_errno(r, "Failed to hash PE binary: %m");
 
@@ -4863,7 +4944,7 @@ static int verb_lock_uki(int argc, char *argv[], uintptr_t _data, void *userdata
                 if (r < 0)
                         return log_error_errno(r, "Failed to build JSON digest object: %m");
 
-                r = uki_hash(fd < 0 ? STDIN_FILENO : fd, md, section_hashes + (i * _UNIFIED_SECTION_MAX), hash_sizes + i);
+                r = uki_hash(fd, md, section_hashes + (i * _UNIFIED_SECTION_MAX), hash_sizes + i);
                 if (r < 0)
                         return log_error_errno(r, "Failed to UKI hash PE binary: %m");
         }
@@ -5442,6 +5523,54 @@ static int vl_method_read_event_log(sd_varlink *link, sd_json_variant *parameter
         return 0;
 }
 
+static int vl_method_list_components(sd_varlink *link, sd_json_variant *parameters, sd_varlink_method_flags_t flags, void *userdata) {
+        _cleanup_(event_log_freep) EventLog *el = NULL;
+        int r;
+
+        assert(link);
+        assert(FLAGS_SET(flags, SD_VARLINK_METHOD_MORE));
+
+        r = sd_varlink_dispatch(link, parameters, /* dispatch_table= */ NULL, /* userdata= */ NULL);
+        if (r != 0)
+                return r;
+
+        r = event_log_load_and_process_components(&el);
+        if (r < 0)
+                return r;
+
+        r = sd_varlink_set_sentinel(link, NULL);
+        if (r < 0)
+                return r;
+
+        FOREACH_ARRAY(c, el->components, el->n_components) {
+                _cleanup_(sd_json_variant_unrefp) sd_json_variant *variants = NULL;
+
+                FOREACH_ARRAY(variant, (*c)->variants, (*c)->n_variants) {
+                        r = sd_json_variant_append_arraybo(
+                                        &variants,
+                                        SD_JSON_BUILD_PAIR_STRING("id", (*variant)->id),
+                                        SD_JSON_BUILD_PAIR_STRING("path", (*variant)->path));
+                        if (r < 0)
+                                return r;
+                }
+
+                if (!variants) {
+                        r = sd_json_variant_new_array(&variants, NULL, 0);
+                        if (r < 0)
+                                return r;
+                }
+
+                r = sd_varlink_replybo(
+                                link,
+                                SD_JSON_BUILD_PAIR_STRING("id", (*c)->id),
+                                SD_JSON_BUILD_PAIR_VARIANT("variants", variants));
+                if (r < 0)
+                        return r;
+        }
+
+        return 0;
+}
+
 typedef struct MethodMakePolicyParameters {
         bool force;
 } MethodMakePolicyParameters;
@@ -5578,6 +5707,10 @@ static int vl_method_on_completed_update(sd_varlink *link, sd_json_variant *para
 static int run(int argc, char *argv[]) {
         int r;
 
+        LIBBLKID_NOTE(recommended);
+        LIBSELINUX_NOTE(recommended);
+        TPM2_NOTE(suggested);
+
         log_setup();
 
         r = mac_init();
@@ -5589,7 +5722,7 @@ static int run(int argc, char *argv[]) {
         if (r <= 0)
                 return r;
 
-        r = DLOPEN_LIBCRYPTO(LOG_ERR, SD_ELF_NOTE_DLOPEN_PRIORITY_REQUIRED);
+        r = DLOPEN_LIBCRYPTO(LOG_ERR, required);
         if (r < 0)
                 return r;
 
@@ -5614,6 +5747,7 @@ static int run(int argc, char *argv[]) {
                 r = sd_varlink_server_bind_method_many(
                                 varlink_server,
                                 "io.systemd.PCRLock.ReadEventLog",                  vl_method_read_event_log,
+                                "io.systemd.PCRLock.ListComponents",                vl_method_list_components,
                                 "io.systemd.PCRLock.MakePolicy",                    vl_method_make_policy,
                                 "io.systemd.PCRLock.RemovePolicy",                  vl_method_remove_policy,
                                 "io.systemd.PCRLock.Lock",                          vl_method_lock,

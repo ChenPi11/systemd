@@ -3,7 +3,7 @@
 
 #include <time.h>
 
-#include "basic-forward.h"
+#include "forward.h"
 
 #define LONG_LINE_MAX (1U*1024U*1024U)
 

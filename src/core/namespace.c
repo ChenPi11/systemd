@@ -2628,7 +2628,7 @@ int setup_namespace(const NamespaceParameters *p, char **reterr_path) {
                                 root_mount_fd = _root_mount_fd;
                         }
 
-                        /* Try to to clone the directory mount if we have privs to, so that we can apply the
+                        /* Try to clone the directory mount if we have privs to, so that we can apply the
                          * MS_SLAVE propagation settings right-away. */
                         if (root_mount_fd < 0) {
                                 _root_mount_fd = open_tree_attr_with_fallback(
@@ -3986,7 +3986,7 @@ int refresh_extensions_in_namespace(
         if (r > 0)
                 return log_debug_errno(SYNTHETIC_ERRNO(EINVAL), "Target namespace is not separate, cannot reload extensions");
 
-        (void) DLOPEN_CRYPTSETUP(LOG_DEBUG, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
+        (void) DLOPEN_CRYPTSETUP(LOG_DEBUG, recommended);
 
         extension_dir = path_join(p->private_namespace_dir, "unit-extensions");
         if (!extension_dir)

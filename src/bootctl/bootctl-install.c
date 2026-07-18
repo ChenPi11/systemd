@@ -523,7 +523,7 @@ static int copy_file_with_version_check(
          * might be left at the end of the file. (Resetting before rather than after a copy attempt is safer
          * because a previous attempt might have failed half-way, leaving the file offset at some undefined
          * place.) */
-        r = copy_bytes(source_fd, write_fd, UINT64_MAX, COPY_REFLINK|COPY_SEEK0_SOURCE);
+        r = copy_bytes(source_fd, write_fd, UINT64_MAX, COPY_SEEK0_SOURCE);
         if (r < 0)
                 return log_error_errno(r, "Failed to copy data from \"%s\" to \"%s\": %m", source_path, dest_path);
 
@@ -1085,7 +1085,7 @@ static int install_secure_boot_auto_enroll(InstallContext *c) {
         if (!c->secure_boot_certificate || !c->secure_boot_private_key)
                 return 0;
 
-        r = DLOPEN_LIBCRYPTO(LOG_DEBUG, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
+        r = DLOPEN_LIBCRYPTO(LOG_DEBUG, recommended);
         if (r < 0)
                 return r;
 
@@ -1339,7 +1339,7 @@ static int insert_into_order(InstallContext *c, uint16_t slot, uint16_t after_sl
         order = t;
 
         /* add us to the top or end of the list */
-        if (c->operation != INSTALL_NEW) {
+        if (c->operation == INSTALL_NEW) {
                 memmove(order + 1, order, n * sizeof(uint16_t));
                 order[0] = slot;
         } else

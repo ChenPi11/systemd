@@ -98,8 +98,7 @@ static void link_configs_free(LinkConfigContext *ctx) {
 
         ctx->stats_by_path = hashmap_free(ctx->stats_by_path);
 
-        LIST_FOREACH(configs, config, ctx->configs)
-                link_config_free(config);
+        LIST_CLEAR(configs, ctx->configs, link_config_free);
 }
 
 LinkConfigContext *link_config_ctx_free(LinkConfigContext *ctx) {
@@ -320,7 +319,7 @@ int link_load_one(LinkConfigContext *ctx, const char *filename) {
                 return 0;
         }
 
-        if (!condition_test_list(config->conditions, environ, NULL, NULL, NULL)) {
+        if (!condition_test_list_net(config->conditions, environ, NULL, NULL, NULL)) {
                 log_debug("%s: Conditions do not match the system environment, skipping.", filename);
                 return 0;
         }

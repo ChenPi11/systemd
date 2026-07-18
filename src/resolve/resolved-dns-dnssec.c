@@ -554,7 +554,12 @@ static void dnssec_fix_rrset_ttl(
                 /* Pick the TTL as the minimum of the RR's TTL, the
                  * RR's original TTL according to the RRSIG and the
                  * RRSIG's own TTL, see RFC 4035, Section 5.3.3 */
-                rr->ttl = MIN3(rr->ttl, rrsig->rrsig.original_ttl, rrsig->ttl);
+                uint32_t ttl = MIN3(rr->ttl, rrsig->rrsig.original_ttl, rrsig->ttl);
+                if (ttl != rr->ttl) {
+                        rr->ttl = ttl;
+                        dns_resource_record_clear_wire_format(rr);
+                }
+
                 rr->expiry = rrsig->rrsig.expiration * USEC_PER_SEC;
 
                 /* Copy over information about the signer and wildcard source of synthesis */
@@ -730,7 +735,7 @@ int dnssec_verify_rrset(
         assert(dnskey);
         assert(result);
 
-        r = DLOPEN_LIBCRYPTO(LOG_WARNING, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
+        r = DLOPEN_LIBCRYPTO(LOG_WARNING, recommended);
         if (r < 0)
                 return r;
 
@@ -1087,7 +1092,7 @@ int dnssec_verify_dnskey_by_ds(DnsResourceRecord *dnskey, DnsResourceRecord *ds,
         assert(dnskey);
         assert(ds);
 
-        r = DLOPEN_LIBCRYPTO(LOG_WARNING, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
+        r = DLOPEN_LIBCRYPTO(LOG_WARNING, recommended);
         if (r < 0)
                 return r;
 
@@ -1227,7 +1232,7 @@ int dnssec_nsec3_hash(DnsResourceRecord *nsec3, const char *name, void *ret) {
         assert(name);
         assert(ret);
 
-        r = DLOPEN_LIBCRYPTO(LOG_WARNING, SD_ELF_NOTE_DLOPEN_PRIORITY_RECOMMENDED);
+        r = DLOPEN_LIBCRYPTO(LOG_WARNING, recommended);
         if (r < 0)
                 return r;
 

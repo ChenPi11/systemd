@@ -799,6 +799,49 @@ test ! -f "$fake_root$hierarchy/now-is-mutable"
 
 
 ( init_trap
+: "Malformed work_dir metadata is rejected without removing unrelated paths"
+[[ -z "$roots_dir" ]] && exit 0
+
+fake_root="$roots_dir/empty-work-dir"
+hierarchy=/opt
+extension_data_dir="$fake_root/var/lib/extensions.mutable$hierarchy"
+work_dir_file="$fake_root$hierarchy/.systemd-sysext/work_dir"
+traversal_target="$roots_dir/work-dir-traversal-target"
+absolute_target="$fake_root/work-dir-absolute-target"
+
+[[ "$FSTYPE" == "fuseblk" ]] && exit 0
+
+prepare_root "$fake_root" "$hierarchy"
+prepare_extension_image "$fake_root" "$hierarchy"
+prepare_read_only_hierarchy "$fake_root" "$hierarchy"
+touch "$fake_root/root-sentinel"
+mkdir "$traversal_target" "$absolute_target"
+touch "$traversal_target/sentinel" "$absolute_target/sentinel"
+prepend_trap "rm -rf ${traversal_target@Q} ${absolute_target@Q}"
+
+run_systemd_sysext "$fake_root" --mutable=yes merge
+prepend_trap "rm -rf ${extension_data_dir@Q}"
+
+# Mutable overlays bind-mount the metadata directory read-only. Unmount that bind first to simulate
+# corrupted on-disk metadata, then try malformed work_dir values.
+umount "$fake_root$hierarchy/.systemd-sysext"
+work_dir=$(<"$work_dir_file")
+
+for invalid_work_dir in "" ../work-dir-traversal-target /work-dir-absolute-target; do
+    printf '%s\n' "$invalid_work_dir" >"$work_dir_file"
+    (! run_systemd_sysext "$fake_root" unmerge)
+    test -f "$fake_root/root-sentinel"
+    test -f "$traversal_target/sentinel"
+    test -f "$absolute_target/sentinel"
+done
+
+# Restore valid metadata and unmerge normally, so the test case leaves no mounted hierarchy behind.
+printf '%s\n' "$work_dir" >"$work_dir_file"
+run_systemd_sysext "$fake_root" unmerge
+)
+
+
+( init_trap
 : "/var/lib/extensions.mutable/… does not exist, auto-mutability, read-only merged"
 fake_root=${roots_dir:+"$roots_dir/simple-read-only-explicit"}
 hierarchy=/opt
@@ -1861,6 +1904,57 @@ if systemctl --quiet is-active "$ext_unit"; then
     echo >&2 "Missing stop of extension unit"
     exit 1
 fi
+)
+
+( init_trap
+: "Nested tmpfs submounts under the hierarchy survive merge/refresh/unmerge round-trip"
+fake_root=${roots_dir:+"$roots_dir/nested-submounts"}
+hierarchy=/opt
+
+# Don't run the test if the inner mount won't be preserved due to an old kernel
+if ! systemd-analyze compare-versions "$(uname -r)" ge 5.12; then
+    echo >&2 "Kernel too old for mount_setattr (need >= 5.12), skipping nested submount test"
+    exit 0
+fi
+
+prepare_root "$fake_root" "$hierarchy"
+prepare_extension_image "$fake_root" "$hierarchy"
+prepare_hierarchy "$fake_root" "$hierarchy"
+
+# Two tmpfs mounts, one nested in the hierarchy under the other. Reproduces the nested mount layout from
+# https://github.com/flatcar/Flatcar/issues/2111 and verifies that we preserve nested mounts across merge,
+# refresh, and unmerge.
+outer_mp="$fake_root$hierarchy/outer"
+inner_mp="$outer_mp/inner"
+mkdir -p "$outer_mp"
+mount -t tmpfs tmpfs "$outer_mp"
+prepend_trap "umount -l ${outer_mp@Q} 2>/dev/null || true"
+mkdir -p "$inner_mp"
+mount -t tmpfs tmpfs "$inner_mp"
+prepend_trap "umount -l ${inner_mp@Q} 2>/dev/null || true"
+touch "$outer_mp/outer-marker"
+touch "$inner_mp/inner-marker"
+
+run_systemd_sysext "$fake_root" merge
+extension_verify_after_merge "$fake_root" "$hierarchy" -e -h
+mountpoint "$outer_mp"
+mountpoint "$inner_mp"
+test -f "$outer_mp/outer-marker"
+test -f "$inner_mp/inner-marker"
+
+run_systemd_sysext "$fake_root" refresh --always-refresh=yes
+extension_verify_after_merge "$fake_root" "$hierarchy" -e -h
+mountpoint "$outer_mp"
+mountpoint "$inner_mp"
+test -f "$outer_mp/outer-marker"
+test -f "$inner_mp/inner-marker"
+
+run_systemd_sysext "$fake_root" unmerge
+extension_verify_after_unmerge "$fake_root" "$hierarchy" -h
+mountpoint "$outer_mp"
+mountpoint "$inner_mp"
+test -f "$outer_mp/outer-marker"
+test -f "$inner_mp/inner-marker"
 )
 
 } # End of run_sysext_tests

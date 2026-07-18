@@ -245,6 +245,18 @@
       </varlistentry>
 
       <varlistentry>
+        <term><option>--cow=<replaceable>BOOL</replaceable></option></term>
+
+        <listitem><para>Controls copy-on-write for newly created image files on filesystems that support it.
+        If true, copy-on-write is enabled; if false, it is disabled. If set to <literal>auto</literal>, the
+        filesystem or parent directory default is left unchanged. Copy-on-write allows files to be reflinked
+        into the image, reducing both build time and disk usage, but may result in fragmentation for images
+        subject to frequent random writes. Defaults to <literal>auto</literal>.</para>
+
+        <xi:include href="version-info.xml" xpointer="v262"/></listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><option>--factory-reset=</option></term>
 
         <listitem><para>Takes boolean. If this switch is not specified, <option>--factory-reset=no</option> is
@@ -609,11 +621,12 @@
         <listitem><para>Instructs <command>systemd-repart</command> to synthesize partition definitions from
         the partition table in the given image or device. This option can be specified multiple times to
         synthesize definitions from each of the given images or devices. The generated definitions will copy
-        the partitions into the destination partition table. The copied partitions will have the same size,
-        metadata and contents but might have a different partition number and might be located at a different
-        offset in the destination partition table. These definitions can be combined with partition
-        definitions read from regular partition definition files. The synthesized definitions take precedence
-        over the definitions read from partition definition files.</para>
+        the partitions into the destination partition table. The copied partitions will have the same or a
+        slightly larger size (partitions may be enlarged to align to the new grain or sector size), metadata
+        and contents but might have a different partition number and might be located at a different offset
+        in the destination partition table. These definitions can be combined with partition definitions read
+        from regular partition definition files. The synthesized definitions take precedence over the
+        definitions read from partition definition files.</para>
 
         <xi:include href="version-info.xml" xpointer="v255"/></listitem>
       </varlistentry>
