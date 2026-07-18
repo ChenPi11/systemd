@@ -58,16 +58,16 @@
 #include "xattr-util.h"
 
 const char* const image_search_path[_IMAGE_CLASS_MAX] = {
-        [IMAGE_MACHINE] =   "/etc/machines\0"              /* only place symlinks here */
-                            "/run/machines\0"              /* and here too */
-                            "/var/lib/machines\0"          /* the main place for images */
-                            "/var/lib/container\0"         /* legacy */
+        [IMAGE_MACHINE] =   SYSCONF_DIR "/machines\0"              /* only place symlinks here */
+                            RUNSTATEDIR "/machines\0"              /* and here too */
+                            LOCALSTATEDIR "/lib/machines\0"          /* the main place for images */
+                            LOCALSTATEDIR "/lib/container\0"         /* legacy */
                             "/usr/local/lib/machines\0"
                             "/usr/lib/machines\0",
 
-        [IMAGE_PORTABLE] =  "/etc/portables\0"             /* only place symlinks here */
-                            "/run/portables\0"             /* and here too */
-                            "/var/lib/portables\0"         /* the main place for images */
+        [IMAGE_PORTABLE] =  SYSCONF_DIR "/portables\0"             /* only place symlinks here */
+                            RUNSTATEDIR "/portables\0"             /* and here too */
+                            LOCALSTATEDIR "/lib/portables\0"         /* the main place for images */
                             "/usr/local/lib/portables\0"
                             "/usr/lib/portables\0",
 
@@ -75,12 +75,12 @@ const char* const image_search_path[_IMAGE_CLASS_MAX] = {
          * because extension images are supposed to extend /usr/, so you get into recursive races, especially
          * with directory-based extensions, as the kernel's OverlayFS explicitly checks for this and errors
          * out with -ELOOP if it finds that a lowerdir= is a child of another lowerdir=. */
-        [IMAGE_SYSEXT] =    "/etc/extensions\0"            /* only place symlinks here */
-                            "/run/extensions\0"            /* and here too */
-                            "/var/lib/extensions\0",       /* the main place for images */
+        [IMAGE_SYSEXT] =    SYSCONF_DIR "/extensions\0"            /* only place symlinks here */
+                            RUNSTATEDIR "/extensions\0"            /* and here too */
+                            LOCALSTATEDIR "/lib/extensions\0",       /* the main place for images */
 
-        [IMAGE_CONFEXT] =   "/run/confexts\0"              /* only place symlinks here */
-                            "/var/lib/confexts\0"          /* the main place for images */
+        [IMAGE_CONFEXT] =   RUNSTATEDIR "/confexts\0"              /* only place symlinks here */
+                            LOCALSTATEDIR "/lib/confexts\0"          /* the main place for images */
                             "/usr/local/lib/confexts\0"
                             "/usr/lib/confexts\0",
 };
@@ -90,14 +90,14 @@ const char* const image_search_path[_IMAGE_CLASS_MAX] = {
 static const char* const image_search_path_initrd[_IMAGE_CLASS_MAX] = {
         /* (entries that aren't listed here will get the same search path as for the non initrd-case) */
 
-        [IMAGE_SYSEXT] =    "/etc/extensions\0"            /* only place symlinks here */
-                            "/run/extensions\0"            /* and here too */
-                            "/var/lib/extensions\0"        /* the main place for images */
+        [IMAGE_SYSEXT] =    SYSCONF_DIR "/extensions\0"            /* only place symlinks here */
+                            RUNSTATEDIR "/extensions\0"            /* and here too */
+                            LOCALSTATEDIR "/lib/extensions\0"        /* the main place for images */
                             "/.extra/sysext\0"             /* put sysext (per-UKI and global) picked up by systemd-stub */
                             "/.extra/global_sysext\0",     /* last, since not trusted */
 
-        [IMAGE_CONFEXT] =   "/run/confexts\0"              /* only place symlinks here */
-                            "/var/lib/confexts\0"          /* the main place for images */
+        [IMAGE_CONFEXT] =   RUNSTATEDIR "/confexts\0"              /* only place symlinks here */
+                            LOCALSTATEDIR "/lib/confexts\0"          /* the main place for images */
                             "/usr/local/lib/confexts\0"
                             "/.extra/confext\0"            /* put confext (per-UKI and global) picked up by systemd-stub */
                             "/.extra/global_confext\0",    /* last, since not trusted. */
@@ -111,10 +111,10 @@ static const char* image_class_suffix_table[_IMAGE_CLASS_MAX] = {
 DEFINE_PRIVATE_STRING_TABLE_LOOKUP_TO_STRING(image_class_suffix, ImageClass);
 
 static const char *const image_root_table[_IMAGE_CLASS_MAX] = {
-        [IMAGE_MACHINE]  = "/var/lib/machines",
-        [IMAGE_PORTABLE] = "/var/lib/portables",
-        [IMAGE_SYSEXT]   = "/var/lib/extensions",
-        [IMAGE_CONFEXT]  = "/var/lib/confexts",
+        [IMAGE_MACHINE]  = LOCALSTATEDIR "/lib/machines",
+        [IMAGE_PORTABLE] = LOCALSTATEDIR "/lib/portables",
+        [IMAGE_SYSEXT]   = LOCALSTATEDIR "/lib/extensions",
+        [IMAGE_CONFEXT]  = LOCALSTATEDIR "/lib/confexts",
 };
 
 DEFINE_PRIVATE_STRING_TABLE_LOOKUP_TO_STRING(image_root, ImageClass);
@@ -766,7 +766,7 @@ static int pick_image_search_path(
                 const char *ns;
                 bool is_initrd;
 
-                r = chase_and_access("/etc/initrd-release", root, CHASE_PREFIX_ROOT, F_OK, /* ret_path= */ NULL);
+                r = chase_and_access(SYSCONF_DIR "/initrd-release", root, CHASE_PREFIX_ROOT, F_OK, /* ret_path= */ NULL);
                 if (r < 0 && r != -ENOENT)
                         return r;
                 is_initrd = r >= 0;
@@ -2243,7 +2243,7 @@ int image_read_metadata(Image *i, const char *root, const ImagePolicy *image_pol
                                                        i->name);
                 }
 
-                r = chase("/etc/hostname", i->path, CHASE_PREFIX_ROOT|CHASE_TRAIL_SLASH, &path, NULL);
+                r = chase(SYSCONF_DIR "/hostname", i->path, CHASE_PREFIX_ROOT|CHASE_TRAIL_SLASH, &path, NULL);
                 if (r < 0 && r != -ENOENT)
                         log_debug_errno(r, "Failed to chase /etc/hostname in image %s: %m", i->name);
                 else if (r >= 0) {
@@ -2258,7 +2258,7 @@ int image_read_metadata(Image *i, const char *root, const ImagePolicy *image_pol
                 if (r < 0)
                         log_debug_errno(r, "Failed to read machine ID in image %s, ignoring: %m", i->name);
 
-                r = chase("/etc/machine-info", i->path, CHASE_PREFIX_ROOT|CHASE_TRAIL_SLASH, &path, NULL);
+                r = chase(SYSCONF_DIR "/machine-info", i->path, CHASE_PREFIX_ROOT|CHASE_TRAIL_SLASH, &path, NULL);
                 if (r < 0 && r != -ENOENT)
                         log_debug_errno(r, "Failed to chase /etc/machine-info in image %s: %m", i->name);
                 else if (r >= 0) {

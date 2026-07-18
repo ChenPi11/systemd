@@ -43,7 +43,7 @@ static int access_check_var_log_journal(sd_journal *j, bool want_other_users) {
         if (access_nofollow(RUNSTATEDIR "/log/journal", F_OK) >= 0)
                 dir = RUNSTATEDIR "/log/journal";
         else
-                dir = "/var/log/journal";
+                dir = LOCALSTATEDIR "/log/journal";
 
         /* If we are in any of the groups listed in the journal ACLs,
          * then all is good, too. Let's enumerate all groups from the

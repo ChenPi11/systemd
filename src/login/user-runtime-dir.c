@@ -314,7 +314,7 @@ static int do_tmpfs_quota(UserRecord *ur) {
         if (!uid_is_valid(ur->uid))
                 return log_error_errno(SYNTHETIC_ERRNO(ENOMSG), "User '%s' lacks UID, refusing.", ur->user_name);
 
-        r = apply_tmpfs_quota(STRV_MAKE(SYSTEM_TMPDIR, "/var/tmp"), ur->uid, ur->tmp_limit.limit, user_record_tmp_limit_scale(ur));
+        r = apply_tmpfs_quota(STRV_MAKE(SYSTEM_TMPDIR, LOCALSTATEDIR SYSTEM_TMPDIR), ur->uid, ur->tmp_limit.limit, user_record_tmp_limit_scale(ur));
         if (r < 0)
                 return r;
 

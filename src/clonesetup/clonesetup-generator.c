@@ -166,7 +166,7 @@ static int add_clone_devices(void) {
         int r, ret = 0;
         const char *fname;
 
-        fname = secure_getenv("SYSTEMD_CLONETAB") ?: "/etc/clonetab";
+        fname = secure_getenv("SYSTEMD_CLONETAB") ?: SYSCONF_DIR "/clonetab";
 
         r = fopen_unlocked(fname, "re", &f);
         if (r < 0) {

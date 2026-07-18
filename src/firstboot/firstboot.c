@@ -417,7 +417,7 @@ static int process_locale(int rfd, sd_varlink **mute_console_link) {
         if (r < 0)
                 return log_error_errno(r, "Failed to write /etc/locale.conf: %m");
 
-        log_info("/etc/locale.conf written.");
+        log_info(SYSCONF_DIR "/locale.conf written.");
         return 1;
 }
 
@@ -562,7 +562,7 @@ static int process_keymap(int rfd, sd_varlink **mute_console_link) {
         if (r < 0)
                 return log_error_errno(r, "Failed to write /etc/vconsole.conf: %m");
 
-        log_info("/etc/vconsole.conf written.");
+        log_info(SYSCONF_DIR "/vconsole.conf written.");
         return 1;
 }
 
@@ -678,7 +678,7 @@ static int process_timezone(int rfd, sd_varlink **mute_console_link) {
         if (r < 0)
                 return log_error_errno(r, "Failed to create /etc/localtime symlink: %m");
 
-        log_info("/etc/localtime written");
+        log_info(SYSCONF_DIR "/localtime written");
         return 0;
 }
 
@@ -784,7 +784,7 @@ static int process_hostname(int rfd, sd_varlink **mute_console_link) {
         if (r < 0)
                 return log_error_errno(r, "Failed to write /etc/hostname: %m");
 
-        log_info("/etc/hostname written.");
+        log_info(SYSCONF_DIR "/hostname written.");
         return 0;
 }
 
@@ -795,7 +795,7 @@ static int process_machine_id(int rfd) {
 
         assert(rfd >= 0);
 
-        pfd = chase_and_open_parent_at(rfd, rfd, "/etc/machine-id",
+        pfd = chase_and_open_parent_at(rfd, rfd, SYSCONF_DIR "/machine-id",
                                        CHASE_MKDIR_0755|CHASE_WARN|CHASE_NOFOLLOW,
                                        &f);
         if (pfd < 0)
@@ -817,7 +817,7 @@ static int process_machine_id(int rfd) {
         if (r < 0)
                 return log_error_errno(r, "Failed to write /etc/machine-id: %m");
 
-        log_info("/etc/machine-id written.");
+        log_info(SYSCONF_DIR "/machine-id written.");
         return 0;
 }
 
@@ -830,7 +830,7 @@ static int process_machine_tags(int rfd) {
         _cleanup_close_ int pfd = chase_and_open_parent_at(
                         /* root_fd= */ rfd,
                         /* dir_fd= */ rfd,
-                        "/etc/machine-info",
+                        SYSCONF_DIR "/machine-info",
                         CHASE_MKDIR_0755|CHASE_WARN|CHASE_NOFOLLOW,
                         &f);
         if (pfd < 0)
@@ -882,7 +882,7 @@ static int process_machine_tags(int rfd) {
         if (r < 0)
                 return log_error_errno(r, "Failed to write /etc/machine-info: %m");
 
-        log_info("/etc/machine-info written.");
+        log_info(SYSCONF_DIR "/machine-info written.");
         return 0;
 }
 
@@ -1181,7 +1181,7 @@ static int process_root_account(int rfd, sd_varlink **mute_console_link) {
 
         assert(rfd >= 0);
 
-        pfd = chase_and_open_parent_at(rfd, rfd, "/etc/passwd",
+        pfd = chase_and_open_parent_at(rfd, rfd, SYSCONF_DIR "/passwd",
                                        CHASE_MKDIR_0755|CHASE_WARN|CHASE_NOFOLLOW,
                                        NULL);
         if (pfd < 0)
@@ -1281,13 +1281,13 @@ static int process_root_account(int rfd, sd_varlink **mute_console_link) {
         if (r < 0)
                 return log_error_errno(r, "Failed to write /etc/passwd: %m");
 
-        log_info("/etc/passwd written.");
+        log_info(SYSCONF_DIR "/passwd written.");
 
         r = write_root_shadow(pfd, hashed_password);
         if (r < 0)
                 return log_error_errno(r, "Failed to write /etc/shadow: %m");
 
-        log_info("/etc/shadow written.");
+        log_info(SYSCONF_DIR "/shadow written.");
         return 0;
 }
 
@@ -1298,7 +1298,7 @@ static int process_kernel_cmdline(int rfd) {
 
         assert(rfd >= 0);
 
-        pfd = chase_and_open_parent_at(rfd, rfd, "/etc/kernel/cmdline",
+        pfd = chase_and_open_parent_at(rfd, rfd, SYSCONF_DIR "/kernel/cmdline",
                                        CHASE_MKDIR_0755|CHASE_WARN|CHASE_NOFOLLOW,
                                        &f);
         if (pfd < 0)
@@ -1320,7 +1320,7 @@ static int process_kernel_cmdline(int rfd) {
         if (r < 0)
                 return log_error_errno(r, "Failed to write /etc/kernel/cmdline: %m");
 
-        log_info("/etc/kernel/cmdline written.");
+        log_info(SYSCONF_DIR "/kernel/cmdline written.");
         return 0;
 }
 
@@ -1356,8 +1356,8 @@ static int process_reset(int rfd) {
                        etc_locale_conf(),
                        etc_vconsole_conf(),
                        etc_hostname(),
-                       "/etc/machine-id",
-                       "/etc/kernel/cmdline",
+                       SYSCONF_DIR "/machine-id",
+                       SYSCONF_DIR "/kernel/cmdline",
                        etc_localtime()) {
                 r = reset_one(rfd, p);
                 if (r < 0)

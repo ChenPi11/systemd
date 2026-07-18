@@ -49,7 +49,7 @@ TEST(strip_tab_ansi) {
         ASSERT_STREQ(p, "waldo\n\n");
         free(p);
 
-        assert_se(terminal_urlify_path("/etc/fstab", "i am a fabulous link", &urlified) >= 0);
+        assert_se(terminal_urlify_path(SYSCONF_DIR "/fstab", "i am a fabulous link", &urlified) >= 0);
         assert_se(p = strjoin("something ", urlified, " something-else"));
         assert_se(q = strdup(p));
         printf("<%s>\n", p);

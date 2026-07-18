@@ -62,13 +62,13 @@ static int context_installdb_acquire_fd(Context *c, bool make) {
         _cleanup_free_ char *j = NULL;
         const char *p;
         if (c->component) {
-                j = strjoin("/var/lib/systemd/sysupdate/installdb.", c->component);
+                j = strjoin(LOCALSTATEDIR "/lib/systemd/sysupdate/installdb.", c->component);
                 if (!j)
                         return log_oom();
 
                 p = j;
         } else
-                p = "/var/lib/systemd/sysupdate/installdb";
+                p = LOCALSTATEDIR "/lib/systemd/sysupdate/installdb";
 
         ChaseFlags flags = CHASE_MUST_BE_DIRECTORY|CHASE_PREFIX_ROOT;
 
@@ -406,7 +406,7 @@ int installdb_list_components(Context *context, char ***ret) {
         assert(ret);
 
         _cleanup_close_ int dir_fd = chase_and_open(
-                        "/var/lib/systemd/sysupdate",
+                        LOCALSTATEDIR "/lib/systemd/sysupdate",
                         context->root,
                         CHASE_MUST_BE_DIRECTORY|CHASE_PREFIX_ROOT,
                         O_DIRECTORY|O_CLOEXEC,

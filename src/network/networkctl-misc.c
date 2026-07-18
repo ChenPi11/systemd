@@ -143,9 +143,9 @@ int verb_persistent_storage(int argc, char *argv[], uintptr_t _data, void *userd
         if (ready) {
                 _cleanup_close_ int fd = -EBADF;
 
-                fd = open("/var/lib/systemd/network/", O_CLOEXEC | O_DIRECTORY);
+                fd = open(LOCALSTATEDIR "/lib/systemd/network/", O_CLOEXEC | O_DIRECTORY);
                 if (fd < 0)
-                        return log_error_errno(errno, "Failed to open %s: %m", "/var/lib/systemd/network/");
+                        return log_error_errno(errno, "Failed to open %s: %m", LOCALSTATEDIR "/lib/systemd/network/");
 
                 r = sd_varlink_push_fd(vl, fd);
                 if (r < 0)

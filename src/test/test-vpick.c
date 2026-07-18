@@ -168,7 +168,7 @@ TEST(path_uses_vpick) {
         ASSERT_OK_POSITIVE(path_uses_vpick("./path/to/foo.v"));
         ASSERT_OK_POSITIVE(path_uses_vpick("path/to.v/foo.v"));
         ASSERT_OK_POSITIVE(path_uses_vpick("path/to/foo.raw.v"));
-        ASSERT_OK_POSITIVE(path_uses_vpick("/var/lib/machines/mymachine.raw.v/"));
+        ASSERT_OK_POSITIVE(path_uses_vpick(LOCALSTATEDIR "/lib/machines/mymachine.raw.v/"));
         ASSERT_OK_POSITIVE(path_uses_vpick("path/to.v/foo___.hi/a.v"));
         ASSERT_OK_ZERO(path_uses_vpick("path/to/foo.mp4.vtt"));
         ASSERT_OK_ZERO(path_uses_vpick("path/to/foo.mp4.v.1"));

@@ -31,8 +31,8 @@
 
 TEST(copy_file) {
         _cleanup_free_ char *buf = NULL;
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-copy_file.XXXXXX";
-        _cleanup_(unlink_tempfilep) char fn_copy[] = "/tmp/test-copy_file.XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-copy_file.XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn_copy[] = SYSTEM_TMPDIR "/test-copy_file.XXXXXX";
         size_t sz = 0;
         int fd;
 
@@ -63,8 +63,8 @@ static bool read_file_at_and_streq(int dir_fd, const char *path, const char *exp
 TEST(copy_tree_replace_file) {
         _cleanup_free_ char *src = NULL, *dst = NULL;
 
-        assert_se(tempfn_random("/tmp/test-copy_file.XXXXXX", NULL, &src) >= 0);
-        assert_se(tempfn_random("/tmp/test-copy_file.XXXXXX", NULL, &dst) >= 0);
+        assert_se(tempfn_random(SYSTEM_TMPDIR "/test-copy_file.XXXXXX", NULL, &src) >= 0);
+        assert_se(tempfn_random(SYSTEM_TMPDIR "/test-copy_file.XXXXXX", NULL, &dst) >= 0);
 
         assert_se(write_string_file(src, "bar bar", WRITE_STRING_FILE_CREATE) == 0);
         assert_se(write_string_file(dst, "foo foo foo", WRITE_STRING_FILE_CREATE) == 0);
@@ -119,8 +119,8 @@ TEST(copy_tree_replace_dirs) {
 }
 
 TEST(copy_file_fd) {
-        _cleanup_(unlink_tempfilep) char in_fn[] = "/tmp/test-copy-file-fd-XXXXXX";
-        _cleanup_(unlink_tempfilep) char out_fn[] = "/tmp/test-copy-file-fd-XXXXXX";
+        _cleanup_(unlink_tempfilep) char in_fn[] = SYSTEM_TMPDIR "/test-copy-file-fd-XXXXXX";
+        _cleanup_(unlink_tempfilep) char out_fn[] = SYSTEM_TMPDIR "/test-copy-file-fd-XXXXXX";
         _cleanup_close_ int in_fd = -EBADF, out_fd = -EBADF;
         const char *text = "boohoo\nfoo\n\tbar\n";
         char buf[64] = {};
@@ -142,8 +142,8 @@ TEST(copy_file_fd) {
 TEST(copy_tree) {
         _cleanup_hashmap_free_ Hashmap *denylist = NULL;
         _cleanup_free_ char *cp = NULL;
-        char original_dir[] = "/tmp/test-copy_tree/";
-        char copy_dir[] = "/tmp/test-copy_tree-copy/";
+        char original_dir[] = SYSTEM_TMPDIR "/test-copy_tree/";
+        char copy_dir[] = SYSTEM_TMPDIR "/test-copy_tree-copy/";
         char **files = STRV_MAKE("file", "dir1/file", "dir1/dir2/file", "dir1/dir2/dir3/dir4/dir5/file");
         char **symlinks = STRV_MAKE("link", "file",
                                     "link2", "dir1/file");
@@ -271,7 +271,7 @@ TEST(copy_tree) {
                                 denylist,
                                 /* subvolumes= */ NULL) < 0);
         assert_se(copy_tree(
-                                "/tmp/inexistent/foo/bar/fsdoi",
+                                SYSTEM_TMPDIR "/inexistent/foo/bar/fsdoi",
                                 copy_dir,
                                 UID_INVALID,
                                 GID_INVALID,
@@ -401,7 +401,7 @@ TEST_RET(copy_bytes) {
 
         infd = open("/usr/lib/os-release", O_RDONLY|O_CLOEXEC);
         if (infd < 0)
-                infd = open("/etc/os-release", O_RDONLY|O_CLOEXEC);
+                infd = open(SYSCONF_DIR "/os-release", O_RDONLY|O_CLOEXEC);
         if (infd < 0)
                 return log_tests_skipped_errno(errno, "Could not open /usr/lib/os-release or /etc/os-release: %m");
 
@@ -433,8 +433,8 @@ TEST_RET(copy_bytes) {
 }
 
 static void test_copy_bytes_regular_file_one(const char *src, uint64_t max_bytes) {
-        _cleanup_(unlink_tempfilep) char fn2[] = "/tmp/test-copy-file-XXXXXX";
-        _cleanup_(unlink_tempfilep) char fn3[] = "/tmp/test-copy-file-XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn2[] = SYSTEM_TMPDIR "/test-copy-file-XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn3[] = SYSTEM_TMPDIR "/test-copy-file-XXXXXX";
         _cleanup_close_ int fd = -EBADF, fd2 = -EBADF, fd3 = -EBADF;
         int r;
         struct stat buf, buf2, buf3;
@@ -498,13 +498,13 @@ TEST(copy_atomic) {
 
         q = strjoina(p, "/fstab");
 
-        r = copy_file_atomic("/etc/fstab", q, 0644, /* copy_flags= */ 0);
+        r = copy_file_atomic(SYSCONF_DIR "/fstab", q, 0644, /* copy_flags= */ 0);
         if (r == -ENOENT || ERRNO_IS_PRIVILEGE(r))
                 return;
 
-        assert_se(copy_file_atomic("/etc/fstab", q, 0644, /* copy_flags= */ 0) == -EEXIST);
+        assert_se(copy_file_atomic(SYSCONF_DIR "/fstab", q, 0644, /* copy_flags= */ 0) == -EEXIST);
 
-        assert_se(copy_file_atomic("/etc/fstab", q, 0644, COPY_REPLACE) >= 0);
+        assert_se(copy_file_atomic(SYSCONF_DIR "/fstab", q, 0644, COPY_REPLACE) >= 0);
 }
 
 TEST(copy_proc) {
@@ -524,8 +524,8 @@ TEST(copy_proc) {
 }
 
 TEST_RET(copy_holes) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/var/tmp/test-copy-hole-fd-XXXXXX";
-        _cleanup_(unlink_tempfilep) char fn_copy[] = "/var/tmp/test-copy-hole-fd-XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = LOCALSTATEDIR SYSTEM_TMPDIR "/test-copy-hole-fd-XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn_copy[] = LOCALSTATEDIR SYSTEM_TMPDIR "/test-copy-hole-fd-XXXXXX";
         struct stat stat;
         off_t blksz;
         int r, fd, fd_copy;
@@ -745,8 +745,8 @@ TEST_RET(copy_with_verity) {
         _cleanup_close_ int src = -EBADF, dst = -EBADF, badsrc = -EBADF, baddst = -EBADF;
 
         /* We're more likely to hit a filesystem with fs-verity enabled on /var/tmp than on /tmp (tmpfs) */
-        ASSERT_OK(src = mkdtemp_open("/var/tmp/test-copy_file-src.XXXXXX", 0, &srcp));
-        ASSERT_OK(dst = mkdtemp_open("/var/tmp/test-copy_file-dst.XXXXXX", 0, &dstp));
+        ASSERT_OK(src = mkdtemp_open(LOCALSTATEDIR SYSTEM_TMPDIR "/test-copy_file-src.XXXXXX", 0, &srcp));
+        ASSERT_OK(dst = mkdtemp_open(LOCALSTATEDIR SYSTEM_TMPDIR "/test-copy_file-dst.XXXXXX", 0, &dstp));
 
         /* Populate some data to differentiate the files. */
         FOREACH_ELEMENT(file, files)
@@ -754,7 +754,7 @@ TEST_RET(copy_with_verity) {
 
         /* Enable on some file using a range of options */
         if (!enable_fsverity(src, "simple", FS_VERITY_HASH_ALG_SHA256, NULL, 0))
-                return log_tests_skipped_errno(errno, "/var/tmp: fs-verity is not supported here");
+                return log_tests_skipped_errno(errno, LOCALSTATEDIR "/tmp: fs-verity is not supported here");
         ASSERT_TRUE(enable_fsverity(src, "bigsha", FS_VERITY_HASH_ALG_SHA512, NULL, 0));
         ASSERT_TRUE(enable_fsverity(src, "salty", FS_VERITY_HASH_ALG_SHA512, "edamame", 8));
 
@@ -767,14 +767,14 @@ TEST_RET(copy_with_verity) {
         int r = copy_tree_at(src, ".", dst, ".", UID_INVALID, GID_INVALID, COPY_REPLACE|COPY_MERGE|COPY_PRESERVE_FS_VERITY, NULL, NULL);
         if (r == -ESOCKTNOSUPPORT)
                 /* This can happen on some versions of btrfs, for example */
-                return log_tests_skipped_errno(errno, "/var/tmp: fs-verity supported, but not reading metadata");
+                return log_tests_skipped_errno(errno, LOCALSTATEDIR "/tmp: fs-verity supported, but not reading metadata");
         ASSERT_OK(r);
         FOREACH_ELEMENT(file, files)
                 assert_fsverity_eq(src, dst, *file);
 
         /* Now try to create files where we know fs-verity doesn't work: tmpfs */
-        ASSERT_OK(badsrc = mkdtemp_open("/tmp/test-copy_file-src.XXXXXX", 0, &badsrcp));
-        ASSERT_OK(baddst = mkdtemp_open("/tmp/test-copy_file-src.XXXXXX", 0, &baddstp));
+        ASSERT_OK(badsrc = mkdtemp_open(SYSTEM_TMPDIR "/test-copy_file-src.XXXXXX", 0, &badsrcp));
+        ASSERT_OK(baddst = mkdtemp_open(SYSTEM_TMPDIR "/test-copy_file-src.XXXXXX", 0, &baddstp));
 
         /* Populate the source, same as before */
         FOREACH_ELEMENT(file, files)

@@ -20,7 +20,7 @@
 #include "tmpfile-util.h"
 
 TEST(writing_tmpfile) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-systemd_writing_tmpfile.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-systemd_writing_tmpfile.XXXXXX";
         _cleanup_free_ char *contents = NULL;
         size_t size;
         _cleanup_close_ int fd = -EBADF;
@@ -106,8 +106,8 @@ TEST(tempfn_random) {
 
         test_tempfn_random_one("foo", NULL, ".#foo", 0);
         test_tempfn_random_one("foo", "bar", ".#barfoo", 0);
-        test_tempfn_random_one("/tmp/foo", NULL, "/tmp/.#foo", 0);
-        test_tempfn_random_one("/tmp/foo", "bar", "/tmp/.#barfoo", 0);
+        test_tempfn_random_one(SYSTEM_TMPDIR "/foo", NULL, SYSTEM_TMPDIR "/.#foo", 0);
+        test_tempfn_random_one(SYSTEM_TMPDIR "/foo", "bar", SYSTEM_TMPDIR "/.#barfoo", 0);
         test_tempfn_random_one("./foo", NULL, ".#foo", 0);
         test_tempfn_random_one("./foo", "bar", ".#barfoo", 0);
         test_tempfn_random_one("../foo", NULL, "../.#foo", 0);
@@ -115,8 +115,8 @@ TEST(tempfn_random) {
 
         test_tempfn_random_one("foo/", NULL, ".#foo", 0);
         test_tempfn_random_one("foo/", "bar", ".#barfoo", 0);
-        test_tempfn_random_one("/tmp/foo/", NULL, "/tmp/.#foo", 0);
-        test_tempfn_random_one("/tmp/foo/", "bar", "/tmp/.#barfoo", 0);
+        test_tempfn_random_one(SYSTEM_TMPDIR "/foo/", NULL, SYSTEM_TMPDIR "/.#foo", 0);
+        test_tempfn_random_one(SYSTEM_TMPDIR "/foo/", "bar", SYSTEM_TMPDIR "/.#barfoo", 0);
         test_tempfn_random_one("./foo/", NULL, ".#foo", 0);
         test_tempfn_random_one("./foo/", "bar", ".#barfoo", 0);
         test_tempfn_random_one("../foo/", NULL, "../.#foo", 0);
@@ -183,8 +183,8 @@ TEST(tempfn_xxxxxx) {
 
         test_tempfn_xxxxxx_one("foo", NULL, ".#foo", 0);
         test_tempfn_xxxxxx_one("foo", "bar", ".#barfoo", 0);
-        test_tempfn_xxxxxx_one("/tmp/foo", NULL, "/tmp/.#foo", 0);
-        test_tempfn_xxxxxx_one("/tmp/foo", "bar", "/tmp/.#barfoo", 0);
+        test_tempfn_xxxxxx_one(SYSTEM_TMPDIR "/foo", NULL, SYSTEM_TMPDIR "/.#foo", 0);
+        test_tempfn_xxxxxx_one(SYSTEM_TMPDIR "/foo", "bar", SYSTEM_TMPDIR "/.#barfoo", 0);
         test_tempfn_xxxxxx_one("./foo", NULL, ".#foo", 0);
         test_tempfn_xxxxxx_one("./foo", "bar", ".#barfoo", 0);
         test_tempfn_xxxxxx_one("../foo", NULL, "../.#foo", 0);
@@ -192,8 +192,8 @@ TEST(tempfn_xxxxxx) {
 
         test_tempfn_xxxxxx_one("foo/", NULL, ".#foo", 0);
         test_tempfn_xxxxxx_one("foo/", "bar", ".#barfoo", 0);
-        test_tempfn_xxxxxx_one("/tmp/foo/", NULL, "/tmp/.#foo", 0);
-        test_tempfn_xxxxxx_one("/tmp/foo/", "bar", "/tmp/.#barfoo", 0);
+        test_tempfn_xxxxxx_one(SYSTEM_TMPDIR "/foo/", NULL, SYSTEM_TMPDIR "/.#foo", 0);
+        test_tempfn_xxxxxx_one(SYSTEM_TMPDIR "/foo/", "bar", SYSTEM_TMPDIR "/.#barfoo", 0);
         test_tempfn_xxxxxx_one("./foo/", NULL, ".#foo", 0);
         test_tempfn_xxxxxx_one("./foo/", "bar", ".#barfoo", 0);
         test_tempfn_xxxxxx_one("../foo/", NULL, "../.#foo", 0);
@@ -261,8 +261,8 @@ TEST(tempfn_random_child) {
 
         test_tempfn_random_child_one("foo", NULL, "foo/.#", 0);
         test_tempfn_random_child_one("foo", "bar", "foo/.#bar", 0);
-        test_tempfn_random_child_one("/tmp/foo", NULL, "/tmp/foo/.#", 0);
-        test_tempfn_random_child_one("/tmp/foo", "bar", "/tmp/foo/.#bar", 0);
+        test_tempfn_random_child_one(SYSTEM_TMPDIR "/foo", NULL, SYSTEM_TMPDIR "/foo/.#", 0);
+        test_tempfn_random_child_one(SYSTEM_TMPDIR "/foo", "bar", SYSTEM_TMPDIR "/foo/.#bar", 0);
         test_tempfn_random_child_one("./foo", NULL, "foo/.#", 0);
         test_tempfn_random_child_one("./foo", "bar", "foo/.#bar", 0);
         test_tempfn_random_child_one("../foo", NULL, "../foo/.#", 0);
@@ -270,8 +270,8 @@ TEST(tempfn_random_child) {
 
         test_tempfn_random_child_one("foo/", NULL, "foo/.#", 0);
         test_tempfn_random_child_one("foo/", "bar", "foo/.#bar", 0);
-        test_tempfn_random_child_one("/tmp/foo/", NULL, "/tmp/foo/.#", 0);
-        test_tempfn_random_child_one("/tmp/foo/", "bar", "/tmp/foo/.#bar", 0);
+        test_tempfn_random_child_one(SYSTEM_TMPDIR "/foo/", NULL, SYSTEM_TMPDIR "/foo/.#", 0);
+        test_tempfn_random_child_one(SYSTEM_TMPDIR "/foo/", "bar", SYSTEM_TMPDIR "/foo/.#bar", 0);
         test_tempfn_random_child_one("./foo/", NULL, "foo/.#", 0);
         test_tempfn_random_child_one("./foo/", "bar", "foo/.#bar", 0);
         test_tempfn_random_child_one("../foo/", NULL, "../foo/.#", 0);
@@ -307,7 +307,7 @@ TEST(tempfn_random_child) {
 TEST(link_tmpfile) {
         _cleanup_free_ char *cmd = NULL, *cmd2 = NULL, *ans = NULL, *ans2 = NULL, *d = NULL, *tmp = NULL, *line = NULL;
         _cleanup_close_ int fd = -EBADF, fd2 = -EBADF;
-        const char *p = saved_argv[1] ?: "/tmp";
+        const char *p = saved_argv[1] ?: SYSTEM_TMPDIR;
         char *pattern;
 
         pattern = strjoina(p, "/systemd-test-XXXXXX");

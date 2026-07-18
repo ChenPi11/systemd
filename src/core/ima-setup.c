@@ -15,7 +15,7 @@
 
 #define IMA_SECFS_DIR "/sys/kernel/security/ima"
 #define IMA_SECFS_POLICY IMA_SECFS_DIR "/policy"
-#define IMA_POLICY_PATH "/etc/ima/ima-policy"
+#define IMA_POLICY_PATH SYSCONF_DIR "/ima/ima-policy"
 
 int ima_setup(void) {
 #if ENABLE_IMA

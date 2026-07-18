@@ -268,7 +268,7 @@ static void test_skip_one(void (*setup)(void)) {
         _cleanup_(test_donep) char *t = NULL;
         sd_journal *j;
 
-        mkdtemp_chdir_chattr("/var/tmp/journal-skip-XXXXXX", &t);
+        mkdtemp_chdir_chattr(LOCALSTATEDIR SYSTEM_TMPDIR "/journal-skip-XXXXXX", &t);
 
         setup();
 
@@ -441,7 +441,7 @@ static void test_boot_id_one(void (*setup)(void), size_t n_ids_expected) {
         _cleanup_free_ LogId *ids = NULL;
         size_t n_ids;
 
-        mkdtemp_chdir_chattr("/var/tmp/journal-boot-id-XXXXXX", &t);
+        mkdtemp_chdir_chattr(LOCALSTATEDIR SYSTEM_TMPDIR "/journal-boot-id-XXXXXX", &t);
 
         setup();
 
@@ -515,7 +515,7 @@ static void test_sequence_numbers_one(void) {
 
         ASSERT_NOT_NULL((m = mmap_cache_new()));
 
-        mkdtemp_chdir_chattr("/var/tmp/journal-seq-XXXXXX", &t);
+        mkdtemp_chdir_chattr(LOCALSTATEDIR SYSTEM_TMPDIR "/journal-seq-XXXXXX", &t);
 
         ASSERT_OK(journal_file_open(-EBADF, "one.journal", O_RDWR|O_CREAT, JOURNAL_COMPRESS, 0644,
                                     UINT64_MAX, NULL, m, NULL, &one));
@@ -842,7 +842,7 @@ static void test_generic_array_bisect_one(size_t n, size_t num_corrupted) {
 
         ASSERT_NOT_NULL((m = mmap_cache_new()));
 
-        mkdtemp_chdir_chattr("/var/tmp/journal-seq-XXXXXX", &t);
+        mkdtemp_chdir_chattr(LOCALSTATEDIR SYSTEM_TMPDIR "/journal-seq-XXXXXX", &t);
 
         ASSERT_OK(journal_file_open(-EBADF, "test.journal", O_RDWR|O_CREAT, JOURNAL_COMPRESS, 0644,
                                     UINT64_MAX, NULL, m, NULL, &f));
@@ -1195,7 +1195,7 @@ TEST(seek_time) {
         size_t n_entries = 0;
         JournalFile *f;
 
-        mkdtemp_chdir_chattr("/var/tmp/journal-seek-time-XXXXXX", &t);
+        mkdtemp_chdir_chattr(LOCALSTATEDIR SYSTEM_TMPDIR "/journal-seek-time-XXXXXX", &t);
 
         ASSERT_NOT_NULL((m = mmap_cache_new()));
 
@@ -1330,8 +1330,8 @@ TEST(seek_time) {
 
 static int intro(void) {
         /* journal_file_open() requires a valid machine id */
-        if (access("/etc/machine-id", F_OK) != 0)
-                return log_tests_skipped("/etc/machine-id not found");
+        if (access(SYSCONF_DIR "/machine-id", F_OK) != 0)
+                return log_tests_skipped(SYSCONF_DIR "/machine-id not found");
 
         arg_keep = saved_argc > 1;
 

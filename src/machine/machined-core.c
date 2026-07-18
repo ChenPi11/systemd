@@ -399,7 +399,7 @@ int machine_get_os_release(Machine *machine, char ***ret_os_release) {
                 if (!f)
                         return log_debug_errno(errno, "Failed to fdopen(): %m");
 
-                r = load_env_file_pairs(f, "/etc/os-release", &l);
+                r = load_env_file_pairs(f, SYSCONF_DIR "/os-release", &l);
                 if (r < 0)
                         return log_debug_errno(r, "Failed to load OS release information: %m");
 

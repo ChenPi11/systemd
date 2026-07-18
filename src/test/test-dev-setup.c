@@ -20,40 +20,40 @@ int main(int argc, char *argv[]) {
         if (have_effective_cap(CAP_DAC_OVERRIDE) <= 0)
                 return log_tests_skipped("missing capability (CAP_DAC_OVERRIDE)");
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-dev-setupXXXXXX", &p));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-dev-setupXXXXXX", &p));
 
-        f = ASSERT_NOT_NULL(path_join(p, "/run/systemd"));
+        f = ASSERT_NOT_NULL(path_join(p, RUNSTATEDIR "/systemd"));
         ASSERT_OK(mkdir_p(f, 0755));
 
         ASSERT_OK(make_inaccessible_nodes(f, 1, 1));
         ASSERT_OK(make_inaccessible_nodes(f, 1, 1)); /* 2nd call should be a clean NOP */
 
         free(f);
-        f = ASSERT_NOT_NULL(path_join(p, "/run/systemd/inaccessible/reg"));
+        f = ASSERT_NOT_NULL(path_join(p, RUNSTATEDIR "/systemd/inaccessible/reg"));
         ASSERT_OK_ERRNO(stat(f, &st));
         ASSERT_TRUE(S_ISREG(st.st_mode));
         ASSERT_EQ(st.st_mode & 07777, 0000U);
 
         free(f);
-        f = ASSERT_NOT_NULL(path_join(p, "/run/systemd/inaccessible/dir"));
+        f = ASSERT_NOT_NULL(path_join(p, RUNSTATEDIR "/systemd/inaccessible/dir"));
         ASSERT_OK_ERRNO(stat(f, &st));
         ASSERT_TRUE(S_ISDIR(st.st_mode));
         ASSERT_EQ(st.st_mode & 07777, 0000U);
 
         free(f);
-        f = ASSERT_NOT_NULL(path_join(p, "/run/systemd/inaccessible/fifo"));
+        f = ASSERT_NOT_NULL(path_join(p, RUNSTATEDIR "/systemd/inaccessible/fifo"));
         ASSERT_OK_ERRNO(stat(f, &st));
         ASSERT_TRUE(S_ISFIFO(st.st_mode));
         ASSERT_EQ(st.st_mode & 07777, 0000U);
 
         free(f);
-        f = ASSERT_NOT_NULL(path_join(p, "/run/systemd/inaccessible/sock"));
+        f = ASSERT_NOT_NULL(path_join(p, RUNSTATEDIR "/systemd/inaccessible/sock"));
         ASSERT_OK_ERRNO(stat(f, &st));
         ASSERT_TRUE(S_ISSOCK(st.st_mode));
         ASSERT_EQ(st.st_mode & 07777, 0000U);
 
         free(f);
-        f = ASSERT_NOT_NULL(path_join(p, "/run/systemd/inaccessible/chr"));
+        f = ASSERT_NOT_NULL(path_join(p, RUNSTATEDIR "/systemd/inaccessible/chr"));
         if (stat(f, &st) < 0)
                 ASSERT_EQ(errno, ENOENT);
         else {
@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
         }
 
         free(f);
-        f = ASSERT_NOT_NULL(path_join(p, "/run/systemd/inaccessible/blk"));
+        f = ASSERT_NOT_NULL(path_join(p, RUNSTATEDIR "/systemd/inaccessible/blk"));
         if (stat(f, &st) < 0)
                 ASSERT_EQ(errno, ENOENT);
         else {

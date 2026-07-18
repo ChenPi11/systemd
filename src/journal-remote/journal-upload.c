@@ -82,7 +82,7 @@ static void close_fd_input(Uploader *u);
 
 #define SERVER_ANSWER_KEEP 2048
 
-#define STATE_FILE "/var/lib/systemd/journal-upload/state"
+#define STATE_FILE LOCALSTATEDIR "/lib/systemd/journal-upload/state"
 
 static size_t output_callback(char *buf,
                               size_t size,

@@ -1305,7 +1305,7 @@ TEST(verify_alias) {
 static int intro(void) {
         const char *p;
 
-        assert_se(mkdtemp_malloc("/tmp/rootXXXXXX", &root) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/rootXXXXXX", &root) >= 0);
 
         p = strjoina(root, "/usr/lib/systemd/system/");
         assert_se(mkdir_p(p, 0755) >= 0);
@@ -1313,7 +1313,7 @@ static int intro(void) {
         p = strjoina(root, SYSTEM_CONFIG_UNIT_DIR"/");
         assert_se(mkdir_p(p, 0755) >= 0);
 
-        p = strjoina(root, "/run/systemd/system/");
+        p = strjoina(root, RUNSTATEDIR "/systemd/system/");
         assert_se(mkdir_p(p, 0755) >= 0);
 
         p = strjoina(root, "/opt/");

@@ -74,10 +74,10 @@ int action_setup_keys(void) {
         if (r < 0)
                 return r;
 
-        r = is_dir("/var/log/journal/", /* follow= */ false);
+        r = is_dir(LOCALSTATEDIR "/log/journal/", /* follow= */ false);
         if (r == 0)
                 return log_error_errno(SYNTHETIC_ERRNO(ENOTDIR),
-                                       "/var/log/journal is not a directory, must be using persistent logging for FSS.");
+                                       LOCALSTATEDIR "/log/journal is not a directory, must be using persistent logging for FSS.");
         if (r == -ENOENT)
                 return log_error_errno(r, "Directory /var/log/journal/ does not exist, must be using persistent logging for FSS.");
         if (r < 0)
@@ -91,7 +91,7 @@ int action_setup_keys(void) {
         if (r < 0)
                 return log_error_errno(r, "Failed to get boot ID: %m");
 
-        path = path_join("/var/log/journal/", SD_ID128_TO_STRING(machine), "/fss");
+        path = path_join(LOCALSTATEDIR "/log/journal/", SD_ID128_TO_STRING(machine), "/fss");
         if (!path)
                 return log_oom();
 

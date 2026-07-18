@@ -34,7 +34,7 @@ static void wait_fd_closed(int fd) {
 }
 
 TEST(asynchronous_close) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-asynchronous_close.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-asynchronous_close.XXXXXX";
         int fd, r;
 
         fd = mkostemp_safe(name);

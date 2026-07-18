@@ -28,7 +28,7 @@
 #include "varlink-io.systemd.Report.Signer.h"
 #include "varlink-util.h"
 
-#define REPORT_SIGN_PLAIN_DIR         "/var/lib/systemd/report.sign.plain"
+#define REPORT_SIGN_PLAIN_DIR         LOCALSTATEDIR "/lib/systemd/report.sign.plain"
 #define REPORT_SIGN_PLAIN_PRIVATE_KEY "local.private"
 #define REPORT_SIGN_PLAIN_PUBLIC_KEY  "local.public"
 

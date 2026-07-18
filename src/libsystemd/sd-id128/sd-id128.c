@@ -125,7 +125,7 @@ _public_ int sd_id128_get_machine(sd_id128_t *ret) {
         int r;
 
         if (sd_id128_is_null(saved_machine_id)) {
-                r = id128_read("/etc/machine-id", ID128_FORMAT_PLAIN | ID128_REFUSE_NULL, &saved_machine_id);
+                r = id128_read(SYSCONF_DIR "/machine-id", ID128_FORMAT_PLAIN | ID128_REFUSE_NULL, &saved_machine_id);
                 if (r < 0)
                         return r;
         }
@@ -147,7 +147,7 @@ int id128_get_machine_at(int rfd, sd_id128_t *ret) {
                 return sd_id128_get_machine(ret);
 
         _cleanup_close_ int fd =
-                chase_and_openat(rfd, rfd, "/etc/machine-id", CHASE_MUST_BE_REGULAR, O_RDONLY|O_CLOEXEC|O_NOCTTY, /* ret_path= */ NULL);
+                chase_and_openat(rfd, rfd, SYSCONF_DIR "/machine-id", CHASE_MUST_BE_REGULAR, O_RDONLY|O_CLOEXEC|O_NOCTTY, /* ret_path= */ NULL);
         if (fd < 0)
                 return fd;
 
@@ -159,7 +159,7 @@ int id128_get_machine(const char *root, sd_id128_t *ret) {
                 return sd_id128_get_machine(ret);
 
         _cleanup_close_ int fd =
-                chase_and_open("/etc/machine-id", root, CHASE_PREFIX_ROOT|CHASE_MUST_BE_REGULAR, O_RDONLY|O_CLOEXEC|O_NOCTTY, /* ret_path= */ NULL);
+                chase_and_open(SYSCONF_DIR "/machine-id", root, CHASE_PREFIX_ROOT|CHASE_MUST_BE_REGULAR, O_RDONLY|O_CLOEXEC|O_NOCTTY, /* ret_path= */ NULL);
         if (fd < 0)
                 return fd;
 

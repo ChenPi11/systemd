@@ -1019,7 +1019,7 @@ static int method_add_signing_key(sd_bus_message *message, void *userdata, sd_bu
         if (!fn_copy)
                 return log_oom();
 
-        _cleanup_free_ char *p = path_join("/var/lib/systemd/home/", fn);
+        _cleanup_free_ char *p = path_join(LOCALSTATEDIR "/lib/systemd/home/", fn);
         if (!p)
                 return log_oom();
 
@@ -1074,7 +1074,7 @@ static int method_remove_signing_key(sd_bus_message *message, void *userdata, sd
         if (r == 0)
                 return 1; /* Will call us back */
 
-        _cleanup_free_ char *p = path_join("/var/lib/systemd/home/", fn);
+        _cleanup_free_ char *p = path_join(LOCALSTATEDIR "/lib/systemd/home/", fn);
         if (!p)
                 return log_oom();
 

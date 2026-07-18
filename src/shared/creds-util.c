@@ -531,7 +531,7 @@ int get_credential_host_secret(CredentialSecretFlags flags, struct iovec *ret) {
                 dirname = _dirname;
                 filename = _filename;
         } else {
-                dirname = "/var/lib/systemd";
+                dirname = LOCALSTATEDIR "/lib/systemd";
                 filename = "credential.secret";
         }
 

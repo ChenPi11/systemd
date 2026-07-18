@@ -38,7 +38,7 @@ TEST(read_one_char) {
         _cleanup_fclose_ FILE *file = NULL;
         char r;
         bool need_nl;
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-read_one_char.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-read_one_char.XXXXXX";
 
         ASSERT_OK_ZERO(fmkostemp_safe(name, "r+", &file));
 

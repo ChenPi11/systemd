@@ -10,7 +10,7 @@
 #include "tmpfile-util.h"
 
 TEST(read_mem_pressure) {
-        _cleanup_(unlink_tempfilep) char path[] = "/tmp/pressurereadtestXXXXXX";
+        _cleanup_(unlink_tempfilep) char path[] = SYSTEM_TMPDIR "/pressurereadtestXXXXXX";
         _cleanup_close_ int fd = -EBADF;
         ResourcePressure rp;
 

@@ -307,7 +307,7 @@ static int get_firmware_search_dirs(char ***ret) {
                 return r;
 
         _cleanup_strv_free_ char **l = NULL;
-        l = strv_new(user_firmware_dir, "/etc/qemu/firmware");
+        l = strv_new(user_firmware_dir, SYSCONF_DIR "/qemu/firmware");
         if (!l)
                 return log_oom_debug();
 

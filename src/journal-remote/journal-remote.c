@@ -18,7 +18,7 @@
 #include "socket-util.h"
 #include "stdio-util.h"
 
-#define REMOTE_JOURNAL_PATH "/var/log/journal/remote"
+#define REMOTE_JOURNAL_PATH LOCALSTATEDIR "/log/journal/remote"
 
 #define filename_escape(s) xescape((s), "/ ")
 

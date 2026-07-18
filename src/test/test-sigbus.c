@@ -17,7 +17,7 @@
 
 int main(int argc, char *argv[]) {
         _cleanup_close_ int fd = -EBADF;
-        char template[] = "/tmp/sigbus-test-XXXXXX";
+        char template[] = SYSTEM_TMPDIR "/sigbus-test-XXXXXX";
         void *addr = NULL;
         uint8_t *p;
 

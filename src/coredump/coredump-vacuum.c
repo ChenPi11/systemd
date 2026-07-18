@@ -129,7 +129,7 @@ int coredump_vacuum(int exclude_fd, uint64_t keep_free, uint64_t max_use) {
          * because we rely on rate-limiting of the messages there,
          * to avoid being flooded. */
 
-        d = opendir("/var/lib/systemd/coredump");
+        d = opendir(LOCALSTATEDIR "/lib/systemd/coredump");
         if (!d) {
                 if (errno == ENOENT)
                         return 0;

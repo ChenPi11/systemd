@@ -451,7 +451,7 @@ TEST(mangle_gecos) {
 }
 
 TEST(lookup_pwent_in_files) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-user-util-passwd-XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-user-util-passwd-XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
 
         ASSERT_OK(fmkostemp_safe(fn, "w", &f));
@@ -519,7 +519,7 @@ TEST(lookup_pwent_in_files) {
                                      &pw), ESRCH);
 
         /* First match wins: same name in two files, but the first file's entry should be picked */
-        _cleanup_(unlink_tempfilep) char fn2[] = "/tmp/test-user-util-passwd2-XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn2[] = SYSTEM_TMPDIR "/test-user-util-passwd2-XXXXXX";
         _cleanup_fclose_ FILE *f2 = NULL;
 
         ASSERT_OK(fmkostemp_safe(fn2, "w", &f2));
@@ -539,7 +539,7 @@ TEST(lookup_pwent_in_files) {
 }
 
 TEST(lookup_grent_in_files) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-user-util-group-XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-user-util-group-XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
 
         ASSERT_OK(fmkostemp_safe(fn, "w", &f));
@@ -597,7 +597,7 @@ TEST(lookup_grent_in_files) {
 }
 
 TEST(lookup_groups_in_files) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-user-util-group-XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-user-util-group-XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
 
         ASSERT_OK(fmkostemp_safe(fn, "w", &f));

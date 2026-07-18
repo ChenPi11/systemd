@@ -24,9 +24,9 @@
 
 TEST(close_many) {
         int fds[3];
-        _cleanup_(unlink_tempfilep) char name0[] = "/tmp/test-close-many.XXXXXX";
-        _cleanup_(unlink_tempfilep) char name1[] = "/tmp/test-close-many.XXXXXX";
-        _cleanup_(unlink_tempfilep) char name2[] = "/tmp/test-close-many.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name0[] = SYSTEM_TMPDIR "/test-close-many.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name1[] = SYSTEM_TMPDIR "/test-close-many.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name2[] = SYSTEM_TMPDIR "/test-close-many.XXXXXX";
 
         fds[0] = mkostemp_safe(name0);
         fds[1] = mkostemp_safe(name1);
@@ -42,7 +42,7 @@ TEST(close_many) {
 }
 
 TEST(close_nointr) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-test-close_nointr.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-test-close_nointr.XXXXXX";
         int fd;
 
         fd = mkostemp_safe(name);
@@ -585,7 +585,7 @@ TEST(dir_fd_is_root) {
         _cleanup_(rm_rf_physical_and_freep) char *tmp = NULL;
         _cleanup_free_ char *x = NULL, *y = NULL;
 
-        assert_se(mkdtemp_malloc("/tmp/test-mkdir-XXXXXX", &tmp) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/test-mkdir-XXXXXX", &tmp) >= 0);
         assert_se(x = path_join(tmp, "x"));
         assert_se(y = path_join(tmp, "x/y"));
         assert_se(mkdir_p(y, 0755) >= 0);
@@ -720,7 +720,7 @@ TEST(path_is_root_at) {
 
         /* bind mounting to non-root directory has no problem, of course. */
         _cleanup_(rm_rf_physical_and_freep) char *tmp = NULL;
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-path_is_root-XXXXXX", &tmp));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-path_is_root-XXXXXX", &tmp));
         ASSERT_OK(mount_nofollow_verbose(LOG_DEBUG, "/", tmp, NULL, MS_BIND|MS_REC, NULL));
         log_debug("/* %s: bind mount(\"/\", \"%s\") */", __func__, tmp);
         test_path_is_root_at_one(true);
@@ -870,7 +870,7 @@ TEST(fd_get_path) {
 }
 
 TEST(fd_vet_accmode) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-fd-accmode.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-fd-accmode.XXXXXX";
         _cleanup_close_ int fd_rw = -EBADF, fd_ro = -EBADF, fd_wo = -EBADF, fd_opath = -EBADF;
 
         ASSERT_OK(fd_rw = mkostemp_safe(name));
@@ -895,7 +895,7 @@ TEST(fd_vet_accmode) {
 }
 
 TEST(fd_is_writable) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-fd-writable.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-fd-writable.XXXXXX";
         _cleanup_close_ int fd_ro = -EBADF, fd_wo = -EBADF, fd_rw = -EBADF, fd_path = -EBADF;
 
         ASSERT_OK(fd_rw = mkostemp_safe(name));

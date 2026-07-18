@@ -122,37 +122,37 @@ int change_uid_gid(const char *user, bool chown_stdio, char **ret_home) {
         x = strchr(line, ':');
         if (!x)
                 return log_error_errno(SYNTHETIC_ERRNO(EIO),
-                                       "/etc/passwd entry has invalid user field.");
+                                       SYSCONF_DIR "/passwd entry has invalid user field.");
 
         u = strchr(x+1, ':');
         if (!u)
                 return log_error_errno(SYNTHETIC_ERRNO(EIO),
-                                       "/etc/passwd entry has invalid password field.");
+                                       SYSCONF_DIR "/passwd entry has invalid password field.");
 
         u++;
         g = strchr(u, ':');
         if (!g)
                 return log_error_errno(SYNTHETIC_ERRNO(EIO),
-                                       "/etc/passwd entry has invalid UID field.");
+                                       SYSCONF_DIR "/passwd entry has invalid UID field.");
 
         *g = 0;
         g++;
         x = strchr(g, ':');
         if (!x)
                 return log_error_errno(SYNTHETIC_ERRNO(EIO),
-                                       "/etc/passwd entry has invalid GID field.");
+                                       SYSCONF_DIR "/passwd entry has invalid GID field.");
 
         *x = 0;
         h = strchr(x+1, ':');
         if (!h)
                 return log_error_errno(SYNTHETIC_ERRNO(EIO),
-                                       "/etc/passwd entry has invalid GECOS field.");
+                                       SYSCONF_DIR "/passwd entry has invalid GECOS field.");
 
         h++;
         x = strchr(h, ':');
         if (!x)
                 return log_error_errno(SYNTHETIC_ERRNO(EIO),
-                                       "/etc/passwd entry has invalid home directory field.");
+                                       SYSCONF_DIR "/passwd entry has invalid home directory field.");
 
         *x = 0;
 

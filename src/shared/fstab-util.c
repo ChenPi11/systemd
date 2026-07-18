@@ -77,7 +77,7 @@ bool fstab_is_extrinsic(const char *mount, const char *opts) {
         if (PATH_IN_SET(mount,
                         "/",
                         "/usr",
-                        "/etc"))
+                        SYSCONF_DIR))
                 return true;
 
         if (PATH_STARTSWITH_SET(mount,
@@ -407,7 +407,7 @@ char* fstab_node_to_udev_node(const char *p) {
 }
 
 const char* fstab_path(void) {
-        return secure_getenv("SYSTEMD_FSTAB") ?: "/etc/fstab";
+        return secure_getenv("SYSTEMD_FSTAB") ?: SYSCONF_DIR "/fstab";
 }
 
 bool fstab_is_bind(const char *options, const char *fstype) {

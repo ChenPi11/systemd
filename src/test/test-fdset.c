@@ -58,7 +58,7 @@ TEST(fdset_put_dup) {
         _cleanup_close_ int fd = -EBADF;
         int copyfd = -EBADF;
         _cleanup_fdset_free_ FDSet *fdset = NULL;
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-fdset_put_dup.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-fdset_put_dup.XXXXXX";
 
         fd = mkostemp_safe(name);
         assert_se(fd >= 0);
@@ -75,7 +75,7 @@ TEST(fdset_cloexec) {
         int fd = -EBADF;
         _cleanup_fdset_free_ FDSet *fdset = NULL;
         int flags = -1;
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-fdset_cloexec.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-fdset_cloexec.XXXXXX";
 
         fd = mkostemp_safe(name);
         assert_se(fd >= 0);
@@ -98,7 +98,7 @@ TEST(fdset_cloexec) {
 TEST(fdset_close_others) {
         int fd = -EBADF, copyfd = -EBADF;
         _cleanup_fdset_free_ FDSet *fdset = NULL;
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-fdset_close_others.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-fdset_close_others.XXXXXX";
 
         fd = mkostemp_safe(name);
         assert_se(fd >= 0);
@@ -125,7 +125,7 @@ TEST(fdset_close_others) {
 TEST(fdset_remove) {
         _cleanup_close_ int fd = -EBADF;
         _cleanup_fdset_free_ FDSet *fdset = NULL;
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-fdset_remove.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-fdset_remove.XXXXXX";
 
         fd = mkostemp_safe(name);
         assert_se(fd >= 0);
@@ -142,7 +142,7 @@ TEST(fdset_remove) {
 TEST(fdset_iterate) {
         int fd = -EBADF;
         _cleanup_fdset_free_ FDSet *fdset = NULL;
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-fdset_iterate.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-fdset_iterate.XXXXXX";
         int c = 0;
         int a;
 
@@ -165,7 +165,7 @@ TEST(fdset_iterate) {
 TEST(fdset_isempty) {
         int fd;
         _cleanup_fdset_free_ FDSet *fdset = NULL;
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-fdset_isempty.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-fdset_isempty.XXXXXX";
 
         fd = mkostemp_safe(name);
         assert_se(fd >= 0);
@@ -181,7 +181,7 @@ TEST(fdset_isempty) {
 TEST(fdset_steal_first) {
         int fd;
         _cleanup_fdset_free_ FDSet *fdset = NULL;
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-fdset_steal_first.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-fdset_steal_first.XXXXXX";
 
         fd = mkostemp_safe(name);
         assert_se(fd >= 0);

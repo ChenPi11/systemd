@@ -482,7 +482,7 @@ static int run(const char *dest, const char *dest_early, const char *dest_late) 
 
         assert_se(arg_dest = dest);
 
-        arg_veritytab = getenv("SYSTEMD_VERITYTAB") ?: "/etc/veritytab";
+        arg_veritytab = getenv("SYSTEMD_VERITYTAB") ?: SYSCONF_DIR "/veritytab";
 
         r = proc_cmdline_parse(parse_proc_cmdline_item, NULL, PROC_CMDLINE_STRIP_RD_PREFIX);
         if (r < 0)

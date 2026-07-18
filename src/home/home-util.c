@@ -146,9 +146,9 @@ int bus_message_append_secret(sd_bus_message *m, UserRecord *secret) {
 }
 
 const char* home_record_dir(void) {
-        return secure_getenv("SYSTEMD_HOME_RECORD_DIR") ?: "/var/lib/systemd/home/";
+        return secure_getenv("SYSTEMD_HOME_RECORD_DIR") ?: LOCALSTATEDIR "/lib/systemd/home/";
 }
 
 const char* home_system_blob_dir(void) {
-        return secure_getenv("SYSTEMD_HOME_SYSTEM_BLOB_DIR") ?: "/var/cache/systemd/home/";
+        return secure_getenv("SYSTEMD_HOME_SYSTEM_BLOB_DIR") ?: LOCALSTATEDIR "/cache/systemd/home/";
 }

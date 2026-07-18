@@ -34,10 +34,10 @@ TEST(readlink_and_make_absolute) {
         const char *tempdir, *name, *name2, *name_alias;
         _cleanup_free_ char *r1 = NULL, *r2 = NULL, *pwd = NULL;
 
-        tempdir = strjoina(arg_test_dir ?: "/tmp", "/test-readlink_and_make_absolute");
+        tempdir = strjoina(arg_test_dir ?: SYSTEM_TMPDIR, "/test-readlink_and_make_absolute");
         name = strjoina(tempdir, "/original");
         name2 = "test-readlink_and_make_absolute/original";
-        name_alias = strjoina(arg_test_dir ?: "/tmp", "/test-readlink_and_make_absolute-alias");
+        name_alias = strjoina(arg_test_dir ?: SYSTEM_TMPDIR, "/test-readlink_and_make_absolute-alias");
 
         assert_se(mkdir_safe(tempdir, 0755, getuid(), getgid(), MKDIR_WARN_MODE) >= 0);
         assert_se(touch(name) >= 0);
@@ -67,7 +67,7 @@ TEST(readlink_and_make_absolute) {
 TEST(get_files_in_directory) {
         _cleanup_strv_free_ char **l = NULL, **t = NULL;
 
-        assert_se(get_files_in_directory(arg_test_dir ?: "/tmp", &l) >= 0);
+        assert_se(get_files_in_directory(arg_test_dir ?: SYSTEM_TMPDIR, &l) >= 0);
         assert_se(get_files_in_directory(".", &t) >= 0);
         assert_se(get_files_in_directory(".", NULL) >= 0);
 }
@@ -99,19 +99,19 @@ TEST(var_tmp) {
         assert_se(unsetenv("TMP") >= 0);
 
         assert_se(var_tmp_dir(&tmp_dir) >= 0);
-        ASSERT_STREQ(tmp_dir, "/var/tmp");
+        ASSERT_STREQ(tmp_dir, LOCALSTATEDIR SYSTEM_TMPDIR);
 
-        assert_se(setenv("TMPDIR", "/tmp", true) >= 0);
-        ASSERT_STREQ(getenv("TMPDIR"), "/tmp");
+        assert_se(setenv("TMPDIR", SYSTEM_TMPDIR, true) >= 0);
+        ASSERT_STREQ(getenv("TMPDIR"), SYSTEM_TMPDIR);
 
         assert_se(var_tmp_dir(&tmp_dir) >= 0);
-        ASSERT_STREQ(tmp_dir, "/tmp");
+        ASSERT_STREQ(tmp_dir, SYSTEM_TMPDIR);
 
         assert_se(setenv("TMPDIR", "/88_does_not_exist_88", true) >= 0);
         ASSERT_STREQ(getenv("TMPDIR"), "/88_does_not_exist_88");
 
         assert_se(var_tmp_dir(&tmp_dir) >= 0);
-        ASSERT_STREQ(tmp_dir, "/var/tmp");
+        ASSERT_STREQ(tmp_dir, LOCALSTATEDIR SYSTEM_TMPDIR);
 
         if (tmpdir_backup)  {
                 assert_se(setenv("TMPDIR", tmpdir_backup, true) >= 0);
@@ -144,7 +144,7 @@ TEST(access_fd) {
         _cleanup_close_ int fd = -EBADF;
         const char *a;
 
-        a = strjoina(arg_test_dir ?: "/tmp", "/access-fd.XXXXXX");
+        a = strjoina(arg_test_dir ?: SYSTEM_TMPDIR, "/access-fd.XXXXXX");
         assert_se(mkdtemp_malloc(a, &p) >= 0);
 
         fd = open(p, O_RDONLY|O_DIRECTORY|O_CLOEXEC);
@@ -501,7 +501,7 @@ static void test_rmdir_parents_one(
 TEST(rmdir_parents) {
         char *temp;
 
-        temp = strjoina(arg_test_dir ?: "/tmp", "/test-rmdir.XXXXXX");
+        temp = strjoina(arg_test_dir ?: SYSTEM_TMPDIR, "/test-rmdir.XXXXXX");
         assert_se(mkdtemp(temp));
 
         test_rmdir_parents_one(temp, "/aaa/../hoge/foo", "/hoge/foo", -EINVAL, NULL, NULL);
@@ -733,13 +733,13 @@ TEST(xopenat_regular) {
         assert_se(fd >= 0);
         fd = safe_close(fd);
 
-        fd = xopenat_full(AT_FDCWD, "/tmp/xopenat-regular-test", O_RDWR|O_CLOEXEC|O_CREAT, XO_REGULAR, 0600);
+        fd = xopenat_full(AT_FDCWD, SYSTEM_TMPDIR "/xopenat-regular-test", O_RDWR|O_CLOEXEC|O_CREAT, XO_REGULAR, 0600);
         assert_se(fd >= 0);
         fd = safe_close(fd);
 
-        assert_se(xopenat_full(AT_FDCWD, "/tmp/xopenat-regular-test", O_RDWR|O_CLOEXEC|O_CREAT|O_EXCL, XO_REGULAR, 0600) == -EEXIST);
+        assert_se(xopenat_full(AT_FDCWD, SYSTEM_TMPDIR "/xopenat-regular-test", O_RDWR|O_CLOEXEC|O_CREAT|O_EXCL, XO_REGULAR, 0600) == -EEXIST);
 
-        assert_se(unlink("/tmp/xopenat-regular-test") >= 0);
+        assert_se(unlink(SYSTEM_TMPDIR "/xopenat-regular-test") >= 0);
 }
 
 TEST(xopenat_socket) {

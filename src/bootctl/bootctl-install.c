@@ -274,7 +274,7 @@ static int load_etc_machine_info(InstallContext *c) {
 
         assert(c);
 
-        _cleanup_free_ char *j = path_join(c->root, "/etc/machine-info");
+        _cleanup_free_ char *j = path_join(c->root, SYSCONF_DIR "/machine-info");
         if (!j)
                 return log_oom();
 
@@ -282,7 +282,7 @@ static int load_etc_machine_info(InstallContext *c) {
                 chase_and_openat(
                                 c->root_fd,
                                 c->root_fd,
-                                "/etc/machine-info",
+                                SYSCONF_DIR "/machine-info",
                                 CHASE_MUST_BE_REGULAR,
                                 O_RDONLY|O_CLOEXEC,
                                 /* ret_path= */ NULL);
@@ -292,7 +292,7 @@ static int load_etc_machine_info(InstallContext *c) {
                 return log_error_errno(fd, "Failed to open '%s': %m", j);
 
         r = parse_env_file_fd(
-                        fd, "/etc/machine-info",
+                        fd, SYSCONF_DIR "/machine-info",
                         "KERNEL_INSTALL_LAYOUT", &layout,
                         "KERNEL_INSTALL_MACHINE_ID", &s);
         if (r < 0)
@@ -391,14 +391,14 @@ static int settle_make_entry_directory(InstallContext *c) {
         if (c->make_entry_directory < 0) { /* Automatic mode */
                 if (layout_type1) {
                         if (c->entry_token_type == BOOT_ENTRY_TOKEN_MACHINE_ID) {
-                                _cleanup_free_ char *j = path_join(c->root, "/etc/machine-id");
+                                _cleanup_free_ char *j = path_join(c->root, SYSCONF_DIR "/machine-id");
                                 if (!j)
                                         return log_oom();
 
                                 _cleanup_close_ int fd = -EBADF;
                                 r = chaseat(c->root_fd,
                                             c->root_fd,
-                                            "/etc/machine-id",
+                                            SYSCONF_DIR "/machine-id",
                                             CHASE_MUST_BE_REGULAR,
                                             /* ret_path= */ NULL,
                                             &fd);
@@ -1025,7 +1025,7 @@ static int install_entry_token(InstallContext *c) {
         if (!c->make_entry_directory && c->entry_token_type == BOOT_ENTRY_TOKEN_MACHINE_ID)
                 return 0;
 
-        const char *confdir = secure_getenv("KERNEL_INSTALL_CONF_ROOT") ?: "/etc/kernel/";
+        const char *confdir = secure_getenv("KERNEL_INSTALL_CONF_ROOT") ?: SYSCONF_DIR "/kernel/";
 
         _cleanup_free_ char *j = path_join(c->root, confdir);
         if (!j)

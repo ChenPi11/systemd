@@ -73,7 +73,7 @@ static int acquire_machine_id(const char *root, bool machine_id_from_firmware, s
         }
 
         /* Then, try reading the D-Bus machine ID, unless it is a symlink */
-        fd = chase_and_open("/var/lib/dbus/machine-id", root, CHASE_PREFIX_ROOT|CHASE_NOFOLLOW|CHASE_MUST_BE_REGULAR, O_RDONLY|O_CLOEXEC|O_NOCTTY, NULL);
+        fd = chase_and_open(LOCALSTATEDIR "/lib/dbus/machine-id", root, CHASE_PREFIX_ROOT|CHASE_NOFOLLOW|CHASE_MUST_BE_REGULAR, O_RDONLY|O_CLOEXEC|O_NOCTTY, NULL);
         if (fd >= 0 && id128_read_fd(fd, ID128_FORMAT_PLAIN | ID128_REFUSE_NULL, ret) >= 0) {
                 log_info("Initializing machine ID from D-Bus machine ID.");
                 return 0;
@@ -139,14 +139,14 @@ int machine_id_setup(const char *root, sd_id128_t machine_id, MachineIdSetupFlag
         WITH_UMASK(0000) {
                 _cleanup_close_ int inode_fd = -EBADF;
 
-                r = chase("/etc/machine-id", root, CHASE_PREFIX_ROOT|CHASE_MUST_BE_REGULAR, &etc_machine_id, &inode_fd);
+                r = chase(SYSCONF_DIR "/machine-id", root, CHASE_PREFIX_ROOT|CHASE_MUST_BE_REGULAR, &etc_machine_id, &inode_fd);
                 if (r == -ENOENT) {
                         _cleanup_close_ int etc_fd = -EBADF;
                         _cleanup_free_ char *etc = NULL;
 
-                        r = chase("/etc/", root, CHASE_PREFIX_ROOT|CHASE_MKDIR_0755|CHASE_MUST_BE_DIRECTORY, &etc, &etc_fd);
+                        r = chase(SYSCONF_DIR "/", root, CHASE_PREFIX_ROOT|CHASE_MKDIR_0755|CHASE_MUST_BE_DIRECTORY, &etc, &etc_fd);
                         if (r < 0)
-                                return log_error_errno(r, "Failed to open %s: %m", "/etc/");
+                                return log_error_errno(r, "Failed to open %s: %m", SYSCONF_DIR "/");
 
                         etc_machine_id = path_join(etc, "machine-id");
                         if (!etc_machine_id)
@@ -304,7 +304,7 @@ int machine_id_commit(const char *root) {
                  * persisted.
                  *
                  * First, explicitly sync the file systems we care about and check if it worked. */
-                FOREACH_STRING(sync_path, "/etc/", "/var/") {
+                FOREACH_STRING(sync_path, SYSCONF_DIR "/", LOCALSTATEDIR "/") {
                         r = syncfs_path(AT_FDCWD, sync_path);
                         if (r < 0)
                                 return log_error_errno(r, "Cannot sync %s: %m", sync_path);
@@ -320,9 +320,9 @@ int machine_id_commit(const char *root) {
 
         _cleanup_close_ int etc_fd = -EBADF;
         _cleanup_free_ char *etc = NULL;
-        r = chase("/etc/", root, CHASE_PREFIX_ROOT|CHASE_MUST_BE_DIRECTORY, &etc, &etc_fd);
+        r = chase(SYSCONF_DIR "/", root, CHASE_PREFIX_ROOT|CHASE_MUST_BE_DIRECTORY, &etc, &etc_fd);
         if (r < 0)
-                return log_error_errno(r, "Failed to open %s: %m", "/etc/");
+                return log_error_errno(r, "Failed to open %s: %m", SYSCONF_DIR "/");
 
         _cleanup_free_ char *etc_machine_id = path_join(etc, "machine-id");
         if (!etc_machine_id)
@@ -368,9 +368,9 @@ int machine_id_commit(const char *root) {
 
         /* Open /etc/ again after we transitioned into our own private mount namespace */
         _cleanup_close_ int etc_fd_again = -EBADF;
-        r = chase("/etc/", root, CHASE_PREFIX_ROOT|CHASE_MUST_BE_DIRECTORY, /* ret_path= */ NULL, &etc_fd_again);
+        r = chase(SYSCONF_DIR "/", root, CHASE_PREFIX_ROOT|CHASE_MUST_BE_DIRECTORY, /* ret_path= */ NULL, &etc_fd_again);
         if (r < 0)
-                return log_error_errno(r, "Failed to open %s: %m", "/etc/");
+                return log_error_errno(r, "Failed to open %s: %m", SYSCONF_DIR "/");
 
         r = umountat_detach_verbose(LOG_ERR, etc_fd_again, "machine-id");
         if (r < 0)

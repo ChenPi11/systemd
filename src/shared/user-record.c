@@ -1843,7 +1843,7 @@ const char* user_record_file_system_type(UserRecord *h) {
 const char* user_record_skeleton_directory(UserRecord *h) {
         assert(h);
 
-        return h->skeleton_directory ?: "/etc/skel";
+        return h->skeleton_directory ?: SYSCONF_DIR "/skel";
 }
 
 mode_t user_record_access_mode(UserRecord *h) {

@@ -2528,10 +2528,10 @@ static int exec_shared_runtime_make(
         }
 
         if (c->private_var_tmp == PRIVATE_TMP_CONNECTED &&
-            !prefixed_path_strv_contains(c->inaccessible_paths, "/var/tmp") &&
-            !prefixed_path_strv_contains(c->inaccessible_paths, "/var")) {
+            !prefixed_path_strv_contains(c->inaccessible_paths, LOCALSTATEDIR SYSTEM_TMPDIR) &&
+            !prefixed_path_strv_contains(c->inaccessible_paths, LOCALSTATEDIR)) {
 
-                r = setup_tmp_dir_one(id, "/var/tmp", &var_tmp_dir);
+                r = setup_tmp_dir_one(id, LOCALSTATEDIR SYSTEM_TMPDIR, &var_tmp_dir);
                 if (r < 0)
                         return r;
         }
@@ -2916,11 +2916,11 @@ int exec_runtime_make(
         }
 
         if (exec_needs_ephemeral(context)) {
-                r = mkdir_p("/var/lib/systemd/ephemeral-trees", 0755);
+                r = mkdir_p(LOCALSTATEDIR "/lib/systemd/ephemeral-trees", 0755);
                 if (r < 0)
                         return r;
 
-                r = tempfn_random_child("/var/lib/systemd/ephemeral-trees", unit->id, &ephemeral);
+                r = tempfn_random_child(LOCALSTATEDIR "/lib/systemd/ephemeral-trees", unit->id, &ephemeral);
                 if (r < 0)
                         return r;
 

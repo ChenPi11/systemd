@@ -80,8 +80,8 @@ TEST(null_or_empty_path_with_root) {
 
 TEST(inode_same) {
         _cleanup_close_ int fd = -EBADF;
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-files_same.XXXXXX";
-        _cleanup_(unlink_tempfilep) char name_alias[] = "/tmp/test-files_same.alias";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-files_same.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name_alias[] = SYSTEM_TMPDIR "/test-files_same.alias";
         int r;
 
         fd = mkostemp_safe(name);
@@ -137,8 +137,8 @@ TEST(inode_same) {
 }
 
 TEST(is_symlink) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-is_symlink.XXXXXX";
-        _cleanup_(unlink_tempfilep) char name_link[] = "/tmp/test-is_symlink.link";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-is_symlink.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name_link[] = SYSTEM_TMPDIR "/test-is_symlink.link";
         _cleanup_close_ int fd = -EBADF;
 
         fd = mkostemp_safe(name);
@@ -152,9 +152,9 @@ TEST(is_symlink) {
 
 TEST(path_is_fs_type) {
         /* run might not be a mount point in build chroots */
-        if (path_is_mount_point_full("/run", NULL, AT_SYMLINK_FOLLOW) > 0) {
-                assert_se(path_is_fs_type("/run", TMPFS_MAGIC) > 0);
-                assert_se(path_is_fs_type("/run", BTRFS_SUPER_MAGIC) == 0);
+        if (path_is_mount_point_full(RUNSTATEDIR, NULL, AT_SYMLINK_FOLLOW) > 0) {
+                assert_se(path_is_fs_type(RUNSTATEDIR, TMPFS_MAGIC) > 0);
+                assert_se(path_is_fs_type(RUNSTATEDIR, BTRFS_SUPER_MAGIC) == 0);
         }
         if (path_is_mount_point_full("/proc", NULL, AT_SYMLINK_FOLLOW) > 0) {
                 assert_se(path_is_fs_type("/proc", PROC_SUPER_MAGIC) > 0);
@@ -166,7 +166,7 @@ TEST(path_is_fs_type) {
 TEST(path_is_temporary_fs) {
         int r;
 
-        FOREACH_STRING(s, "/", "/run", "/sys", "/sys/", "/proc", "/i-dont-exist", "/var", "/var/lib") {
+        FOREACH_STRING(s, "/", RUNSTATEDIR, "/sys", "/sys/", "/proc", "/i-dont-exist", LOCALSTATEDIR, LOCALSTATEDIR "/lib") {
                 r = path_is_temporary_fs(s);
 
                 log_info_errno(r, "path_is_temporary_fs(\"%s\"): %d, %s",
@@ -174,8 +174,8 @@ TEST(path_is_temporary_fs) {
         }
 
         /* run might not be a mount point in build chroots */
-        if (path_is_mount_point_full("/run", NULL, AT_SYMLINK_FOLLOW) > 0)
-                assert_se(path_is_temporary_fs("/run") > 0);
+        if (path_is_mount_point_full(RUNSTATEDIR, NULL, AT_SYMLINK_FOLLOW) > 0)
+                assert_se(path_is_temporary_fs(RUNSTATEDIR) > 0);
         assert_se(path_is_temporary_fs("/proc") == 0);
         assert_se(path_is_temporary_fs("/i-dont-exist") == -ENOENT);
 }
@@ -183,7 +183,7 @@ TEST(path_is_temporary_fs) {
 TEST(path_is_read_only_fs) {
         int r;
 
-        FOREACH_STRING(s, "/", "/run", "/sys", "/sys/", "/proc", "/i-dont-exist", "/var", "/var/lib") {
+        FOREACH_STRING(s, "/", RUNSTATEDIR, "/sys", "/sys/", "/proc", "/i-dont-exist", LOCALSTATEDIR, LOCALSTATEDIR "/lib") {
                 r = path_is_read_only_fs(s);
 
                 log_info_errno(r, "path_is_read_only_fs(\"%s\"): %d, %s",
@@ -204,7 +204,7 @@ TEST(dir_is_empty) {
         assert_se(dir_is_empty_at(AT_FDCWD, "/proc", /* ignore_hidden_or_backup= */ true) == 0);
         assert_se(dir_is_empty_at(AT_FDCWD, "/icertainlydontexistdoi", /* ignore_hidden_or_backup= */ true) == -ENOENT);
 
-        assert_se(mkdtemp_malloc("/tmp/emptyXXXXXX", &empty_dir) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/emptyXXXXXX", &empty_dir) >= 0);
         assert_se(dir_is_empty_at(AT_FDCWD, empty_dir, /* ignore_hidden_or_backup= */ true) > 0);
 
         j = path_join(empty_dir, "zzz");

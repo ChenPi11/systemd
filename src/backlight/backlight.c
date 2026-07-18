@@ -463,9 +463,9 @@ static int build_save_file_path(sd_device *device, char **ret) {
                 if (!escaped_path_id)
                         return log_oom();
 
-                path = strjoin("/var/lib/systemd/backlight/", escaped_path_id, ":", escaped_subsystem, ":", escaped_sysname);
+                path = strjoin(LOCALSTATEDIR "/lib/systemd/backlight/", escaped_path_id, ":", escaped_subsystem, ":", escaped_sysname);
         } else
-                path = strjoin("/var/lib/systemd/backlight/", escaped_subsystem, ":", escaped_sysname);
+                path = strjoin(LOCALSTATEDIR "/lib/systemd/backlight/", escaped_subsystem, ":", escaped_sysname);
         if (!path)
                 return log_oom();
 

@@ -226,7 +226,7 @@ static int load_user_database(Context *c) {
 
         assert(c);
 
-        r = chase_and_fopen_unlocked("/etc/passwd", arg_root, CHASE_PREFIX_ROOT, "re", &passwd_path, &f);
+        r = chase_and_fopen_unlocked(SYSCONF_DIR "/passwd", arg_root, CHASE_PREFIX_ROOT, "re", &passwd_path, &f);
         if (r == -ENOENT)
                 return 0;
         if (r < 0)
@@ -269,7 +269,7 @@ static int load_group_database(Context *c) {
 
         assert(c);
 
-        r = chase_and_fopen_unlocked("/etc/group", arg_root, CHASE_PREFIX_ROOT, "re", &group_path, &f);
+        r = chase_and_fopen_unlocked(SYSCONF_DIR "/group", arg_root, CHASE_PREFIX_ROOT, "re", &group_path, &f);
         if (r == -ENOENT)
                 return 0;
         if (r < 0)
@@ -492,7 +492,7 @@ static int write_temporary_passwd(
                 goto done;
         }
 
-        r = fopen_temporary_label("/etc/passwd", passwd_path, &passwd, &passwd_tmp);
+        r = fopen_temporary_label(SYSCONF_DIR "/passwd", passwd_path, &passwd, &passwd_tmp);
         if (r < 0)
                 return log_debug_errno(r, "Failed to open temporary copy of %s: %m", passwd_path);
 
@@ -625,7 +625,7 @@ static int write_temporary_shadow(
                 goto done;
         }
 
-        r = fopen_temporary_label("/etc/shadow", shadow_path, &shadow, &shadow_tmp);
+        r = fopen_temporary_label(SYSCONF_DIR "/shadow", shadow_path, &shadow, &shadow_tmp);
         if (r < 0)
                 return log_debug_errno(r, "Failed to open temporary copy of %s: %m", shadow_path);
 
@@ -762,7 +762,7 @@ static int write_temporary_group(
                 goto done;
         }
 
-        r = fopen_temporary_label("/etc/group", group_path, &group, &group_tmp);
+        r = fopen_temporary_label(SYSCONF_DIR "/group", group_path, &group, &group_tmp);
         if (r < 0)
                 return log_error_errno(r, "Failed to open temporary copy of %s: %m", group_path);
 
@@ -881,7 +881,7 @@ static int write_temporary_gshadow(
                 goto done;
         }
 
-        r = fopen_temporary_label("/etc/gshadow", gshadow_path, &gshadow, &gshadow_tmp);
+        r = fopen_temporary_label(SYSCONF_DIR "/gshadow", gshadow_path, &gshadow, &gshadow_tmp);
         if (r < 0)
                 return log_error_errno(r, "Failed to open temporary copy of %s: %m", gshadow_path);
 
@@ -955,19 +955,19 @@ static int write_files(Context *c) {
         _cleanup_(unlink_and_freep) char *passwd_tmp = NULL, *group_tmp = NULL, *shadow_tmp = NULL, *gshadow_tmp = NULL;
         int r;
 
-        _cleanup_free_ char *passwd_path = path_join(arg_root, "/etc/passwd");
+        _cleanup_free_ char *passwd_path = path_join(arg_root, SYSCONF_DIR "/passwd");
         if (!passwd_path)
                 return log_oom();
 
-        _cleanup_free_ char *shadow_path = path_join(arg_root, "/etc/shadow");
+        _cleanup_free_ char *shadow_path = path_join(arg_root, SYSCONF_DIR "/shadow");
         if (!shadow_path)
                 return log_oom();
 
-        _cleanup_free_ char *group_path = path_join(arg_root, "/etc/group");
+        _cleanup_free_ char *group_path = path_join(arg_root, SYSCONF_DIR "/group");
         if (!group_path)
                 return log_oom();
 
-        _cleanup_free_ char *gshadow_path = path_join(arg_root, "/etc/gshadow");
+        _cleanup_free_ char *gshadow_path = path_join(arg_root, SYSCONF_DIR "/gshadow");
         if (!gshadow_path)
                 return log_oom();
 
@@ -991,23 +991,23 @@ static int write_files(Context *c) {
 
         /* Make a backup of the old files */
         if (group) {
-                r = make_backup("/etc/group", group_path);
+                r = make_backup(SYSCONF_DIR "/group", group_path);
                 if (r < 0)
                         return log_error_errno(r, "Failed to backup %s: %m", group_path);
         }
         if (gshadow) {
-                r = make_backup("/etc/gshadow", gshadow_path);
+                r = make_backup(SYSCONF_DIR "/gshadow", gshadow_path);
                 if (r < 0)
                         return log_error_errno(r, "Failed to backup %s: %m", gshadow_path);
         }
 
         if (passwd) {
-                r = make_backup("/etc/passwd", passwd_path);
+                r = make_backup(SYSCONF_DIR "/passwd", passwd_path);
                 if (r < 0)
                         return log_error_errno(r, "Failed to backup %s: %m", passwd_path);
         }
         if (shadow) {
-                r = make_backup("/etc/shadow", shadow_path);
+                r = make_backup(SYSCONF_DIR "/shadow", shadow_path);
                 if (r < 0)
                         return log_error_errno(r, "Failed to backup %s: %m", shadow_path);
         }
@@ -2353,7 +2353,7 @@ static int run(int argc, char *argv[]) {
                 r = read_login_defs(&c.login_defs, NULL, arg_root);
                 if (r < 0)
                         return log_error_errno(r, "Failed to read %s%s: %m",
-                                               strempty(arg_root), "/etc/login.defs");
+                                               strempty(arg_root), SYSCONF_DIR "/login.defs");
 
                 c.login_defs_need_warning = true;
 

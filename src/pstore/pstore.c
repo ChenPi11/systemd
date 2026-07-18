@@ -48,7 +48,7 @@ static PStoreStorage arg_storage = PSTORE_STORAGE_EXTERNAL;
 
 static bool arg_unlink = true;
 static const char *arg_sourcedir = "/sys/fs/pstore";
-static const char *arg_archivedir = "/var/lib/systemd/pstore";
+static const char *arg_archivedir = LOCALSTATEDIR "/lib/systemd/pstore";
 
 static int parse_config(void) {
         static const ConfigTableItem items[] = {

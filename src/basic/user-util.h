@@ -114,7 +114,7 @@ int take_etc_passwd_lock(const char *root);
 #define GID_MAPPED_ROOT ((gid_t) (INT32_MAX-1))
 
 #define ETC_PASSWD_LOCK_FILENAME ".pwd.lock"
-#define ETC_PASSWD_LOCK_PATH "/etc/" ETC_PASSWD_LOCK_FILENAME
+#define ETC_PASSWD_LOCK_PATH SYSCONF_DIR "/" ETC_PASSWD_LOCK_FILENAME
 
 /* The following macros add 1 when converting things, since UID 0 is a valid UID, while the pointer
  * NULL is special */
@@ -160,8 +160,8 @@ static inline bool hashed_password_is_locked_or_invalid(const char *password) {
 }
 
 /* Places where we will try to load account data from */
-#define PASSWD_FILES STRV_MAKE("/etc/passwd", "/usr/lib/passwd")
-#define GROUP_FILES STRV_MAKE("/etc/group", "/usr/lib/group")
+#define PASSWD_FILES STRV_MAKE(SYSCONF_DIR "/passwd", "/usr/lib/passwd")
+#define GROUP_FILES STRV_MAKE(SYSCONF_DIR "/group", "/usr/lib/group")
 
 /* A locked *and* invalid password for "struct spwd"'s .sp_pwdp and "struct passwd"'s .pw_passwd field */
 #define PASSWORD_LOCKED_AND_INVALID "!*"

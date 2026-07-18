@@ -1198,11 +1198,11 @@ static int enumerate_partitions(dev_t devnum) {
 
         if (m->partitions[PARTITION_VAR].found)
                 RET_GATHER(r, add_partition_mount(PARTITION_VAR, m->partitions + PARTITION_VAR,
-                                                  "var", "/var", "Variable Data Partition"));
+                                                  "var", LOCALSTATEDIR, "Variable Data Partition"));
 
         if (m->partitions[PARTITION_TMP].found)
                 RET_GATHER(r, add_partition_mount(PARTITION_TMP, m->partitions + PARTITION_TMP,
-                                                  "var-tmp", "/var/tmp", "Temporary Data Partition"));
+                                                  "var-tmp", LOCALSTATEDIR SYSTEM_TMPDIR, "Temporary Data Partition"));
 
         if (m->partitions[PARTITION_ROOT].found)
                 RET_GATHER(r, add_partition_root_flags(m->partitions + PARTITION_ROOT));

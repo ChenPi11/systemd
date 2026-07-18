@@ -115,7 +115,7 @@ TEST(find_ovmf_config) {
         if (native_arch_as_qemu(/* ret= */ NULL) < 0)
                 return (void) log_tests_skipped("native architecture not supported by qemu");
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-vmspawn-firmware-XXXXXX", &tmp));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-vmspawn-firmware-XXXXXX", &tmp));
         ASSERT_OK_ERRNO(setenv("XDG_CONFIG_HOME", tmp, /* overwrite= */ true));
         ASSERT_NOT_NULL(dir = path_join(tmp, "qemu/firmware"));
 

@@ -35,7 +35,7 @@ static int open_archive_file(sd_journal **ret) {
         if (r < 0)
                 return r;
 
-        p = strjoina("/var/log/journal/", SD_ID128_TO_STRING(machine_id), "/");
+        p = strjoina(LOCALSTATEDIR "/log/journal/", SD_ID128_TO_STRING(machine_id), "/");
 
         d = opendir(p);
         if (!d)
@@ -109,7 +109,7 @@ static void test_journal_flush_one(int argc, char *argv[]) {
         int r;
 
         ASSERT_NOT_NULL(m = mmap_cache_new());
-        ASSERT_OK(mkdtemp_malloc("/var/tmp/test-journal-flush.XXXXXX", &dn));
+        ASSERT_OK(mkdtemp_malloc(LOCALSTATEDIR SYSTEM_TMPDIR "/test-journal-flush.XXXXXX", &dn));
         (void) chattr_path(dn, FS_NOCOW_FL, FS_NOCOW_FL);
 
         ASSERT_NOT_NULL(fn = path_join(dn, "test.journal"));

@@ -87,7 +87,7 @@ TEST(condition_test_path) {
         ASSERT_OK_POSITIVE(condition_test(condition, environ));
         condition_free(condition);
 
-        ASSERT_NOT_NULL((condition = condition_new(CONDITION_FILE_IS_EXECUTABLE, "/etc/passwd", false, false)));
+        ASSERT_NOT_NULL((condition = condition_new(CONDITION_FILE_IS_EXECUTABLE, SYSCONF_DIR "/passwd", false, false)));
         ASSERT_OK_ZERO(condition_test(condition, environ));
         condition_free(condition);
 
@@ -103,7 +103,7 @@ TEST(condition_test_path) {
         ASSERT_OK_ZERO(condition_test(condition, environ));
         condition_free(condition);
 
-        ASSERT_NOT_NULL((condition = condition_new(CONDITION_PATH_IS_READ_WRITE, "/tmp", false, false)));
+        ASSERT_NOT_NULL((condition = condition_new(CONDITION_PATH_IS_READ_WRITE, SYSTEM_TMPDIR, false, false)));
         ASSERT_OK_POSITIVE(condition_test(condition, environ));
         condition_free(condition);
 
@@ -111,8 +111,8 @@ TEST(condition_test_path) {
         ASSERT_OK_ZERO(condition_test(condition, environ));
         condition_free(condition);
 
-        if (access("/run/dbus/system_bus_socket", F_OK) >= 0) {
-                ASSERT_NOT_NULL((condition = condition_new(CONDITION_PATH_IS_SOCKET, "/run/dbus/system_bus_socket", false, false)));
+        if (access(RUNSTATEDIR "/dbus/system_bus_socket", F_OK) >= 0) {
+                ASSERT_NOT_NULL((condition = condition_new(CONDITION_PATH_IS_SOCKET, RUNSTATEDIR "/dbus/system_bus_socket", false, false)));
                 ASSERT_OK_POSITIVE(condition_test(condition, environ));
                 condition_free(condition);
         }
@@ -218,7 +218,7 @@ TEST(condition_test_host) {
 
         r = sd_id128_get_machine(&id);
         if (ERRNO_IS_NEG_MACHINE_ID_UNSET(r))
-                return (void) log_tests_skipped("/etc/machine-id missing");
+                return (void) log_tests_skipped(SYSCONF_DIR "/machine-id missing");
         ASSERT_OK(r);
 
         ASSERT_NOT_NULL((condition = condition_new(CONDITION_HOST, SD_ID128_TO_STRING(id), false, false)));
@@ -293,7 +293,7 @@ TEST(condition_test_fraction) {
         sd_id128_t id;
         r = sd_id128_get_machine(&id);
         if (ERRNO_IS_NEG_MACHINE_ID_UNSET(r))
-                return (void) log_tests_skipped("/etc/machine-id missing");
+                return (void) log_tests_skipped(SYSCONF_DIR "/machine-id missing");
         ASSERT_OK(r);
 
         /* Distribution check: for a fixed machine ID, varying the tag spreads results uniformly, so

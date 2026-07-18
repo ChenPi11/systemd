@@ -1575,7 +1575,7 @@ static void track_file_disposition(sd_journal *j, JournalFile *f) {
 
         if (!j->has_runtime_files && path_has_prefix(j, f->path, RUNSTATEDIR))
                 j->has_runtime_files = true;
-        else if (!j->has_persistent_files && path_has_prefix(j, f->path, "/var"))
+        else if (!j->has_persistent_files && path_has_prefix(j, f->path, LOCALSTATEDIR))
                 j->has_persistent_files = true;
 }
 
@@ -2220,8 +2220,8 @@ fail:
 static int add_search_paths(sd_journal *j) {
 
         static const char search_paths[] =
-                "/run/log/journal\0"
-                "/var/log/journal\0";
+                RUNSTATEDIR "/log/journal\0"
+                LOCALSTATEDIR "/log/journal\0";
 
         assert(j);
 
@@ -2232,7 +2232,7 @@ static int add_search_paths(sd_journal *j) {
                 (void) add_root_directory(j, p, true);
 
         if (!(j->flags & SD_JOURNAL_LOCAL_ONLY))
-                (void) add_root_directory(j, "/var/log/journal/remote", true);
+                (void) add_root_directory(j, LOCALSTATEDIR "/log/journal/remote", true);
 
         return 0;
 }

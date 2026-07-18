@@ -16,14 +16,14 @@
 
 TEST(path_is_os_tree) {
         ASSERT_GT(path_is_os_tree("/"), 0);
-        ASSERT_EQ(path_is_os_tree("/etc"), 0);
+        ASSERT_EQ(path_is_os_tree(SYSCONF_DIR), 0);
         assert_se(path_is_os_tree("/idontexist") == -ENOENT);
 }
 
 TEST(parse_os_release) {
         _cleanup_free_ char *id = NULL, *id2 = NULL, *name = NULL, *foobar = NULL;
 
-        if (access("/etc/os-release", F_OK) >= 0 || access("/usr/lib/os-release", F_OK) >= 0) {
+        if (access(SYSCONF_DIR "/os-release", F_OK) >= 0 || access("/usr/lib/os-release", F_OK) >= 0) {
                 ASSERT_EQ(parse_os_release(NULL, "ID", &id), 0);
                 log_info("ID: %s", id);
         }
@@ -32,7 +32,7 @@ TEST(parse_os_release) {
         ASSERT_EQ(parse_os_release(NULL, "ID", &id2), 0);
         log_info("ID: %s", strnull(id2));
 
-        _cleanup_(unlink_tempfilep) char tmpfile[] = "/tmp/test-os-util.XXXXXX";
+        _cleanup_(unlink_tempfilep) char tmpfile[] = SYSTEM_TMPDIR "/test-os-util.XXXXXX";
         ASSERT_EQ(write_tmpfile(tmpfile,
                                 "ID=the-id  \n"
                                 "NAME=the-name"), 0);
@@ -43,7 +43,7 @@ TEST(parse_os_release) {
         ASSERT_STREQ(id, "the-id");
         ASSERT_STREQ(name, "the-name");
 
-        _cleanup_(unlink_tempfilep) char tmpfile2[] = "/tmp/test-os-util.XXXXXX";
+        _cleanup_(unlink_tempfilep) char tmpfile2[] = SYSTEM_TMPDIR "/test-os-util.XXXXXX";
         ASSERT_EQ(write_tmpfile(tmpfile2,
                                 "ID=\"ignored\"  \n"
                                 "ID=\"the-id\"  \n"
@@ -67,7 +67,7 @@ TEST(parse_extension_release) {
         _cleanup_free_ char *id = NULL, *version_id = NULL, *foobar = NULL, *a = NULL, *b = NULL;
         _cleanup_(rm_rf_physical_and_freep) char *tempdir = NULL;
 
-        int r = mkdtemp_malloc("/tmp/test-os-util.XXXXXX", &tempdir);
+        int r = mkdtemp_malloc(SYSTEM_TMPDIR "/test-os-util.XXXXXX", &tempdir);
         if (r < 0)
                 log_error_errno(r, "Failed to setup working directory: %m");
 
@@ -84,7 +84,7 @@ TEST(parse_extension_release) {
         ASSERT_STREQ(id, "the-id");
         ASSERT_STREQ(version_id, "the-version-id");
 
-        assert_se(b = path_join(tempdir, "/etc/extension-release.d/extension-release.tester"));
+        assert_se(b = path_join(tempdir, SYSCONF_DIR "/extension-release.d/extension-release.tester"));
         assert_se(mkdir_parents(b, 0777) >= 0);
 
         r = write_string_file(b, "ID=\"ignored\" \n ID=\"the-id\" \n VERSION_ID='the-version-id'", WRITE_STRING_FILE_CREATE);
@@ -106,7 +106,7 @@ TEST(parse_extension_release) {
 }
 
 TEST(load_os_release_pairs) {
-        _cleanup_(unlink_tempfilep) char tmpfile[] = "/tmp/test-os-util.XXXXXX";
+        _cleanup_(unlink_tempfilep) char tmpfile[] = SYSTEM_TMPDIR "/test-os-util.XXXXXX";
         ASSERT_EQ(write_tmpfile(tmpfile,
                                 "ID=\"ignored\"  \n"
                                 "ID=\"the-id\"  \n"

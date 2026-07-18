@@ -199,7 +199,7 @@ static int get_path(uint64_t type, char **buffer, const char **ret) {
                 return 0;
 
         case SD_PATH_SYSTEM_CONFIGURATION:
-                *ret = "/etc";
+                *ret = SYSCONF_DIR;
                 return 0;
 
         case SD_PATH_SYSTEM_RUNTIME:
@@ -211,19 +211,19 @@ static int get_path(uint64_t type, char **buffer, const char **ret) {
                 return 0;
 
         case SD_PATH_SYSTEM_STATE_PRIVATE:
-                *ret = "/var/lib";
+                *ret = LOCALSTATEDIR "/lib";
                 return 0;
 
         case SD_PATH_SYSTEM_STATE_LOGS:
-                *ret = "/var/log";
+                *ret = LOCALSTATEDIR "/log";
                 return 0;
 
         case SD_PATH_SYSTEM_STATE_CACHE:
-                *ret = "/var/cache";
+                *ret = LOCALSTATEDIR "/cache";
                 return 0;
 
         case SD_PATH_SYSTEM_STATE_SPOOL:
-                *ret = "/var/spool";
+                *ret = LOCALSTATEDIR "/spool";
                 return 0;
 
         case SD_PATH_USER_BINARIES:
@@ -366,11 +366,11 @@ static int get_path(uint64_t type, char **buffer, const char **ret) {
                 return 0;
 
         case SD_PATH_SYSTEM_CREDENTIAL_STORE:
-                *ret = "/etc/credstore";
+                *ret = SYSCONF_DIR "/credstore";
                 return 0;
 
         case SD_PATH_SYSTEM_CREDENTIAL_STORE_ENCRYPTED:
-                *ret = "/etc/credstore.encrypted";
+                *ret = SYSCONF_DIR "/credstore.encrypted";
                 return 0;
 
         case SD_PATH_USER_CREDENTIAL_STORE:
@@ -595,7 +595,7 @@ static int get_search(uint64_t type, char ***ret) {
                                                ".config",
                                                "XDG_CONFIG_DIRS",
                                                false,
-                                               "/etc",
+                                               SYSCONF_DIR,
                                                NULL);
 
         case SD_PATH_SEARCH_BINARIES_DEFAULT: {

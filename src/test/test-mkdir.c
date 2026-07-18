@@ -18,7 +18,7 @@ TEST(mkdir_p_safe) {
         _cleanup_free_ char *p = NULL, *q = NULL;
         int r;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-mkdir-XXXXXX", &tmp));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-mkdir-XXXXXX", &tmp));
 
         ASSERT_NOT_NULL(p = path_join(tmp, "run/aaa/bbb"));
         ASSERT_OK(mkdir_p(p, 0755));
@@ -75,7 +75,7 @@ TEST(mkdir_p_safe) {
         ASSERT_OK_POSITIVE(is_dir(q, false));
         ASSERT_OK_POSITIVE(is_dir(q, true));
 
-        ASSERT_ERROR(mkdir_p_safe(tmp, "/tmp/test-mkdir-outside", 0755, UID_INVALID, GID_INVALID, 0), EINVAL);
+        ASSERT_ERROR(mkdir_p_safe(tmp, SYSTEM_TMPDIR "/test-mkdir-outside", 0755, UID_INVALID, GID_INVALID, 0), EINVAL);
 
         p = mfree(p);
         ASSERT_NOT_NULL(p = path_join(tmp, "zero-mode/should-fail-to-create-child"));
@@ -92,10 +92,10 @@ TEST(mkdir_p_root) {
         _cleanup_(rm_rf_physical_and_freep) char *tmp = NULL;
         _cleanup_free_ char *p = NULL;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-mkdir-XXXXXX", &tmp));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-mkdir-XXXXXX", &tmp));
 
         ASSERT_NOT_NULL(p = path_join(tmp, "run/aaa/bbb"));
-        ASSERT_OK(mkdir_p_root(tmp, "/run/aaa/bbb", UID_INVALID, GID_INVALID, 0755));
+        ASSERT_OK(mkdir_p_root(tmp, RUNSTATEDIR "/aaa/bbb", UID_INVALID, GID_INVALID, 0755));
         ASSERT_OK_POSITIVE(is_dir(p, false));
         ASSERT_OK_POSITIVE(is_dir(p, true));
 
@@ -108,7 +108,7 @@ TEST(mkdir_p_root) {
 
         p = mfree(p);
         ASSERT_NOT_NULL(p = path_join(tmp, "var/run/hoge/foo/baz"));
-        ASSERT_OK(mkdir_p_root(tmp, "/var/run/hoge/foo/baz", UID_INVALID, GID_INVALID, 0755));
+        ASSERT_OK(mkdir_p_root(tmp, LOCALSTATEDIR RUNSTATEDIR "/hoge/foo/baz", UID_INVALID, GID_INVALID, 0755));
         ASSERT_OK_POSITIVE(is_dir(p, false));
         ASSERT_OK_POSITIVE(is_dir(p, true));
 
@@ -142,7 +142,7 @@ TEST(mkdir_p_root_full) {
         _cleanup_free_ char *p = NULL;
         struct stat st;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-mkdir-XXXXXX", &tmp));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-mkdir-XXXXXX", &tmp));
 
         ASSERT_NOT_NULL((p = path_join(tmp, "foo")));
         ASSERT_OK(mkdir_p_root_full(tmp, "/foo", UID_INVALID, GID_INVALID, 0755, 2 * USEC_PER_SEC, NULL));

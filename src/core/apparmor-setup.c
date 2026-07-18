@@ -51,14 +51,14 @@ int mac_apparmor_setup(void) {
                 return 0;
         }
 
-        cache_dir_path = sym_aa_policy_cache_dir_path_preview(features, AT_FDCWD, "/etc/apparmor/earlypolicy");
+        cache_dir_path = sym_aa_policy_cache_dir_path_preview(features, AT_FDCWD, SYSCONF_DIR "/apparmor/earlypolicy");
         if (!cache_dir_path) {
                 log_debug_errno(errno, "Failed to get the path of the early AppArmor policy cache directory, ignoring: %m");
                 return 0;
         }
 
         /* aa_policy_cache_new will internally use the same path as aa_policy_cache_dir_path_preview has returned. */
-        r = sym_aa_policy_cache_new(&policy_cache, features, AT_FDCWD, "/etc/apparmor/earlypolicy", 0);
+        r = sym_aa_policy_cache_new(&policy_cache, features, AT_FDCWD, SYSCONF_DIR "/apparmor/earlypolicy", 0);
         if (r < 0) {
                 if (errno == ENOENT)
                         log_debug_errno(errno,

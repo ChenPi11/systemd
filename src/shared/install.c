@@ -3332,7 +3332,7 @@ static int presets_find_config(RuntimeScope scope, const char *root_dir, char **
         assert(scope < _RUNTIME_SCOPE_MAX);
 
         if (scope == RUNTIME_SCOPE_SYSTEM) {
-                r = chase_and_access("/etc/initrd-release", root_dir, CHASE_PREFIX_ROOT, F_OK, /* ret_path= */ NULL);
+                r = chase_and_access(SYSCONF_DIR "/initrd-release", root_dir, CHASE_PREFIX_ROOT, F_OK, /* ret_path= */ NULL);
                 if (r < 0 && r != -ENOENT)
                         return r;
 

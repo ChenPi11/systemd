@@ -71,7 +71,7 @@ static int make_filename(const CoredumpContext *context, char **ret) {
                 return r;
 
         if (asprintf(ret,
-                     "/var/lib/systemd/coredump/core.%s."UID_FMT"." SD_ID128_FORMAT_STR "."PID_FMT"."USEC_FMT,
+                     LOCALSTATEDIR "/lib/systemd/coredump/core.%s."UID_FMT"." SD_ID128_FORMAT_STR "."PID_FMT"."USEC_FMT,
                      c, context->uid, SD_ID128_FORMAT_VAL(boot), context->pidref.pid, context->timestamp) < 0)
                 return -ENOMEM;
 

@@ -58,7 +58,7 @@ TEST(rereadpt) {
                 return (void) log_tests_skipped("sfdisk not found");
         ASSERT_OK(r);
 
-        _cleanup_close_ int fd = open_tmpfile_unlinkable("/var/tmp", O_RDWR);
+        _cleanup_close_ int fd = open_tmpfile_unlinkable(LOCALSTATEDIR SYSTEM_TMPDIR, O_RDWR);
         ASSERT_FD(fd);
 
         ASSERT_OK_ERRNO(ftruncate(fd, 100 * 1024 * 1024));

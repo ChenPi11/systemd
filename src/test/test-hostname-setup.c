@@ -18,7 +18,7 @@
 #include "tmpfile-util.h"
 
 TEST(read_etc_hostname) {
-        _cleanup_(unlink_tempfilep) char path[] = "/tmp/hostname.XXXXXX";
+        _cleanup_(unlink_tempfilep) char path[] = SYSTEM_TMPDIR "/hostname.XXXXXX";
         char *hostname;
         int r;
 
@@ -111,7 +111,7 @@ TEST(hostname_substitute_wildcards_words) {
         if (ERRNO_IS_NEG_MACHINE_ID_UNSET(r))
                 return (void) log_tests_skipped_errno(r, "skipping word hostname tests, no machine ID defined");
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/hostname-wordlist.XXXXXX", &d));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/hostname-wordlist.XXXXXX", &d));
 
         /* The n-th '$' reads the word list file named after its position. */
         _cleanup_free_ char *one_list = ASSERT_PTR(path_join(d, "1"));
@@ -144,7 +144,7 @@ TEST(hostname_setup_cmdline_wildcards) {
         if (ERRNO_IS_NEG_MACHINE_ID_UNSET(r))
                 return (void) log_tests_skipped_errno(r, "skipping cmdline wildcard hostname tests, no machine ID defined");
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/hostname-wordlist.XXXXXX", &d));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/hostname-wordlist.XXXXXX", &d));
         ASSERT_OK(setenv("SYSTEMD_PROC_CMDLINE", "systemd.hostname=$-????", /* overwrite= */ true));
         ASSERT_OK(setenv("SYSTEMD_HOSTNAME_WORDLIST_PATH", d, /* overwrite= */ true));
 

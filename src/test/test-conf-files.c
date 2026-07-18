@@ -24,8 +24,8 @@ TEST(conf_files_list) {
         _cleanup_strv_free_ char **result = NULL;
         const char *search1, *search2, *search3, *search1_a, *search1_b, *search1_c, *search2_aa, *search2_mm;
 
-        ASSERT_OK(tfd = mkdtemp_open("/tmp/test-conf-files-XXXXXX", O_PATH, &t));
-        ASSERT_OK(tfd2 = mkdtemp_open("/tmp/test-conf-files-XXXXXX", O_PATH, &t2));
+        ASSERT_OK(tfd = mkdtemp_open(SYSTEM_TMPDIR "/test-conf-files-XXXXXX", O_PATH, &t));
+        ASSERT_OK(tfd2 = mkdtemp_open(SYSTEM_TMPDIR "/test-conf-files-XXXXXX", O_PATH, &t2));
 
         ASSERT_OK_ERRNO(mkdirat(tfd, "dir1", 0755));
         ASSERT_OK_ERRNO(mkdirat(tfd, "dir2", 0755));
@@ -120,19 +120,19 @@ TEST(conf_files_list) {
         result = strv_free(result);
 
         /* search dir1 with relative path */
-        ASSERT_OK_ERRNO(chdir("/tmp/"));
+        ASSERT_OK_ERRNO(chdir(SYSTEM_TMPDIR "/"));
 
-        ASSERT_OK(conf_files_list(&result, NULL, NULL, CONF_FILES_FILTER_MASKED, path_startswith(search1, "/tmp/")));
+        ASSERT_OK(conf_files_list(&result, NULL, NULL, CONF_FILES_FILTER_MASKED, path_startswith(search1, SYSTEM_TMPDIR "/")));
         strv_print(result);
         ASSERT_TRUE(strv_equal(result, STRV_MAKE(search1_a, search1_b, search1_c)));
         result = strv_free(result);
 
-        ASSERT_OK(conf_files_list(&result, NULL, "/", CONF_FILES_FILTER_MASKED, path_startswith(search1, "/tmp/")));
+        ASSERT_OK(conf_files_list(&result, NULL, "/", CONF_FILES_FILTER_MASKED, path_startswith(search1, SYSTEM_TMPDIR "/")));
         strv_print(result);
         ASSERT_TRUE(strv_equal(result, STRV_MAKE(search1_a, search1_b, search1_c)));
         result = strv_free(result);
 
-        ASSERT_OK(conf_files_list(&result, NULL, "///../../././//", CONF_FILES_FILTER_MASKED, path_startswith(search1, "/tmp/")));
+        ASSERT_OK(conf_files_list(&result, NULL, "///../../././//", CONF_FILES_FILTER_MASKED, path_startswith(search1, SYSTEM_TMPDIR "/")));
         strv_print(result);
         ASSERT_TRUE(strv_equal(result, STRV_MAKE(search1_a, search1_b, search1_c)));
         result = strv_free(result);
@@ -142,11 +142,11 @@ TEST(conf_files_list) {
         ASSERT_TRUE(strv_equal(result, STRV_MAKE(search1_a, search1_b, search1_c)));
         result = strv_free(result);
 
-        ASSERT_OK(conf_files_list_at(&result, NULL, AT_FDCWD, CONF_FILES_FILTER_MASKED, path_startswith(search1, "/tmp/")));
+        ASSERT_OK(conf_files_list_at(&result, NULL, AT_FDCWD, CONF_FILES_FILTER_MASKED, path_startswith(search1, SYSTEM_TMPDIR "/")));
         strv_print(result);
-        ASSERT_TRUE(strv_equal(result, STRV_MAKE(path_startswith(search1_a, "/tmp/"),
-                                                 path_startswith(search1_b, "/tmp/"),
-                                                 path_startswith(search1_c, "/tmp/"))));
+        ASSERT_TRUE(strv_equal(result, STRV_MAKE(path_startswith(search1_a, SYSTEM_TMPDIR "/"),
+                                                 path_startswith(search1_b, SYSTEM_TMPDIR "/"),
+                                                 path_startswith(search1_c, SYSTEM_TMPDIR "/"))));
         result = strv_free(result);
 
         ASSERT_OK(conf_files_list_at(&result, NULL, tfd, CONF_FILES_FILTER_MASKED, "dir1"));

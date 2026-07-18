@@ -2702,7 +2702,7 @@ static int verb_update_impl(int argc, char **argv, UpdateActionFlags action_flag
                 if (r < 0)
                         return log_error_errno(r, "Failed to parse /etc/os-release: %m");
                 if (!booted_version)
-                        return log_error_errno(SYNTHETIC_ERRNO(ENODATA), "/etc/os-release lacks IMAGE_VERSION field.");
+                        return log_error_errno(SYNTHETIC_ERRNO(ENODATA), SYSCONF_DIR "/os-release lacks IMAGE_VERSION field.");
         }
 
         switch (context.component_select) {
@@ -2908,7 +2908,7 @@ static int verb_pending_or_reboot(int argc, char *argv[], uintptr_t _data, void 
                     * if we see what the first argument is about */
                 return log_error_errno(r, "Failed to parse /etc/os-release: %m");
         if (!booted_version)
-                return log_error_errno(SYNTHETIC_ERRNO(ENODATA), "/etc/os-release lacks IMAGE_VERSION= field.");
+                return log_error_errno(SYNTHETIC_ERRNO(ENODATA), SYSCONF_DIR "/os-release lacks IMAGE_VERSION= field.");
 
         r = strverscmp_improved(context.newest_installed->version, booted_version);
         if (r > 0) {

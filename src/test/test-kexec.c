@@ -85,7 +85,7 @@ static int find_kernel_image(char **ret) {
 TEST(passthrough_unrecognized) {
         /* A file with unrecognized magic should pass through as-is (return 0) */
         _cleanup_close_ int fd = -EBADF;
-        _cleanup_(unlink_tempfilep) char path[] = "/tmp/test-kexec.XXXXXX";
+        _cleanup_(unlink_tempfilep) char path[] = SYSTEM_TMPDIR "/test-kexec.XXXXXX";
 
         ASSERT_OK(fd = mkostemp_safe(path));
         ASSERT_OK_EQ_ERRNO(write(fd, "HELLO WORLD\0", 12), 12);
@@ -100,8 +100,8 @@ TEST(passthrough_unrecognized) {
 TEST(gzip_round_trip) {
         _cleanup_close_ int src_fd = -EBADF, gz_fd = -EBADF;
         _cleanup_(unlink_tempfilep) char
-                src_path[] = "/tmp/test-kexec-src.XXXXXX",
-                gz_path[] = "/tmp/test-kexec-gz.XXXXXX";
+                src_path[] = SYSTEM_TMPDIR "/test-kexec-src.XXXXXX",
+                gz_path[] = SYSTEM_TMPDIR "/test-kexec-gz.XXXXXX";
         int r;
 
         r = dlopen_zlib(LOG_DEBUG);
@@ -139,9 +139,9 @@ TEST(zboot_synthetic) {
         /* Construct a minimal ZBOOT header with a gzip-compressed payload */
         _cleanup_close_ int src_fd = -EBADF, gz_fd = -EBADF, zboot_fd = -EBADF;
         _cleanup_(unlink_tempfilep) char
-                src_path[] = "/tmp/test-kexec-zboot-src.XXXXXX",
-                gz_path[] = "/tmp/test-kexec-zboot-gz.XXXXXX",
-                zboot_path[] = "/tmp/test-kexec-zboot.XXXXXX";
+                src_path[] = SYSTEM_TMPDIR "/test-kexec-zboot-src.XXXXXX",
+                gz_path[] = SYSTEM_TMPDIR "/test-kexec-zboot-gz.XXXXXX",
+                zboot_path[] = SYSTEM_TMPDIR "/test-kexec-zboot.XXXXXX";
         int r;
 
         r = dlopen_zlib(LOG_DEBUG);

@@ -1777,7 +1777,7 @@ static int setup_timezone(const char *dest) {
         assert(dest);
 
         if (IN_SET(arg_timezone, TIMEZONE_AUTO, TIMEZONE_SYMLINK)) {
-                r = readlink_malloc("/etc/localtime", &p);
+                r = readlink_malloc(SYSCONF_DIR "/localtime", &p);
                 if (r == -ENOENT && arg_timezone == TIMEZONE_AUTO)
                         m = etc_writable() ? TIMEZONE_DELETE : TIMEZONE_OFF;
                 else if (r == -EINVAL && arg_timezone == TIMEZONE_AUTO) /* regular file? */
@@ -1801,7 +1801,7 @@ static int setup_timezone(const char *dest) {
         if (m == TIMEZONE_OFF)
                 return 0;
 
-        r = chase("/etc", dest, CHASE_PREFIX_ROOT, &etc, NULL);
+        r = chase(SYSCONF_DIR, dest, CHASE_PREFIX_ROOT, &etc, NULL);
         if (r < 0) {
                 log_warning_errno(r, "Failed to resolve /etc path in container, ignoring: %m");
                 return 0;
@@ -1823,7 +1823,7 @@ static int setup_timezone(const char *dest) {
 
                 z = timezone_from_path(p);
                 if (!z) {
-                        log_warning("/etc/localtime does not point into /usr/share/zoneinfo/, not updating container timezone.");
+                        log_warning(SYSCONF_DIR "/localtime does not point into /usr/share/zoneinfo/, not updating container timezone.");
                         return 0;
                 }
 
@@ -1868,7 +1868,7 @@ static int setup_timezone(const char *dest) {
                 if (found == 0) /* missing? */
                         (void) touch(resolved);
 
-                r = mount_nofollow_verbose(LOG_WARNING, "/etc/localtime", resolved, NULL, MS_BIND, NULL);
+                r = mount_nofollow_verbose(LOG_WARNING, SYSCONF_DIR "/localtime", resolved, NULL, MS_BIND, NULL);
                 if (r >= 0)
                         return mount_nofollow_verbose(LOG_ERR, NULL, resolved, NULL, MS_BIND|MS_REMOUNT|MS_RDONLY|MS_NOSUID|MS_NODEV, NULL);
 
@@ -1877,7 +1877,7 @@ static int setup_timezone(const char *dest) {
 
         case TIMEZONE_COPY:
                 /* If mounting failed, try to copy */
-                r = copy_file_atomic("/etc/localtime", where, 0644, COPY_REPLACE);
+                r = copy_file_atomic(SYSCONF_DIR "/localtime", where, 0644, COPY_REPLACE);
                 if (r < 0) {
                         log_full_errno(ERRNO_IS_NEG_FS_WRITE_REFUSED(r) ? LOG_DEBUG : LOG_WARNING, r,
                                        "Failed to copy /etc/localtime to %s, ignoring: %m", where);
@@ -1949,7 +1949,7 @@ static int setup_resolv_conf(const char *dest) {
                         m = RESOLV_CONF_OFF;
                 else if (have_resolv_conf(PRIVATE_STUB_RESOLV_CONF) > 0 && resolved_listening() > 0)
                         m = etc_writable() ? RESOLV_CONF_COPY_STUB : RESOLV_CONF_BIND_STUB;
-                else if (have_resolv_conf("/etc/resolv.conf") > 0)
+                else if (have_resolv_conf(SYSCONF_DIR "/resolv.conf") > 0)
                         m = etc_writable() ? RESOLV_CONF_COPY_HOST : RESOLV_CONF_BIND_HOST;
                 else
                         m = etc_writable() ? RESOLV_CONF_DELETE : RESOLV_CONF_OFF;
@@ -1960,7 +1960,7 @@ static int setup_resolv_conf(const char *dest) {
         if (m == RESOLV_CONF_OFF)
                 return 0;
 
-        r = chase("/etc", dest, CHASE_PREFIX_ROOT, &etc, NULL);
+        r = chase(SYSCONF_DIR, dest, CHASE_PREFIX_ROOT, &etc, NULL);
         if (r < 0) {
                 log_warning_errno(r, "Failed to resolve /etc path in container, ignoring: %m");
                 return 0;
@@ -1982,7 +1982,7 @@ static int setup_resolv_conf(const char *dest) {
         else if (IN_SET(m, RESOLV_CONF_BIND_STUB, RESOLV_CONF_REPLACE_STUB, RESOLV_CONF_COPY_STUB))
                 what = PRIVATE_STUB_RESOLV_CONF;
         else
-                what = "/etc/resolv.conf";
+                what = SYSCONF_DIR "/resolv.conf";
 
         if (IN_SET(m, RESOLV_CONF_BIND_HOST, RESOLV_CONF_BIND_STATIC, RESOLV_CONF_BIND_UPLINK, RESOLV_CONF_BIND_STUB)) {
                 _cleanup_free_ char *resolved = NULL;
@@ -2560,7 +2560,7 @@ static int setup_journal(const char *directory, uid_t uid_shift, uid_t uid_range
                 return -EEXIST;
         }
 
-        FOREACH_STRING(dirname, "/var", "/var/log", "/var/log/journal") {
+        FOREACH_STRING(dirname, LOCALSTATEDIR, LOCALSTATEDIR "/log", LOCALSTATEDIR "/log/journal") {
                 r = userns_mkdir(directory, dirname, 0755, 0, 0);
                 if (r < 0) {
                         bool ignore = r == -EROFS && try;
@@ -2570,7 +2570,7 @@ static int setup_journal(const char *directory, uid_t uid_shift, uid_t uid_range
                 }
         }
 
-        _cleanup_free_ char *p = path_join("/var/log/journal/", SD_ID128_TO_STRING(arg_uuid));
+        _cleanup_free_ char *p = path_join(LOCALSTATEDIR "/log/journal/", SD_ID128_TO_STRING(arg_uuid));
         if (!p)
                 return log_oom();
 
@@ -3106,7 +3106,7 @@ static int determine_names(void) {
                 /* If --template= was specified then we should not search for a machine, but instead create a
                  * new one in /var/lib/machine. */
 
-                arg_directory = path_join("/var/lib/machines", arg_machine);
+                arg_directory = path_join(LOCALSTATEDIR "/lib/machines", arg_machine);
                 if (!arg_directory)
                         return log_oom();
         }

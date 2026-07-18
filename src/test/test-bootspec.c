@@ -63,7 +63,7 @@ TEST_RET(bootspec_sort) {
         _cleanup_(rm_rf_physical_and_freep) char *d = NULL;
         _cleanup_(boot_config_free) BootConfig config = BOOT_CONFIG_NULL;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/bootspec-testXXXXXX", &d));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/bootspec-testXXXXXX", &d));
 
         FOREACH_ELEMENT(entry, entries) {
                 _cleanup_free_ char *j = NULL;
@@ -174,7 +174,7 @@ TEST_RET(bootspec_boot_config_find_entry) {
         _cleanup_(rm_rf_physical_and_freep) char *d = NULL;
         _cleanup_(boot_config_free) BootConfig config = BOOT_CONFIG_NULL;
 
-        assert_se(mkdtemp_malloc("/tmp/bootspec-testXXXXXX", &d) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/bootspec-testXXXXXX", &d) >= 0);
 
         FOREACH_ELEMENT(entry, entries) {
                 _cleanup_free_ char *j = NULL;

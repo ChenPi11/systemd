@@ -40,7 +40,7 @@ TEST(mstack) {
         _cleanup_close_ int tfd = -EBADF;
         int r;
 
-        tfd = mkdtemp_open("/tmp/mstack-what-XXXXXX", O_PATH, &t);
+        tfd = mkdtemp_open(SYSTEM_TMPDIR "/mstack-what-XXXXXX", O_PATH, &t);
         ASSERT_OK(tfd);
 
         ASSERT_OK_ERRNO(mkdirat(tfd, "rw", 0755));
@@ -97,12 +97,12 @@ TEST(mstack) {
                                                   flags));
 
                         _cleanup_(rmdir_and_freep) char *m = NULL;
-                        ASSERT_OK(mkdtemp_malloc("/tmp/mstack-temporary-XXXXXX", &m));
+                        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/mstack-temporary-XXXXXX", &m));
 
                         ASSERT_OK(mstack_make_mounts(mstack, m, flags));
 
                         _cleanup_(rmdir_and_freep) char *w = NULL;
-                        ASSERT_OK(mkdtemp_malloc("/tmp/mstack-where-XXXXXX", &w));
+                        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/mstack-where-XXXXXX", &w));
 
                         _cleanup_close_ int rfd = -EBADF;
                         ASSERT_OK(mstack_bind_mounts(mstack, w, /* where_fd= */ -EBADF, flags, &rfd));

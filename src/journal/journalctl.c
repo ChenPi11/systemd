@@ -1130,14 +1130,14 @@ static int run(int argc, char *argv[]) {
                 if (r < 0)
                         log_debug_errno(r, "Failed to get root mount ID, ignoring: %m");
                 else {
-                        r = path_get_mnt_id("/var/log/journal/", &log_mnt_id);
+                        r = path_get_mnt_id(LOCALSTATEDIR "/log/journal/", &log_mnt_id);
                         if (r < 0)
                                 log_debug_errno(r, "Failed to get journal directory mount ID, ignoring: %m");
                         else if (root_mnt_id == log_mnt_id) {
-                                log_debug("/var/log/journal/ is on root file system, not relinquishing access to /var.");
+                                log_debug(LOCALSTATEDIR "/log/journal/ is on root file system, not relinquishing access to /var.");
                                 return 0;
                         } else
-                                log_debug("/var/log/journal/ is not on the root file system, relinquishing access to it.");
+                                log_debug(LOCALSTATEDIR "/log/journal/ is not on the root file system, relinquishing access to it.");
                 }
 
                 _fallthrough_;

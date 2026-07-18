@@ -244,7 +244,7 @@ static const MountEntry protect_system_full_table[] = {
         { "/usr",                MOUNT_READ_ONLY,     false },
         { "/boot",               MOUNT_READ_ONLY,     true  },
         { "/efi",                MOUNT_READ_ONLY,     true  },
-        { "/etc",                MOUNT_READ_ONLY,     false },
+        { SYSCONF_DIR,                MOUNT_READ_ONLY,     false },
 };
 
 /* ProtectSystem=strict. In this strict mode, we mount everything read-only, except for /proc, /dev, and
@@ -806,7 +806,7 @@ static int append_private_tmp(MountList *ml, const NamespaceParameters *p) {
                 if (r < 0)
                         return r;
 
-                r = append_private_tmp_one(ml, p->private_var_tmp, "/var/tmp/", p->var_tmp_dir);
+                r = append_private_tmp_one(ml, p->private_var_tmp, LOCALSTATEDIR SYSTEM_TMPDIR "/", p->var_tmp_dir);
                 if (r < 0)
                         return r;
 
@@ -852,7 +852,7 @@ static int append_private_tmp(MountList *ml, const NamespaceParameters *p) {
                 return log_oom_debug();
         *me = (MountEntry) {
                 .source_malloc = TAKE_PTR(var_tmp_dir),
-                .path_const = "/var/tmp/",
+                .path_const = LOCALSTATEDIR SYSTEM_TMPDIR "/",
                 .mode = MOUNT_BIND,
                 .source_dir_mode = 01777,
                 .create_source_dir = true,

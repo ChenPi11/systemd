@@ -706,7 +706,7 @@ static int bus_service_set_transient_property(
                         if (!path_is_normalized(n))
                                 return sd_bus_error_setf(reterr_error, SD_BUS_ERROR_INVALID_ARGS, "PIDFile= path '%s' is not valid", n);
 
-                        e = path_startswith(n, "/var/run/");
+                        e = path_startswith(n, LOCALSTATEDIR RUNSTATEDIR "/");
                         if (e) {
                                 char *z;
 

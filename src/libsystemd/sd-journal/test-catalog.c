@@ -185,7 +185,7 @@ static void test_catalog_oob_offset_one(uint64_t item_offset, size_t strings_siz
         /* Builds a hostile single-item catalog database and verifies the reader rejects it instead of
          * chasing the item's string offset out of the mapping. The blob is laid out from the real struct
          * offsets so it keeps matching open_mmap() if CatalogHeader/CatalogItem ever change. */
-        _cleanup_(unlink_tempfilep) char db[] = "/tmp/test-catalog.XXXXXX";
+        _cleanup_(unlink_tempfilep) char db[] = SYSTEM_TMPDIR "/test-catalog.XXXXXX";
         _cleanup_close_ int fd = -EBADF;
         _cleanup_free_ char *text = NULL;
         _cleanup_free_ uint8_t *blob = NULL;

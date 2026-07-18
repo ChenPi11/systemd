@@ -73,7 +73,7 @@ static int locale_context_load_conf(LocaleContext *c, LocaleLoadFlag flag) {
         if (fd == -ENOENT)
                 return 0;
         if (fd < 0)
-                return log_debug_errno(errno, "Failed to open %s: %m", "/etc/locale.conf");
+                return log_debug_errno(errno, "Failed to open %s: %m", SYSCONF_DIR "/locale.conf");
 
         if (fstat(fd, &st) < 0)
                 return log_debug_errno(errno, "Failed to stat /etc/locale.conf: %m");
@@ -307,7 +307,7 @@ const char* etc_locale_conf(void) {
         static const char *cached = NULL;
 
         if (!cached)
-                cached = secure_getenv("SYSTEMD_ETC_LOCALE_CONF") ?: "/etc/locale.conf";
+                cached = secure_getenv("SYSTEMD_ETC_LOCALE_CONF") ?: SYSCONF_DIR "/locale.conf";
 
         return cached;
 }
@@ -316,7 +316,7 @@ const char* etc_vconsole_conf(void) {
         static const char *cached = NULL;
 
         if (!cached)
-                cached = secure_getenv("SYSTEMD_ETC_VCONSOLE_CONF") ?: "/etc/vconsole.conf";
+                cached = secure_getenv("SYSTEMD_ETC_VCONSOLE_CONF") ?: SYSCONF_DIR "/vconsole.conf";
 
         return cached;
 }

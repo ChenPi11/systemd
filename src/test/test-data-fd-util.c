@@ -37,7 +37,7 @@ TEST(copy_data_fd) {
         _cleanup_(pidref_done_sigkill_wait) PidRef pidref = PIDREF_NULL;
         int r;
 
-        fd1 = open("/etc/fstab", O_RDONLY|O_CLOEXEC);
+        fd1 = open(SYSCONF_DIR "/fstab", O_RDONLY|O_CLOEXEC);
         if (fd1 >= 0) {
 
                 fd2 = copy_data_fd(fd1);

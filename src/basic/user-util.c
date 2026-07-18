@@ -963,7 +963,7 @@ bool synthesize_nobody(void) {
         static int cache = -1;
 
         if (cache < 0)
-                cache = access("/etc/systemd/dont-synthesize-nobody", F_OK) < 0;
+                cache = access(PKGSYSCONFDIR "/dont-synthesize-nobody", F_OK) < 0;
 
         return cache;
 }

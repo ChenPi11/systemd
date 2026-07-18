@@ -13,7 +13,7 @@
 static char long_string[LONG_LINE_MAX+1];
 
 TEST(serialize_item) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-serialize.XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-serialize.XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
 
         assert_se(fmkostemp_safe(fn, "r+", &f) == 0);
@@ -42,7 +42,7 @@ TEST(serialize_item) {
 }
 
 TEST(serialize_item_escaped) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-serialize.XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-serialize.XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
 
         assert_se(fmkostemp_safe(fn, "r+", &f) == 0);
@@ -67,7 +67,7 @@ TEST(serialize_item_escaped) {
 }
 
 TEST(serialize_usec) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-serialize.XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-serialize.XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
 
         assert_se(fmkostemp_safe(fn, "r+", &f) == 0);
@@ -94,7 +94,7 @@ TEST(serialize_usec) {
 }
 
 TEST(serialize_strv) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-serialize.XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-serialize.XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
 
         char **strv = STRV_MAKE("a", "b", "foo foo",
@@ -150,7 +150,7 @@ TEST(deserialize_environment) {
 
 TEST(serialize_environment) {
         _cleanup_strv_free_ char **env = NULL, **env2 = NULL;
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-env-util.XXXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-env-util.XXXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
         int r;
 
@@ -191,7 +191,7 @@ TEST(serialize_environment) {
 }
 
 TEST(serialize_item_hexmem) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-serialize.XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-serialize.XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
 
         assert_se(fmkostemp_safe(fn, "r+", &f) == 0);
@@ -208,7 +208,7 @@ TEST(serialize_item_hexmem) {
 }
 
 TEST(serialize_item_base64mem) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-serialize.XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-serialize.XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
 
         assert_se(fmkostemp_safe(fn, "r+", &f) == 0);
@@ -225,7 +225,7 @@ TEST(serialize_item_base64mem) {
 }
 
 TEST(serialize_string_set) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-serialize.XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-serialize.XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
         _cleanup_set_free_ Set *s = NULL;
         _cleanup_free_ char *line1 = NULL, *line2 = NULL;

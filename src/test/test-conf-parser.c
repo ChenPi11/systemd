@@ -325,7 +325,7 @@ static const char* const config_file[] = {
 };
 
 static void test_config_parse_one(unsigned i, const char *s) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-conf-parser.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-conf-parser.XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
         _cleanup_free_ char *setting1 = NULL;
         int r;
@@ -409,9 +409,9 @@ TEST(config_parse_standard_file_with_dropins_full) {
         _cleanup_close_ int rfd = -EBADF;
         int r;
 
-        ASSERT_OK(rfd = mkdtemp_open("/tmp/test-config-parse-XXXXXX", 0, &root));
-        assert_se(mkdir_p_root(root, "/etc/kernel/install.conf.d", UID_INVALID, GID_INVALID, 0755));
-        assert_se(mkdir_p_root(root, "/run/kernel/install.conf.d", UID_INVALID, GID_INVALID, 0755));
+        ASSERT_OK(rfd = mkdtemp_open(SYSTEM_TMPDIR "/test-config-parse-XXXXXX", 0, &root));
+        assert_se(mkdir_p_root(root, SYSCONF_DIR "/kernel/install.conf.d", UID_INVALID, GID_INVALID, 0755));
+        assert_se(mkdir_p_root(root, RUNSTATEDIR "/kernel/install.conf.d", UID_INVALID, GID_INVALID, 0755));
         assert_se(mkdir_p_root(root, "/usr/lib/kernel/install.conf.d", UID_INVALID, GID_INVALID, 0755));
         assert_se(mkdir_p_root(root, "/usr/local/lib/kernel/install.conf.d", UID_INVALID, GID_INVALID, 0755));
 
@@ -470,8 +470,8 @@ TEST(config_parse_standard_file_with_dropins_full) {
         assert_se(strv_length(dropins) == 4);
 
         /* Make sure that we follow symlinks */
-        assert_se(mkdir_p_root(root, "/etc/kernel/install2.conf.d", UID_INVALID, GID_INVALID, 0755));
-        assert_se(mkdir_p_root(root, "/run/kernel/install2.conf.d", UID_INVALID, GID_INVALID, 0755));
+        assert_se(mkdir_p_root(root, SYSCONF_DIR "/kernel/install2.conf.d", UID_INVALID, GID_INVALID, 0755));
+        assert_se(mkdir_p_root(root, RUNSTATEDIR "/kernel/install2.conf.d", UID_INVALID, GID_INVALID, 0755));
         assert_se(mkdir_p_root(root, "/usr/lib/kernel/install2.conf.d", UID_INVALID, GID_INVALID, 0755));
         assert_se(mkdir_p_root(root, "/usr/local/lib/kernel/install2.conf.d", UID_INVALID, GID_INVALID, 0755));
 
@@ -481,8 +481,8 @@ TEST(config_parse_standard_file_with_dropins_full) {
         assert_se(symlinkat("/usr/local/lib/kernel/install.conf.d/drop1.conf", rfd, "usr/local/lib/kernel/install2.conf.d/drop1.conf") == 0);
         assert_se(symlinkat("/usr/local/lib/kernel/install.conf.d/drop2.conf", rfd, "usr/local/lib/kernel/install2.conf.d/drop2.conf") == 0);
         assert_se(symlinkat("/usr/lib/kernel/install.conf.d/drop2.conf", rfd, "usr/lib/kernel/install2.conf.d/drop2.conf") == 0);
-        assert_se(symlinkat("/run/kernel/install.conf.d/drop3.conf", rfd, "run/kernel/install2.conf.d/drop3.conf") == 0);
-        assert_se(symlinkat("/etc/kernel/install.conf.d/drop4.conf", rfd, "etc/kernel/install2.conf.d/drop4.conf") == 0);
+        assert_se(symlinkat(RUNSTATEDIR "/kernel/install.conf.d/drop3.conf", rfd, "run/kernel/install2.conf.d/drop3.conf") == 0);
+        assert_se(symlinkat(SYSCONF_DIR "/kernel/install.conf.d/drop4.conf", rfd, "etc/kernel/install2.conf.d/drop4.conf") == 0);
 
         r = config_parse_standard_file_with_dropins_full(
                         root,

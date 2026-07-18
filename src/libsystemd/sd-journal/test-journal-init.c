@@ -16,7 +16,7 @@
 int main(int argc, char *argv[]) {
         sd_journal *j;
         int r, i, I = 100;
-        char t[] = "/var/tmp/journal-stream-XXXXXX";
+        char t[] = LOCALSTATEDIR SYSTEM_TMPDIR "/journal-stream-XXXXXX";
 
         test_setup_logging(LOG_DEBUG);
 

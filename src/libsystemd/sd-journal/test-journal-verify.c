@@ -65,7 +65,7 @@ static int raw_verify(const char *fn, const char *verification_key) {
 
 static int run_test(const char *verification_key, ssize_t max_iterations) {
         _cleanup_(mmap_cache_unrefp) MMapCache *m = NULL;
-        char t[] = "/var/tmp/journal-XXXXXX";
+        char t[] = LOCALSTATEDIR SYSTEM_TMPDIR "/journal-XXXXXX";
         struct stat st;
         JournalFile *f;
         JournalFile *df;

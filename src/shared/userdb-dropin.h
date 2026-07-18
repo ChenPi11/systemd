@@ -6,7 +6,7 @@
 /* This could be put together with CONF_PATHS_NULSTR, with the exception of the /run/host/ part in the
  * middle, which we use here, but not otherwise. */
 #define USERDB_DROPIN_DIR_NULSTR(n)             \
-        "/etc/" n "\0"                          \
+        SYSCONF_DIR "/" n "\0"                          \
         RUNSTATEDIR "/" n "\0"                          \
         RUNSTATEDIR "/host/" n "\0"                     \
         "/usr/local/lib/" n "\0"                \

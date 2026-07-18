@@ -313,9 +313,9 @@ static int extract_now(
                 if (r < 0)
                         return log_error_errno(r, "Failed to open extension release from '%s': %m", image_name);
 
-                os_release_id = strjoina((class == IMAGE_SYSEXT) ? "/usr/lib" : "/etc", "/extension-release.d/extension-release.", image_name);
+                os_release_id = strjoina((class == IMAGE_SYSEXT) ? "/usr/lib" : SYSCONF_DIR, "/extension-release.d/extension-release.", image_name);
         } else {
-                os_release_id = "/etc/os-release";
+                os_release_id = SYSCONF_DIR "/os-release";
                 r = open_os_release_at(rfd, &os_release_path, &os_release_fd);
         }
         if (r < 0)

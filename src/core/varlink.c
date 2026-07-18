@@ -561,7 +561,7 @@ static int manager_varlink_init_system_api(Manager *m) {
                 char text[DECIMAL_STR_MAX(uid_t) + 1 + DECIMAL_STR_MAX(gid_t) + 1];
                 xsprintf(text, UID_FMT "-" UID_FMT, (uid_t) DYNAMIC_UID_MIN, (uid_t) DYNAMIC_UID_MAX);
                 FOREACH_STRING(xattr, "user.userdb.uid", "user.userdb.gid")
-                        (void) xsetxattr(AT_FDCWD, "/run/systemd/userdb/io.systemd.DynamicUser", /* at_flags= */ 0, xattr, text);
+                        (void) xsetxattr(AT_FDCWD, RUNSTATEDIR "/systemd/userdb/io.systemd.DynamicUser", /* at_flags= */ 0, xattr, text);
         }
 
         return 0;

@@ -1592,12 +1592,12 @@ static int os_release_status(void) {
 static int setup_os_release(RuntimeScope scope) {
         char os_release_dst[STRLEN(RUNSTATEDIR "/user//systemd/propagate/.os-release-stage/os-release") + DECIMAL_STR_MAX(uid_t)] =
                 RUNSTATEDIR "/systemd/propagate/.os-release-stage/os-release";
-        const char *os_release_src = "/etc/os-release";
+        const char *os_release_src = SYSCONF_DIR "/os-release";
         int r;
 
         assert(IN_SET(scope, RUNTIME_SCOPE_SYSTEM, RUNTIME_SCOPE_USER));
 
-        if (access("/etc/os-release", F_OK) < 0) {
+        if (access(SYSCONF_DIR "/os-release", F_OK) < 0) {
                 if (errno != ENOENT)
                         log_debug_errno(errno, "Failed to check if /etc/os-release exists, ignoring: %m");
 
@@ -2603,7 +2603,7 @@ static void log_execution_mode(bool *ret_first_boot) {
                                  * first-boot initialization to occur. If the container manager wants to
                                  * provision the machine ID it should pass $container_uuid to PID 1. */
 
-                                r = read_one_line_file("/etc/machine-id", &id_text);
+                                r = read_one_line_file(SYSCONF_DIR "/machine-id", &id_text);
                                 if (r < 0 || streq(id_text, "uninitialized")) {
                                         if (r < 0 && r != -ENOENT)
                                                 log_warning_errno(r, "Unexpected error while reading /etc/machine-id, assuming first boot: %m");

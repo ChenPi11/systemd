@@ -100,9 +100,9 @@ TEST(device_path_make_canonical) {
         test_device_path_make_canonical_one("/dev/urandom");
         test_device_path_make_canonical_one("/dev/tty");
 
-        if (is_device_node("/run/systemd/inaccessible/blk") > 0) {
-                test_device_path_make_canonical_one("/run/systemd/inaccessible/chr");
-                test_device_path_make_canonical_one("/run/systemd/inaccessible/blk");
+        if (is_device_node(RUNSTATEDIR "/systemd/inaccessible/blk") > 0) {
+                test_device_path_make_canonical_one(RUNSTATEDIR "/systemd/inaccessible/chr");
+                test_device_path_make_canonical_one(RUNSTATEDIR "/systemd/inaccessible/blk");
         }
 }
 

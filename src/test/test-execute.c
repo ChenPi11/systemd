@@ -41,7 +41,7 @@
 #include "user-util.h"
 #include "virt.h"
 
-#define PRIVATE_UNIT_DIR "/run/test-execute-unit-dir"
+#define PRIVATE_UNIT_DIR RUNSTATEDIR "/test-execute-unit-dir"
 
 static char *user_runtime_unit_dir = NULL;
 static bool can_unshare;
@@ -216,12 +216,12 @@ static bool check_user_has_group_with_same_name(const char *name) {
 
 static bool is_inaccessible_available(void) {
         FOREACH_STRING(p,
-                       "/run/systemd/inaccessible/reg",
-                       "/run/systemd/inaccessible/dir",
-                       "/run/systemd/inaccessible/chr",
-                       "/run/systemd/inaccessible/blk",
-                       "/run/systemd/inaccessible/fifo",
-                       "/run/systemd/inaccessible/sock")
+                       RUNSTATEDIR "/systemd/inaccessible/reg",
+                       RUNSTATEDIR "/systemd/inaccessible/dir",
+                       RUNSTATEDIR "/systemd/inaccessible/chr",
+                       RUNSTATEDIR "/systemd/inaccessible/blk",
+                       RUNSTATEDIR "/systemd/inaccessible/fifo",
+                       RUNSTATEDIR "/systemd/inaccessible/sock")
                 if (access(p, F_OK) < 0)
                         return false;
 
@@ -330,13 +330,13 @@ static void _test_service(const char *file, unsigned line, const char *func,
         _test_service(PROJECT_FILE, __LINE__, __func__, m, unit_name, result_expected)
 
 static void test_exec_bindpaths(Manager *m) {
-        ASSERT_OK(mkdir_p("/tmp/test-exec-bindpaths", 0755));
-        ASSERT_OK(mkdir_p("/tmp/test-exec-bindreadonlypaths", 0755));
+        ASSERT_OK(mkdir_p(SYSTEM_TMPDIR "/test-exec-bindpaths", 0755));
+        ASSERT_OK(mkdir_p(SYSTEM_TMPDIR "/test-exec-bindreadonlypaths", 0755));
 
         test(m, "exec-bindpaths.service", can_unshare ? 0 : EXIT_NAMESPACE, CLD_EXITED);
 
-        (void) rm_rf("/tmp/test-exec-bindpaths", REMOVE_ROOT|REMOVE_PHYSICAL);
-        (void) rm_rf("/tmp/test-exec-bindreadonlypaths", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(SYSTEM_TMPDIR "/test-exec-bindpaths", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(SYSTEM_TMPDIR "/test-exec-bindreadonlypaths", REMOVE_ROOT|REMOVE_PHYSICAL);
 }
 
 static void test_exec_cpuaffinity(Manager *m) {
@@ -369,12 +369,12 @@ static void test_exec_credentials(Manager *m) {
 }
 
 static void test_exec_workingdirectory(Manager *m) {
-        ASSERT_OK(mkdir_p("/tmp/test-exec_workingdirectory", 0755));
+        ASSERT_OK(mkdir_p(SYSTEM_TMPDIR "/test-exec_workingdirectory", 0755));
 
         test(m, "exec-workingdirectory.service", 0, CLD_EXITED);
         test(m, "exec-workingdirectory-trailing-dot.service", 0, CLD_EXITED);
 
-        (void) rm_rf("/tmp/test-exec_workingdirectory", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(SYSTEM_TMPDIR "/test-exec_workingdirectory", REMOVE_ROOT|REMOVE_PHYSICAL);
 }
 
 static void test_exec_execsearchpath(Manager *m) {
@@ -384,13 +384,13 @@ static void test_exec_execsearchpath(Manager *m) {
         if (r > 0)
                 return (void) log_tests_skipped("/bin/ls is a symlink, maybe coreutils is built with --enable-single-binary=symlinks");
 
-        ASSERT_OK(mkdir_p("/tmp/test-exec_execsearchpath", 0755));
+        ASSERT_OK(mkdir_p(SYSTEM_TMPDIR "/test-exec_execsearchpath", 0755));
 
-        ASSERT_OK(copy_file("/bin/ls", "/tmp/test-exec_execsearchpath/ls_temp", 0,  0777, COPY_REPLACE));
+        ASSERT_OK(copy_file("/bin/ls", SYSTEM_TMPDIR "/test-exec_execsearchpath/ls_temp", 0,  0777, COPY_REPLACE));
 
         test(m, "exec-execsearchpath.service", 0, CLD_EXITED);
 
-        ASSERT_OK(rm_rf("/tmp/test-exec_execsearchpath", REMOVE_ROOT|REMOVE_PHYSICAL));
+        ASSERT_OK(rm_rf(SYSTEM_TMPDIR "/test-exec_execsearchpath", REMOVE_ROOT|REMOVE_PHYSICAL));
 
         test(m, "exec-execsearchpath.service", EXIT_EXEC, CLD_EXITED);
 }
@@ -432,19 +432,19 @@ static void test_exec_execsearchpath_environment_files(Manager *m) {
 
         int r;
 
-        r = write_string_file("/tmp/test-exec_execsearchpath_environmentfile.conf", path_not_set, WRITE_STRING_FILE_CREATE);
+        r = write_string_file(SYSTEM_TMPDIR "/test-exec_execsearchpath_environmentfile.conf", path_not_set, WRITE_STRING_FILE_CREATE);
         ASSERT_OK(r);
 
         test(m, "exec-execsearchpath-environmentfile.service", 0, CLD_EXITED);
 
-        (void) unlink("/tmp/test-exec_environmentfile.conf");
+        (void) unlink(SYSTEM_TMPDIR "/test-exec_environmentfile.conf");
 
-        r = write_string_file("/tmp/test-exec_execsearchpath_environmentfile-set.conf", path_set, WRITE_STRING_FILE_CREATE);
+        r = write_string_file(SYSTEM_TMPDIR "/test-exec_execsearchpath_environmentfile-set.conf", path_set, WRITE_STRING_FILE_CREATE);
         ASSERT_OK(r);
 
         test(m, "exec-execsearchpath-environmentfile-set.service", 0, CLD_EXITED);
 
-        (void) unlink("/tmp/test-exec_environmentfile-set.conf");
+        (void) unlink(SYSTEM_TMPDIR "/test-exec_environmentfile-set.conf");
 }
 
 static void test_exec_execsearchpath_passenvironment(Manager *m) {
@@ -502,15 +502,15 @@ static void test_exec_ignoresigpipe(Manager *m) {
 }
 
 static void test_exec_privatetmp(Manager *m) {
-        ASSERT_OK(touch("/tmp/test-exec_privatetmp"));
+        ASSERT_OK(touch(SYSTEM_TMPDIR "/test-exec_privatetmp"));
 
         if (MANAGER_IS_SYSTEM(m) || have_userns_privileges()) {
                 test(m, "exec-privatetmp-yes.service", can_unshare ? 0 : MANAGER_IS_SYSTEM(m) ? EXIT_FAILURE : EXIT_NAMESPACE, CLD_EXITED);
                 test(m, "exec-privatetmp-disabled-by-prefix.service", can_unshare ? 0 : MANAGER_IS_SYSTEM(m) ? EXIT_FAILURE : EXIT_NAMESPACE, CLD_EXITED);
 
-                (void) unlink("/tmp/test-exec_privatetmp_disconnected");
+                (void) unlink(SYSTEM_TMPDIR "/test-exec_privatetmp_disconnected");
                 test(m, "exec-privatetmp-disconnected-nodefaultdeps-nor-sandboxing.service", 0, CLD_EXITED);
-                ASSERT_OK_ERRNO(access("/tmp/test-exec_privatetmp_disconnected", F_OK));
+                ASSERT_OK_ERRNO(access(SYSTEM_TMPDIR "/test-exec_privatetmp_disconnected", F_OK));
 
                 FOREACH_STRING(s,
                                "exec-privatetmp-disconnected.service",
@@ -519,17 +519,17 @@ static void test_exec_privatetmp(Manager *m) {
                                "exec-privatetmp-disconnected-wants-mounts-for-var.service",
                                "exec-privatetmp-disconnected-after-and-requires-for-var.service",
                                "exec-privatetmp-disconnected-after-and-wants-for-var.service") {
-                        (void) unlink("/tmp/test-exec_privatetmp_disconnected");
-                        (void) unlink("/var/tmp/test-exec_privatetmp_disconnected");
+                        (void) unlink(SYSTEM_TMPDIR "/test-exec_privatetmp_disconnected");
+                        (void) unlink(LOCALSTATEDIR SYSTEM_TMPDIR "/test-exec_privatetmp_disconnected");
                         test(m, s, can_unshare ? 0 : MANAGER_IS_SYSTEM(m) ? EXIT_FAILURE : EXIT_NAMESPACE, CLD_EXITED);
-                        ASSERT_FAIL(access("/tmp/test-exec_privatetmp_disconnected", F_OK));
-                        ASSERT_FAIL(access("/var/tmp/test-exec_privatetmp_disconnected", F_OK));
+                        ASSERT_FAIL(access(SYSTEM_TMPDIR "/test-exec_privatetmp_disconnected", F_OK));
+                        ASSERT_FAIL(access(LOCALSTATEDIR SYSTEM_TMPDIR "/test-exec_privatetmp_disconnected", F_OK));
                 }
         }
 
         test(m, "exec-privatetmp-no.service", 0, CLD_EXITED);
 
-        (void) unlink("/tmp/test-exec_privatetmp");
+        (void) unlink(SYSTEM_TMPDIR "/test-exec_privatetmp");
 }
 
 static void test_exec_privatedevices(Manager *m) {
@@ -611,7 +611,7 @@ static void test_exec_readonlypaths(Manager *m) {
         if (MANAGER_IS_SYSTEM(m) || have_userns_privileges())
                 test(m, "exec-readonlypaths-simple.service", can_unshare ? 0 : MANAGER_IS_SYSTEM(m) ? EXIT_FAILURE : EXIT_NAMESPACE, CLD_EXITED);
 
-        if (path_is_read_only_fs("/var") > 0) {
+        if (path_is_read_only_fs(LOCALSTATEDIR) > 0) {
                 log_notice("Directory /var is readonly, skipping remaining tests in %s", __func__);
                 return;
         }
@@ -831,11 +831,11 @@ static void test_exec_mount_apivfs(Manager *m) {
 
         ASSERT_OK(write_drop_in(user_runtime_unit_dir, "exec-mount-apivfs-no.service", 10, "bind-mount", data));
 
-        ASSERT_OK(mkdir_p("/tmp/test-exec-mount-apivfs-no/root", 0755));
+        ASSERT_OK(mkdir_p(SYSTEM_TMPDIR "/test-exec-mount-apivfs-no/root", 0755));
 
         test(m, "exec-mount-apivfs-no.service", can_unshare || !MANAGER_IS_SYSTEM(m) ? 0 : EXIT_NAMESPACE, CLD_EXITED);
 
-        (void) rm_rf("/tmp/test-exec-mount-apivfs-no/root", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(SYSTEM_TMPDIR "/test-exec-mount-apivfs-no/root", REMOVE_ROOT|REMOVE_PHYSICAL);
 #endif
 }
 
@@ -1047,23 +1047,23 @@ static void test_exec_dynamicuser(Manager *m) {
         test(m, "exec-dynamicuser-supplementarygroups.service", status, CLD_EXITED);
         test(m, "exec-dynamicuser-statedir.service", status, CLD_EXITED);
 
-        (void) rm_rf("/var/lib/quux", REMOVE_ROOT|REMOVE_PHYSICAL);
-        (void) rm_rf("/var/lib/test-dynamicuser-migrate", REMOVE_ROOT|REMOVE_PHYSICAL);
-        (void) rm_rf("/var/lib/test-dynamicuser-migrate2", REMOVE_ROOT|REMOVE_PHYSICAL);
-        (void) rm_rf("/var/lib/waldo", REMOVE_ROOT|REMOVE_PHYSICAL);
-        (void) rm_rf("/var/lib/private/quux", REMOVE_ROOT|REMOVE_PHYSICAL);
-        (void) rm_rf("/var/lib/private/test-dynamicuser-migrate", REMOVE_ROOT|REMOVE_PHYSICAL);
-        (void) rm_rf("/var/lib/private/test-dynamicuser-migrate2", REMOVE_ROOT|REMOVE_PHYSICAL);
-        (void) rm_rf("/var/lib/private/waldo", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(LOCALSTATEDIR "/lib/quux", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(LOCALSTATEDIR "/lib/test-dynamicuser-migrate", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(LOCALSTATEDIR "/lib/test-dynamicuser-migrate2", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(LOCALSTATEDIR "/lib/waldo", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(LOCALSTATEDIR "/lib/private/quux", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(LOCALSTATEDIR "/lib/private/test-dynamicuser-migrate", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(LOCALSTATEDIR "/lib/private/test-dynamicuser-migrate2", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(LOCALSTATEDIR "/lib/private/waldo", REMOVE_ROOT|REMOVE_PHYSICAL);
 
         test(m, "exec-dynamicuser-statedir-migrate-step1.service", 0, CLD_EXITED);
         test(m, "exec-dynamicuser-statedir-migrate-step2.service", status, CLD_EXITED);
         test(m, "exec-dynamicuser-statedir-migrate-step1.service", 0, CLD_EXITED);
 
-        (void) rm_rf("/var/lib/test-dynamicuser-migrate", REMOVE_ROOT|REMOVE_PHYSICAL);
-        (void) rm_rf("/var/lib/test-dynamicuser-migrate2", REMOVE_ROOT|REMOVE_PHYSICAL);
-        (void) rm_rf("/var/lib/private/test-dynamicuser-migrate", REMOVE_ROOT|REMOVE_PHYSICAL);
-        (void) rm_rf("/var/lib/private/test-dynamicuser-migrate2", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(LOCALSTATEDIR "/lib/test-dynamicuser-migrate", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(LOCALSTATEDIR "/lib/test-dynamicuser-migrate2", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(LOCALSTATEDIR "/lib/private/test-dynamicuser-migrate", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(LOCALSTATEDIR "/lib/private/test-dynamicuser-migrate2", REMOVE_ROOT|REMOVE_PHYSICAL);
 
         test(m, "exec-dynamicuser-runtimedirectory1.service", status, CLD_EXITED);
         test(m, "exec-dynamicuser-runtimedirectory2.service", status, CLD_EXITED);
@@ -1091,12 +1091,12 @@ static void test_exec_environmentfile(Manager *m) {
                 "VAR5=password\\with\\backslashes";
         int r;
 
-        r = write_string_file("/tmp/test-exec_environmentfile.conf", e, WRITE_STRING_FILE_CREATE);
+        r = write_string_file(SYSTEM_TMPDIR "/test-exec_environmentfile.conf", e, WRITE_STRING_FILE_CREATE);
         ASSERT_OK(r);
 
         test(m, "exec-environmentfile.service", 0, CLD_EXITED);
 
-        (void) unlink("/tmp/test-exec_environmentfile.conf");
+        (void) unlink(SYSTEM_TMPDIR "/test-exec_environmentfile.conf");
 }
 
 static void test_exec_passenvironment(Manager *m) {
@@ -1136,9 +1136,9 @@ static void test_exec_umask(Manager *m) {
 }
 
 static void test_exec_runtimedirectory(Manager *m) {
-        (void) rm_rf("/run/test-exec_runtimedirectory2", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(RUNSTATEDIR "/test-exec_runtimedirectory2", REMOVE_ROOT|REMOVE_PHYSICAL);
         test(m, "exec-runtimedirectory.service", 0, CLD_EXITED);
-        (void) rm_rf("/run/test-exec_runtimedirectory2", REMOVE_ROOT|REMOVE_PHYSICAL);
+        (void) rm_rf(RUNSTATEDIR "/test-exec_runtimedirectory2", REMOVE_ROOT|REMOVE_PHYSICAL);
 
         test(m, "exec-runtimedirectory-mode.service", 0, CLD_EXITED);
         test(m, "exec-runtimedirectory-owner.service", MANAGER_IS_SYSTEM(m) ? 0 : EXIT_GROUP, CLD_EXITED);
@@ -1516,7 +1516,7 @@ static int prepare_ns(const char *process_name) {
                         ASSERT_OK(mount_nofollow_verbose(LOG_DEBUG, build_dir, build_dir_mount, NULL, MS_BIND, NULL));
                 }
 
-                FOREACH_STRING(p, "/dev/shm", "/root", "/tmp", "/var/tmp", "/var/lib")
+                FOREACH_STRING(p, "/dev/shm", "/root", SYSTEM_TMPDIR, LOCALSTATEDIR SYSTEM_TMPDIR, LOCALSTATEDIR "/lib")
                         ASSERT_OK(mount_nofollow_verbose(LOG_DEBUG, "tmpfs", p, "tmpfs", MS_NOSUID|MS_NODEV, NULL));
 
                 if (build_dir_mount) {
@@ -1533,12 +1533,12 @@ static int prepare_ns(const char *process_name) {
                 }
 
                 /* Prepare credstore like tmpfiles.d/credstore.conf for LoadCredential= tests. */
-                FOREACH_STRING(p, "/run/credstore", "/run/credstore.encrypted") {
+                FOREACH_STRING(p, RUNSTATEDIR "/credstore", RUNSTATEDIR "/credstore.encrypted") {
                         ASSERT_OK(mkdir_p(p, 0700));
                         ASSERT_OK(mount_nofollow_verbose(LOG_DEBUG, "tmpfs", p, "tmpfs", MS_NOSUID|MS_NODEV, "mode=0700"));
                 }
 
-                ASSERT_OK(write_string_file("/run/credstore/test-execute.load-credential", "foo", WRITE_STRING_FILE_CREATE));
+                ASSERT_OK(write_string_file(RUNSTATEDIR "/credstore/test-execute.load-credential", "foo", WRITE_STRING_FILE_CREATE));
         }
 
         return r;

@@ -139,11 +139,11 @@ static int timer_setup_persistent(Timer *t) {
 
         if (MANAGER_IS_SYSTEM(UNIT(t)->manager)) {
 
-                r = unit_add_mounts_for(UNIT(t), "/var/lib/systemd/timers", UNIT_DEPENDENCY_FILE, UNIT_MOUNT_REQUIRES);
+                r = unit_add_mounts_for(UNIT(t), LOCALSTATEDIR "/lib/systemd/timers", UNIT_DEPENDENCY_FILE, UNIT_MOUNT_REQUIRES);
                 if (r < 0)
                         return r;
 
-                stamp_path = strjoin("/var/lib/systemd/timers/stamp-", UNIT(t)->id);
+                stamp_path = strjoin(LOCALSTATEDIR "/lib/systemd/timers/stamp-", UNIT(t)->id);
         } else {
                 const char *e;
 

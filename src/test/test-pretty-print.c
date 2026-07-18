@@ -46,7 +46,7 @@ TEST(terminal_urlify) {
 
         formatted = mfree(formatted);
 
-        assert_se(terminal_urlify_path("/etc/fstab", "this link to your /etc/fstab", &formatted) >= 0);
+        assert_se(terminal_urlify_path(SYSCONF_DIR "/fstab", "this link to your /etc/fstab", &formatted) >= 0);
         printf("Or click on %s to have a look at it!\n", formatted);
 }
 
@@ -54,12 +54,12 @@ TEST(cat_files) {
         assert_se(cat_files("/no/such/file", NULL, 0) == -ENOENT);
         assert_se(cat_files(NULL, NULL, 0) == 0);
 
-        if (access("/etc/fstab", R_OK) >= 0)
-                assert_se(cat_files("/etc/fstab", STRV_MAKE("/etc/fstab", "/etc/fstab"), 0) == 0);
+        if (access(SYSCONF_DIR "/fstab", R_OK) >= 0)
+                assert_se(cat_files(SYSCONF_DIR "/fstab", STRV_MAKE(SYSCONF_DIR "/fstab", SYSCONF_DIR "/fstab"), 0) == 0);
 
         /* Test masked file (symlink to /dev/null) - should succeed with exit code 0 */
         _cleanup_(rm_rf_physical_and_freep) char *tmp = NULL;
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-cat-files-XXXXXX", &tmp));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-cat-files-XXXXXX", &tmp));
         _cleanup_free_ char *masked_file = ASSERT_NOT_NULL(path_join(tmp, "masked.conf"));
         ASSERT_OK_ERRNO(symlink("/dev/null", masked_file));
         ASSERT_OK(cat_files(masked_file, /* dropins= */ NULL, /* flags= */ 0));

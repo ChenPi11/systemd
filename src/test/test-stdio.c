@@ -7,7 +7,7 @@
 #include "tmpfile-util.h"
 
 TEST(read_only) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-stdio-read-only-XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-stdio-read-only-XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
         _cleanup_close_ int fd = -EBADF;
         int r;

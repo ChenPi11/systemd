@@ -27,7 +27,7 @@
 #include "verbs.h"
 
 static const char* const conf_file_dirs[] = {
-        "/etc/udev/hwdb.d",
+        SYSCONF_DIR "/udev/hwdb.d",
         UDEVLIBEXECDIR "/hwdb.d",
         NULL
 };
@@ -587,7 +587,7 @@ int hwdb_update(const char *root, const char *hwdb_bin_dir, bool strict, bool co
          * source. If true, then hwdb.bin will be created without the information. systemd-hwdb command
          * should set the argument false, and 'udevadm hwdb' command should set it true. */
 
-        hwdb_bin = path_join(root, hwdb_bin_dir ?: "/etc/udev", "hwdb.bin");
+        hwdb_bin = path_join(root, hwdb_bin_dir ?: SYSCONF_DIR "/udev", "hwdb.bin");
         if (!hwdb_bin)
                 return -ENOMEM;
 

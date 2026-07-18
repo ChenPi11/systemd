@@ -216,7 +216,7 @@ int x11_read_data(Context *c, sd_bus_message *m) {
                 c->x11_cache = sd_bus_message_ref(m);
         }
 
-        fd = RET_NERRNO(open("/etc/X11/xorg.conf.d/00-keyboard.conf", O_CLOEXEC | O_PATH));
+        fd = RET_NERRNO(open(SYSCONF_DIR "/X11/xorg.conf.d/00-keyboard.conf", O_CLOEXEC | O_PATH));
         if (fd == -ENOENT) {
                 c->x11_stat = (struct stat) {};
                 x11_context_clear(&c->x11_from_xorg);
@@ -339,15 +339,15 @@ int x11_write_data(Context *c) {
 
         xc = context_get_x11_context(c);
         if (x11_context_isempty(xc)) {
-                if (unlink("/etc/X11/xorg.conf.d/00-keyboard.conf") < 0)
+                if (unlink(SYSCONF_DIR "/X11/xorg.conf.d/00-keyboard.conf") < 0)
                         return errno == ENOENT ? 0 : -errno;
 
                 c->x11_stat = (struct stat) {};
                 return 0;
         }
 
-        (void) mkdir_p_label("/etc/X11/xorg.conf.d", 0755);
-        r = fopen_temporary("/etc/X11/xorg.conf.d/00-keyboard.conf", &f, &temp_path);
+        (void) mkdir_p_label(SYSCONF_DIR "/X11/xorg.conf.d", 0755);
+        r = fopen_temporary(SYSCONF_DIR "/X11/xorg.conf.d/00-keyboard.conf", &f, &temp_path);
         if (r < 0)
                 return r;
 
@@ -378,10 +378,10 @@ int x11_write_data(Context *c) {
         if (r < 0)
                 return r;
 
-        if (rename(temp_path, "/etc/X11/xorg.conf.d/00-keyboard.conf") < 0)
+        if (rename(temp_path, SYSCONF_DIR "/X11/xorg.conf.d/00-keyboard.conf") < 0)
                 return -errno;
 
-        if (stat("/etc/X11/xorg.conf.d/00-keyboard.conf", &c->x11_stat) < 0)
+        if (stat(SYSCONF_DIR "/X11/xorg.conf.d/00-keyboard.conf", &c->x11_stat) < 0)
                 return -errno;
 
         return 0;
@@ -394,7 +394,7 @@ bool locale_gen_check_available(void) {
                         log_warning_errno(errno, "Unable to determine whether " LOCALEGEN_PATH " exists and is executable, assuming it is not: %m");
                 return false;
         }
-        if (access("/etc/locale.gen", F_OK) < 0) {
+        if (access(SYSCONF_DIR "/locale.gen", F_OK) < 0) {
                 if (errno != ENOENT)
                         log_warning_errno(errno, "Unable to determine whether /etc/locale.gen exists, assuming it does not: %m");
                 return false;
@@ -475,14 +475,14 @@ int locale_gen_enable_locale(const char *locale) {
         if (r < 0 && r != -EOPNOTSUPP)
                 return r;
 
-        fr = fopen("/etc/locale.gen", "re");
+        fr = fopen(SYSCONF_DIR "/locale.gen", "re");
         if (!fr) {
                 if (errno != ENOENT)
                         return -errno;
                 write_new = true;
         }
 
-        r = fopen_temporary("/etc/locale.gen", &fw, &temp_path);
+        r = fopen_temporary(SYSCONF_DIR "/locale.gen", &fw, &temp_path);
         if (r < 0)
                 return r;
 
@@ -564,7 +564,7 @@ int locale_gen_enable_locale(const char *locale) {
         if (r < 0)
                 return r;
 
-        if (rename(temp_path, "/etc/locale.gen") < 0)
+        if (rename(temp_path, SYSCONF_DIR "/locale.gen") < 0)
                 return -errno;
         temp_path = mfree(temp_path);
 

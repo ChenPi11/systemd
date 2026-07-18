@@ -181,7 +181,7 @@ static int add_integritytab_devices(void) {
 static int run(const char *dest, const char *dest_early, const char *dest_late) {
         assert_se(arg_dest = dest);
 
-        arg_integritytab = getenv("SYSTEMD_INTEGRITYTAB") ?: "/etc/integritytab";
+        arg_integritytab = getenv("SYSTEMD_INTEGRITYTAB") ?: SYSCONF_DIR "/integritytab";
 
         return add_integritytab_devices();
 }

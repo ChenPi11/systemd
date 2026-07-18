@@ -32,15 +32,15 @@ SD_VARLINK_DEFINE_ENUM_TYPE(
 
 SD_VARLINK_DEFINE_ENUM_TYPE(
                 ResolvConfMode,
-                SD_VARLINK_FIELD_COMMENT("/etc/resolv.conf is a symbolic link to "PRIVATE_UPLINK_RESOLV_CONF"."),
+                SD_VARLINK_FIELD_COMMENT(SYSCONF_DIR "/resolv.conf is a symbolic link to "PRIVATE_UPLINK_RESOLV_CONF"."),
                 SD_VARLINK_DEFINE_ENUM_VALUE(uplink),
-                SD_VARLINK_FIELD_COMMENT("/etc/resolv.conf is a symbolic link to "PRIVATE_STUB_RESOLV_CONF"."),
+                SD_VARLINK_FIELD_COMMENT(SYSCONF_DIR "/resolv.conf is a symbolic link to "PRIVATE_STUB_RESOLV_CONF"."),
                 SD_VARLINK_DEFINE_ENUM_VALUE(stub),
-                SD_VARLINK_FIELD_COMMENT("/etc/resolv.conf is a symbolic link to "PRIVATE_STATIC_RESOLV_CONF"."),
+                SD_VARLINK_FIELD_COMMENT(SYSCONF_DIR "/resolv.conf is a symbolic link to "PRIVATE_STATIC_RESOLV_CONF"."),
                 SD_VARLINK_DEFINE_ENUM_VALUE(static),
-                SD_VARLINK_FIELD_COMMENT("/etc/resolv.conf does not exist."),
+                SD_VARLINK_FIELD_COMMENT(SYSCONF_DIR "/resolv.conf does not exist."),
                 SD_VARLINK_DEFINE_ENUM_VALUE(missing),
-                SD_VARLINK_FIELD_COMMENT("/etc/resolv.conf is not managed by systemd-resolved."),
+                SD_VARLINK_FIELD_COMMENT(SYSCONF_DIR "/resolv.conf is not managed by systemd-resolved."),
                 SD_VARLINK_DEFINE_ENUM_VALUE(foreign));
 
 SD_VARLINK_DEFINE_STRUCT_TYPE(

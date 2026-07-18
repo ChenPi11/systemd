@@ -29,7 +29,7 @@ static int check_etc_passwd_collisions(
         if (!directory)
                 return 0;
 
-        r = chase_and_fopen_unlocked("/etc/passwd", directory, CHASE_PREFIX_ROOT, "re", NULL, &f);
+        r = chase_and_fopen_unlocked(SYSCONF_DIR "/passwd", directory, CHASE_PREFIX_ROOT, "re", NULL, &f);
         if (r == -ENOENT)
                 return 0; /* no user database? then no user, hence no collision */
         if (r < 0)
@@ -64,7 +64,7 @@ static int check_etc_group_collisions(
         if (!directory)
                 return 0;
 
-        r = chase_and_fopen_unlocked("/etc/group", directory, CHASE_PREFIX_ROOT, "re", NULL, &f);
+        r = chase_and_fopen_unlocked(SYSCONF_DIR "/group", directory, CHASE_PREFIX_ROOT, "re", NULL, &f);
         if (r == -ENOENT)
                 return 0; /* no group database? then no group, hence no collision */
         if (r < 0)

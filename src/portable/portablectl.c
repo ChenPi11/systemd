@@ -542,7 +542,7 @@ static int verb_inspect_image(int argc, char *argv[], uintptr_t _data, void *use
 
                 r = parse_env_data(
                                 data, sz,
-                                "/etc/os-release",
+                                SYSCONF_DIR "/os-release",
                                 "PORTABLE_PRETTY_NAME", &pretty_portable,
                                 "PRETTY_NAME", &pretty_os);
                 if (r < 0)

@@ -258,7 +258,7 @@ TEST(personality) {
 }
 
 TEST(pid_get_cmdline_harder) {
-        char path[] = "/tmp/test-cmdlineXXXXXX";
+        char path[] = SYSTEM_TMPDIR "/test-cmdlineXXXXXX";
         _cleanup_close_ int fd = -EBADF;
         _cleanup_free_ char *line = NULL;
         _cleanup_strv_free_ char **args = NULL;

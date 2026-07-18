@@ -41,7 +41,7 @@ static int setup_test(Manager **ret) {
                        "directorynotempty",
                        "makedirectory") {
 
-                _cleanup_free_ char *p = ASSERT_NOT_NULL(strjoin("/tmp/test-path_", s));
+                _cleanup_free_ char *p = ASSERT_NOT_NULL(strjoin(SYSTEM_TMPDIR "/test-path_", s));
                 (void) rm_rf(p, REMOVE_ROOT|REMOVE_PHYSICAL);
         }
 
@@ -141,7 +141,7 @@ static int _check_states(
         } while (0)
 
 TEST_RET(path_exists) {
-        const char *test_path = "/tmp/test-path_exists";
+        const char *test_path = SYSTEM_TMPDIR "/test-path_exists";
         int r;
 
         _cleanup_(manager_freep) Manager *m = NULL;
@@ -174,7 +174,7 @@ TEST_RET(path_exists) {
 }
 
 TEST_RET(path_existsglob) {
-        const char *test_path = "/tmp/test-path_existsglobFOOBAR";
+        const char *test_path = SYSTEM_TMPDIR "/test-path_existsglobFOOBAR";
         int r;
 
         _cleanup_(manager_freep) Manager *m = NULL;
@@ -207,7 +207,7 @@ TEST_RET(path_existsglob) {
 }
 
 TEST_RET(path_changed) {
-        const char *test_path = "/tmp/test-path_changed";
+        const char *test_path = SYSTEM_TMPDIR "/test-path_changed";
         int r;
 
         _cleanup_(manager_freep) Manager *m = NULL;
@@ -244,7 +244,7 @@ TEST_RET(path_changed) {
 }
 
 TEST_RET(path_modified) {
-        const char *test_path = "/tmp/test-path_modified";
+        const char *test_path = SYSTEM_TMPDIR "/test-path_modified";
         int r;
 
         _cleanup_(manager_freep) Manager *m = NULL;
@@ -282,7 +282,7 @@ TEST_RET(path_modified) {
 }
 
 TEST_RET(path_unit) {
-        const char *test_path = "/tmp/test-path_unit";
+        const char *test_path = SYSTEM_TMPDIR "/test-path_unit";
         int r;
 
         _cleanup_(manager_freep) Manager *m = NULL;
@@ -311,7 +311,7 @@ TEST_RET(path_unit) {
 }
 
 TEST_RET(path_directorynotempty) {
-        const char *test_file, *test_path = "/tmp/test-path_directorynotempty/";
+        const char *test_file, *test_path = SYSTEM_TMPDIR "/test-path_directorynotempty/";
         int r;
 
         _cleanup_(manager_freep) Manager *m = NULL;
@@ -351,7 +351,7 @@ TEST_RET(path_directorynotempty) {
 }
 
 TEST_RET(path_makedirectory_directorymode) {
-        const char *test_path = "/tmp/test-path_makedirectory/";
+        const char *test_path = SYSTEM_TMPDIR "/test-path_makedirectory/";
         int r;
 
         _cleanup_(manager_freep) Manager *m = NULL;

@@ -24,7 +24,7 @@ TEST(getxattr_at_malloc) {
         const char *x;
         int r;
 
-        ASSERT_OK(fd = mkdtemp_open("/var/tmp/test-xattrtestXXXXXX", O_RDONLY|O_NOCTTY, &t));
+        ASSERT_OK(fd = mkdtemp_open(LOCALSTATEDIR SYSTEM_TMPDIR "/test-xattrtestXXXXXX", O_RDONLY|O_NOCTTY, &t));
         x = strjoina(t, "/test");
         ASSERT_OK(touch(x));
 
@@ -77,7 +77,7 @@ TEST(getcrtime) {
         usec_t usec, k;
         int r;
 
-        ASSERT_OK(fd = mkdtemp_open("/var/tmp/test-xattrtestXXXXXX", 0, &t));
+        ASSERT_OK(fd = mkdtemp_open(LOCALSTATEDIR SYSTEM_TMPDIR "/test-xattrtestXXXXXX", 0, &t));
 
         r = fd_getcrtime(fd, &usec);
         if (r < 0)
@@ -141,7 +141,7 @@ TEST(xsetxattr) {
         const char *x;
         int r;
 
-        ASSERT_OK(dfd = mkdtemp_open("/var/tmp/test-xattrtestXXXXXX", O_PATH, &t));
+        ASSERT_OK(dfd = mkdtemp_open(LOCALSTATEDIR SYSTEM_TMPDIR "/test-xattrtestXXXXXX", O_PATH, &t));
         x = strjoina(t, "/test");
         ASSERT_OK(touch(x));
 

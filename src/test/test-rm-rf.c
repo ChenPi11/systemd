@@ -17,7 +17,7 @@ static void test_rm_rf_chmod_inner(void) {
 
         ASSERT_NE(getuid(), 0U);
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-rm-rf.XXXXXXX", &d));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-rm-rf.XXXXXXX", &d));
         a = strjoina(d, "/a");
         b = strjoina(a, "/b");
         x = strjoina(d, "/x");
@@ -123,7 +123,7 @@ TEST(rm_rf_dangling_symlink) {
         _cleanup_(rm_rf_physical_and_freep) char *d = NULL;
         const char *link;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-rm-rf-dangling.XXXXXXX", &d));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-rm-rf-dangling.XXXXXXX", &d));
         link = strjoina(d, "/link");
 
         ASSERT_OK_ERRNO(symlink("missing", link));

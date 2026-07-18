@@ -102,18 +102,18 @@ STATIC_DESTRUCTOR_REGISTER(arg_location_end, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_policy_path, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_entry_token, freep);
 
-#define PCRLOCK_SECUREBOOT_POLICY_PATH      "/var/lib/pcrlock.d/240-secureboot-policy.pcrlock.d/generated.pcrlock"
-#define PCRLOCK_FIRMWARE_CODE_EARLY_PATH    "/var/lib/pcrlock.d/250-firmware-code-early.pcrlock.d/generated.pcrlock"
-#define PCRLOCK_FIRMWARE_CONFIG_EARLY_PATH  "/var/lib/pcrlock.d/250-firmware-config-early.pcrlock.d/generated.pcrlock"
-#define PCRLOCK_FIRMWARE_CODE_LATE_PATH     "/var/lib/pcrlock.d/550-firmware-code-late.pcrlock.d/generated.pcrlock"
-#define PCRLOCK_FIRMWARE_CONFIG_LATE_PATH   "/var/lib/pcrlock.d/550-firmware-config-late.pcrlock.d/generated.pcrlock"
-#define PCRLOCK_GPT_PATH                    "/var/lib/pcrlock.d/600-gpt.pcrlock.d/generated.pcrlock"
-#define PCRLOCK_SECUREBOOT_AUTHORITY_PATH   "/var/lib/pcrlock.d/620-secureboot-authority.pcrlock.d/generated.pcrlock"
-#define PCRLOCK_KERNEL_CMDLINE_PATH         "/var/lib/pcrlock.d/710-kernel-cmdline.pcrlock.d/generated.pcrlock"
-#define PCRLOCK_KERNEL_INITRD_PATH          "/var/lib/pcrlock.d/720-kernel-initrd.pcrlock.d/generated.pcrlock"
-#define PCRLOCK_MACHINE_ID_PATH             "/var/lib/pcrlock.d/820-machine-id.pcrlock"
-#define PCRLOCK_ROOT_FILE_SYSTEM_PATH       "/var/lib/pcrlock.d/830-root-file-system.pcrlock"
-#define PCRLOCK_FILE_SYSTEM_PATH_PREFIX     "/var/lib/pcrlock.d/840-file-system-"
+#define PCRLOCK_SECUREBOOT_POLICY_PATH      LOCALSTATEDIR "/lib/pcrlock.d/240-secureboot-policy.pcrlock.d/generated.pcrlock"
+#define PCRLOCK_FIRMWARE_CODE_EARLY_PATH    LOCALSTATEDIR "/lib/pcrlock.d/250-firmware-code-early.pcrlock.d/generated.pcrlock"
+#define PCRLOCK_FIRMWARE_CONFIG_EARLY_PATH  LOCALSTATEDIR "/lib/pcrlock.d/250-firmware-config-early.pcrlock.d/generated.pcrlock"
+#define PCRLOCK_FIRMWARE_CODE_LATE_PATH     LOCALSTATEDIR "/lib/pcrlock.d/550-firmware-code-late.pcrlock.d/generated.pcrlock"
+#define PCRLOCK_FIRMWARE_CONFIG_LATE_PATH   LOCALSTATEDIR "/lib/pcrlock.d/550-firmware-config-late.pcrlock.d/generated.pcrlock"
+#define PCRLOCK_GPT_PATH                    LOCALSTATEDIR "/lib/pcrlock.d/600-gpt.pcrlock.d/generated.pcrlock"
+#define PCRLOCK_SECUREBOOT_AUTHORITY_PATH   LOCALSTATEDIR "/lib/pcrlock.d/620-secureboot-authority.pcrlock.d/generated.pcrlock"
+#define PCRLOCK_KERNEL_CMDLINE_PATH         LOCALSTATEDIR "/lib/pcrlock.d/710-kernel-cmdline.pcrlock.d/generated.pcrlock"
+#define PCRLOCK_KERNEL_INITRD_PATH          LOCALSTATEDIR "/lib/pcrlock.d/720-kernel-initrd.pcrlock.d/generated.pcrlock"
+#define PCRLOCK_MACHINE_ID_PATH             LOCALSTATEDIR "/lib/pcrlock.d/820-machine-id.pcrlock"
+#define PCRLOCK_ROOT_FILE_SYSTEM_PATH       LOCALSTATEDIR "/lib/pcrlock.d/830-root-file-system.pcrlock"
+#define PCRLOCK_FILE_SYSTEM_PATH_PREFIX     LOCALSTATEDIR "/lib/pcrlock.d/840-file-system-"
 #define PCRLOCK_PE_INPUT_MAX                (2U * U64_GB)
 
 /* The default set of PCRs to lock to */
@@ -1869,9 +1869,9 @@ static int event_log_load_components(EventLog *el) {
         assert(el);
 
         dirs = arg_components ?:
-                STRV_MAKE("/etc/pcrlock.d",
+                STRV_MAKE(SYSCONF_DIR "/pcrlock.d",
                           RUNSTATEDIR "/pcrlock.d",
-                          "/var/lib/pcrlock.d",
+                          LOCALSTATEDIR "/lib/pcrlock.d",
                           "/usr/local/lib/pcrlock.d",
                           "/usr/lib/pcrlock.d");
 
@@ -3018,7 +3018,7 @@ static int unlink_pcrlock(const char *default_pcrlock_path) {
         } else
                 log_info("%s deleted.", p);
 
-        (void) rmdir_parents(p, "/var/lib");
+        (void) rmdir_parents(p, LOCALSTATEDIR "/lib");
 
         return 0;
 }
@@ -3964,7 +3964,7 @@ static int make_policy(bool force, RecoveryPinMode recovery_pin_mode) {
         if (r < 0)
                 return log_error_errno(r, "Failed to format new configuration to JSON: %m");
 
-        const char *path = arg_policy_path ?: (in_initrd() ? RUNSTATEDIR "/systemd/pcrlock.json" : "/var/lib/systemd/pcrlock.json");
+        const char *path = arg_policy_path ?: (in_initrd() ? RUNSTATEDIR "/systemd/pcrlock.json" : LOCALSTATEDIR "/lib/systemd/pcrlock.json");
         r = write_string_file(path, text, WRITE_STRING_FILE_CREATE|WRITE_STRING_FILE_ATOMIC|WRITE_STRING_FILE_SYNC|WRITE_STRING_FILE_MKDIR_0755|WRITE_STRING_FILE_LABEL);
         if (r < 0)
                 return log_error_errno(r, "Failed to write new configuration to '%s': %m", path);
@@ -4070,7 +4070,7 @@ static int remove_policy(void) {
         if (arg_policy_path)
                 RET_GATHER(ret, remove_policy_file(arg_policy_path));
         else {
-                RET_GATHER(ret, remove_policy_file("/var/lib/systemd/pcrlock.json"));
+                RET_GATHER(ret, remove_policy_file(LOCALSTATEDIR "/lib/systemd/pcrlock.json"));
                 RET_GATHER(ret, remove_policy_file(RUNSTATEDIR "/systemd/pcrlock.json"));
         }
 
@@ -5079,13 +5079,13 @@ static int verb_lock_file_system(int argc, char *argv[], uintptr_t _data, void *
                 if (r < 0)
                         return log_error_errno(r, "Failed to get device of root file system: %m");
 
-                r = get_block_device("/var", &b);
+                r = get_block_device(LOCALSTATEDIR, &b);
                 if (r < 0)
                         return log_error_errno(r, "Failed to get device of /var/ file system: %m");
 
                 /* if backing device is distinct, then measure /var/ too */
                 if (a != b)
-                        paths[1] = "/var";
+                        paths[1] = LOCALSTATEDIR;
 
                 enable_json_sse();
         }
@@ -5128,7 +5128,7 @@ static int verb_unlock_file_system(int argc, char *argv[], uintptr_t _data, void
                 paths[0] = argv[1];
         else {
                 paths[0] = "/";
-                paths[1] = "/var";
+                paths[1] = LOCALSTATEDIR;
         }
 
         STRV_FOREACH(p, paths) {

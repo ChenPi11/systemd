@@ -2757,11 +2757,11 @@ int dissected_image_mount(
         if (r < 0)
                 return r;
 
-        r = mount_partition(PARTITION_VAR, m->partitions + PARTITION_VAR, where, "/var", uid_shift, uid_range, userns_fd, flags);
+        r = mount_partition(PARTITION_VAR, m->partitions + PARTITION_VAR, where, LOCALSTATEDIR, uid_shift, uid_range, userns_fd, flags);
         if (r < 0)
                 return r;
 
-        r = mount_partition(PARTITION_TMP, m->partitions + PARTITION_TMP, where, "/var/tmp", uid_shift, uid_range, userns_fd, flags);
+        r = mount_partition(PARTITION_TMP, m->partitions + PARTITION_TMP, where, LOCALSTATEDIR SYSTEM_TMPDIR, uid_shift, uid_range, userns_fd, flags);
         if (r < 0)
                 return r;
 
@@ -4228,12 +4228,12 @@ int dissected_image_acquire_metadata(
         };
 
         static const char *const paths[_META_MAX] = {
-                [META_HOSTNAME]          = "/etc/hostname\0",
-                [META_MACHINE_ID]        = "/etc/machine-id\0",
-                [META_MACHINE_INFO]      = "/etc/machine-info\0",
-                [META_OS_RELEASE]        = "/etc/os-release\0"
+                [META_HOSTNAME]          = SYSCONF_DIR "/hostname\0",
+                [META_MACHINE_ID]        = SYSCONF_DIR "/machine-id\0",
+                [META_MACHINE_INFO]      = SYSCONF_DIR "/machine-info\0",
+                [META_OS_RELEASE]        = SYSCONF_DIR "/os-release\0"
                                            "/usr/lib/os-release\0",
-                [META_INITRD_RELEASE]    = "/etc/initrd-release\0"
+                [META_INITRD_RELEASE]    = SYSCONF_DIR "/initrd-release\0"
                                            "/usr/lib/initrd-release\0",
                 [META_SYSEXT_RELEASE]    = "sysext-release\0",       /* String used only for logging. */
                 [META_CONFEXT_RELEASE]   = "confext-release\0",      /* ditto */
@@ -4438,11 +4438,11 @@ int dissected_image_acquire_metadata(
                                 if (r < 0)
                                         log_debug_errno(r, "Image contains invalid /etc/machine-id: %s", line);
                         } else if (r == 0)
-                                log_debug("/etc/machine-id file of image is empty.");
+                                log_debug(SYSCONF_DIR "/machine-id file of image is empty.");
                         else if (streq(line, "uninitialized"))
-                                log_debug("/etc/machine-id file of image is uninitialized (likely aborted first boot).");
+                                log_debug(SYSCONF_DIR "/machine-id file of image is uninitialized (likely aborted first boot).");
                         else
-                                log_debug("/etc/machine-id file of image has unexpected length %i.", r);
+                                log_debug(SYSCONF_DIR "/machine-id file of image has unexpected length %i.", r);
 
                         break;
                 }

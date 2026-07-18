@@ -7221,8 +7221,8 @@ static int tpm2_define_nvpcr_nv_index(
          * file in /run/, with a separate file for orderly and non-orderly NvPCRs, since the two draw on
          * different TPM resources (RAM-backed vs. NVRAM-backed). */
         const char *exhausted_flag = orderly ?
-                "/run/systemd/tpm2-nv-space-exhausted-orderly" :
-                "/run/systemd/tpm2-nv-space-exhausted-non-orderly";
+                RUNSTATEDIR "/systemd/tpm2-nv-space-exhausted-orderly" :
+                RUNSTATEDIR "/systemd/tpm2-nv-space-exhausted-non-orderly";
 
         TPM2B_NV_PUBLIC public_info = {
                 .size = sizeof_field(TPM2B_NV_PUBLIC, nvPublic),
@@ -8307,7 +8307,7 @@ static int tpm2_nvpcr_write_anchor_secret(
 }
 
 static int tpm2_nvpcr_write_anchor_secret_to_var(const struct iovec *credential) {
-        return tpm2_nvpcr_write_anchor_secret("/var/lib/systemd/nvpcr", "nvpcr-anchor.cred", credential);
+        return tpm2_nvpcr_write_anchor_secret(LOCALSTATEDIR "/lib/systemd/nvpcr", "nvpcr-anchor.cred", credential);
 }
 
 static int tpm2_nvpcr_write_anchor_secret_to_boot(const struct iovec *credential) {
@@ -8358,7 +8358,7 @@ static int tpm2_nvpcr_acquire_anchor_secret_from_var(struct iovec *ret_credentia
 
         r = read_full_file_full(
                         AT_FDCWD,
-                        "/var/lib/systemd/nvpcr/nvpcr-anchor.cred",
+                        LOCALSTATEDIR "/lib/systemd/nvpcr/nvpcr-anchor.cred",
                         /* offset= */ UINT64_MAX,
                         CREDENTIAL_ENCRYPTED_SIZE_MAX,
                         READ_FULL_FILE_UNBASE64|READ_FULL_FILE_FAIL_WHEN_LARGER|READ_FULL_FILE_VERIFY_REGULAR,
@@ -9382,8 +9382,8 @@ void tpm2_pcrlock_policy_done(Tpm2PCRLockPolicy *data) {
 
 int tpm2_pcrlock_search_file(const char *path, FILE **ret_file, char **ret_path) {
         static const char search[] =
-                "/run/systemd\0"
-                "/var/lib/systemd\0";
+                RUNSTATEDIR "/systemd\0"
+                LOCALSTATEDIR "/lib/systemd\0";
 
         int r;
 

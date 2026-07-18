@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
         };
 
         const char * const no_exec[] = {
-                "/var",
+                LOCALSTATEDIR,
                 NULL
         };
 
@@ -46,20 +46,20 @@ int main(int argc, char *argv[]) {
 
         static const BindMount bind_mount = {
                 .source = (char*) "/usr/bin",
-                .destination = (char*) "/etc/systemd",
+                .destination = (char*) PKGSYSCONFDIR,
                 .read_only = true,
         };
 
         static const TemporaryFileSystem tmpfs = {
-                .path = (char*) "/var",
+                .path = (char*) LOCALSTATEDIR,
                 .options = (char*) "ro",
         };
 
         char *root_directory;
         char *projects_directory;
         int r;
-        char tmp_dir[] = "/tmp/systemd-private-XXXXXX",
-             var_tmp_dir[] = "/var/tmp/systemd-private-XXXXXX";
+        char tmp_dir[] = SYSTEM_TMPDIR "/systemd-private-XXXXXX",
+             var_tmp_dir[] = LOCALSTATEDIR SYSTEM_TMPDIR "/systemd-private-XXXXXX";
 
         test_setup_logging(LOG_DEBUG);
 

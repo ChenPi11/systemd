@@ -60,7 +60,7 @@
         "\"   \n"
 
 TEST(load_env_file_1) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-load-env-file.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-load-env-file.XXXXXX";
         assert_se(write_tmpfile(name, env_file_1) == 0);
 
         _cleanup_strv_free_ char **data = NULL;
@@ -75,7 +75,7 @@ TEST(load_env_file_1) {
 }
 
 TEST(load_env_file_2) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-load-env-file.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-load-env-file.XXXXXX";
         assert_se(write_tmpfile(name, env_file_2) == 0);
 
         _cleanup_strv_free_ char **data = NULL;
@@ -85,7 +85,7 @@ TEST(load_env_file_2) {
 }
 
 TEST(load_env_file_3) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-load-env-file.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-load-env-file.XXXXXX";
         assert_se(write_tmpfile(name, env_file_3) == 0);
 
         _cleanup_strv_free_ char **data = NULL;
@@ -96,7 +96,7 @@ TEST(load_env_file_3) {
 }
 
 TEST(load_env_file_4) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-load-env-file.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-load-env-file.XXXXXX";
         assert_se(write_tmpfile(name, env_file_4) == 0);
 
         _cleanup_strv_free_ char **data = NULL;
@@ -108,7 +108,7 @@ TEST(load_env_file_4) {
 }
 
 TEST(load_env_file_5) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-load-env-file.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-load-env-file.XXXXXX";
         assert_se(write_tmpfile(name, env_file_5) == 0);
 
         _cleanup_strv_free_ char **data = NULL;
@@ -119,7 +119,7 @@ TEST(load_env_file_5) {
 }
 
 TEST(load_env_file_6) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-load-env-file.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-load-env-file.XXXXXX";
         assert_se(write_tmpfile(name, env_file_6) == 0);
 
         _cleanup_strv_free_ char **data = NULL;
@@ -141,7 +141,7 @@ TEST(load_env_file_invalid_utf8) {
                        "fo\ufffeo=bar",
                        "foo=b\uffffar",
                        "baz=hello world\ufffe") {
-                _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-load-env-file.XXXXXX";
+                _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-load-env-file.XXXXXX";
                 assert_se(write_tmpfile(name, s) == 0);
 
                 _cleanup_strv_free_ char **data = NULL;
@@ -190,8 +190,8 @@ TEST(write_and_load_env_file) {
 
 TEST(parse_env_file) {
         _cleanup_(unlink_tempfilep) char
-                t[] = "/tmp/test-fileio-in-XXXXXX",
-                p[] = "/tmp/test-fileio-out-XXXXXX";
+                t[] = SYSTEM_TMPDIR "/test-fileio-in-XXXXXX",
+                p[] = SYSTEM_TMPDIR "/test-fileio-out-XXXXXX";
         FILE *f;
         _cleanup_free_ char *one = NULL, *two = NULL, *three = NULL, *four = NULL, *five = NULL,
                         *six = NULL, *seven = NULL, *eight = NULL, *nine = NULL, *ten = NULL,
@@ -319,8 +319,8 @@ static void test_one_shell_var(const char *file, const char *variable, const cha
 
 TEST(parse_multiline_env_file) {
         _cleanup_(unlink_tempfilep) char
-                t[] = "/tmp/test-fileio-in-XXXXXX",
-                p[] = "/tmp/test-fileio-out-XXXXXX";
+                t[] = SYSTEM_TMPDIR "/test-fileio-in-XXXXXX",
+                p[] = SYSTEM_TMPDIR "/test-fileio-out-XXXXXX";
         FILE *f;
         _cleanup_strv_free_ char **a = NULL, **b = NULL;
 
@@ -362,7 +362,7 @@ TEST(parse_multiline_env_file) {
 }
 
 TEST(merge_env_file) {
-        _cleanup_(unlink_tempfilep) char t[] = "/tmp/test-fileio-XXXXXX";
+        _cleanup_(unlink_tempfilep) char t[] = SYSTEM_TMPDIR "/test-fileio-XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
         _cleanup_strv_free_ char **a = NULL;
 
@@ -420,7 +420,7 @@ TEST(merge_env_file) {
 }
 
 TEST(merge_env_file_invalid) {
-        _cleanup_(unlink_tempfilep) char t[] = "/tmp/test-fileio-XXXXXX";
+        _cleanup_(unlink_tempfilep) char t[] = SYSTEM_TMPDIR "/test-fileio-XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
         _cleanup_strv_free_ char **a = NULL;
 
@@ -472,7 +472,7 @@ static void check_file_pairs_one(char **l) {
 }
 
 TEST(load_env_file_pairs) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-load_env_file_pairs-XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-load_env_file_pairs-XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
         _cleanup_strv_free_ char **l = NULL;
         int fd;

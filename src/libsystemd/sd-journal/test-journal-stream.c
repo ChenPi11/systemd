@@ -60,7 +60,7 @@ static void verify_contents(sd_journal *j, unsigned skip) {
 static void run_test(void) {
         _cleanup_(mmap_cache_unrefp) MMapCache *m = NULL;
         JournalFile *one, *two, *three;
-        char t[] = "/var/tmp/journal-stream-XXXXXX";
+        char t[] = LOCALSTATEDIR SYSTEM_TMPDIR "/journal-stream-XXXXXX";
         unsigned i;
         _cleanup_(sd_journal_closep) sd_journal *j = NULL;
         char *z;
@@ -176,8 +176,8 @@ static void run_test(void) {
 int main(int argc, char *argv[]) {
 
         /* journal_file_open() requires a valid machine id */
-        if (access("/etc/machine-id", F_OK) != 0)
-                return log_tests_skipped("/etc/machine-id not found");
+        if (access(SYSCONF_DIR "/machine-id", F_OK) != 0)
+                return log_tests_skipped(SYSCONF_DIR "/machine-id not found");
 
         test_setup_logging(LOG_DEBUG);
 

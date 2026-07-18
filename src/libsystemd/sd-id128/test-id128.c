@@ -245,7 +245,7 @@ TEST(benchmark_sd_id128_get_machine_app_specific) {
         usec_t t, q;
 
         if (sd_id128_get_machine(NULL) < 0)
-                return (void) log_tests_skipped("/etc/machine-id is not initialized");
+                return (void) log_tests_skipped(SYSCONF_DIR "/machine-id is not initialized");
 
         log_info("/* %s (%u iterations) */", __func__, iterations);
 
@@ -307,7 +307,7 @@ TEST(id128_at) {
         ASSERT_EQ_ID128(id, i);
 
         /* id128_read() */
-        ASSERT_NOT_NULL((p = path_join(t, "/etc/machine-id")));
+        ASSERT_NOT_NULL((p = path_join(t, SYSCONF_DIR "/machine-id")));
 
         i = SD_ID128_NULL;
         ASSERT_OK(id128_read(p, ID128_FORMAT_PLAIN, &i));
@@ -321,7 +321,7 @@ TEST(id128_at) {
         ASSERT_EQ_ID128(id, i);
 
         free(p);
-        ASSERT_NOT_NULL((p = path_join(t, "/etc/hoge-id")));
+        ASSERT_NOT_NULL((p = path_join(t, SYSCONF_DIR "/hoge-id")));
 
         i = SD_ID128_NULL;
         ASSERT_OK(id128_read(p, ID128_FORMAT_PLAIN, &i));

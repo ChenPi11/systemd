@@ -124,7 +124,7 @@ static bool arg_mutable_argv_set = false;
 /* Is set to IMAGE_CONFEXT when systemd is called with the confext functionality instead of the default */
 static ImageClass arg_image_class = IMAGE_SYSEXT;
 
-#define MUTABLE_EXTENSIONS_BASE_DIR "/var/lib/extensions.mutable"
+#define MUTABLE_EXTENSIONS_BASE_DIR LOCALSTATEDIR "/lib/extensions.mutable"
 
 /* redirect_dir=on and noatime prevent unnecessary upcopies, metacopy=off prevents broken
  * files from partial upcopies after umount, index=off allows reuse of the upper/work dirs */
@@ -1857,11 +1857,11 @@ static int unmerge_subprocess(
 
         assert(c);
         assert(workspace);
-        assert(path_startswith(workspace, "/run/"));
+        assert(path_startswith(workspace, RUNSTATEDIR "/"));
 
         /* Mark the whole of /run as MS_SLAVE, so that we can mount stuff below it that doesn't show up on
          * the host otherwise. */
-        r = mount_nofollow_verbose(LOG_ERR, NULL, "/run", NULL, MS_SLAVE|MS_REC, NULL);
+        r = mount_nofollow_verbose(LOG_ERR, NULL, RUNSTATEDIR, NULL, MS_SLAVE|MS_REC, NULL);
         if (r < 0)
                 return r;
 
@@ -1929,7 +1929,7 @@ static int unmerge(const Context *c) {
         if (r == 0) {
                 /* Child with its own mount namespace */
 
-                r = unmerge_subprocess(c, "/run/systemd/sysext");
+                r = unmerge_subprocess(c, RUNSTATEDIR "/systemd/sysext");
 
                 /* Our namespace ceases to exist here, also implicitly detaching all temporary mounts we
                  * created below /run. Nice! */
@@ -2150,7 +2150,7 @@ static int merge_subprocess(
                         log_debug("Force mode enabled, skipping version validation.");
                 else {
                         bool is_initrd;
-                        r = chase_and_access("/etc/initrd-release", c->root, CHASE_PREFIX_ROOT, F_OK, /* ret_path= */ NULL);
+                        r = chase_and_access(SYSCONF_DIR "/initrd-release", c->root, CHASE_PREFIX_ROOT, F_OK, /* ret_path= */ NULL);
                         if (r < 0 && r != -ENOENT)
                                 return log_error_errno(r, "Failed to check for /etc/initrd-release: %m");
                         is_initrd = r >= 0;

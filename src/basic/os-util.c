@@ -42,8 +42,8 @@ static const struct {
                 .release_file_path_prefix = "/usr/lib/extension-release.d/extension-release.",
         },
         [IMAGE_CONFEXT] = {
-                .release_file_directory = "/etc/extension-release.d/",
-                .release_file_path_prefix = "/etc/extension-release.d/extension-release.",
+                .release_file_directory = SYSCONF_DIR "/extension-release.d/",
+                .release_file_path_prefix = SYSCONF_DIR "/extension-release.d/extension-release.",
         }
 };
 
@@ -176,7 +176,7 @@ int open_os_release_at(int rfd, char **ret_path, int *ret_fd) {
         if (e)
                 return chaseat(rfd, rfd, e, /* flags= */ 0, ret_path, ret_fd);
 
-        FOREACH_STRING(path, "/etc/os-release", "/usr/lib/os-release") {
+        FOREACH_STRING(path, SYSCONF_DIR "/os-release", "/usr/lib/os-release") {
                 r = chaseat(rfd, rfd, path, /* flags= */ 0, ret_path, ret_fd);
                 if (r != -ENOENT)
                         return r;

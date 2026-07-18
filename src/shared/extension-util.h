@@ -16,7 +16,7 @@ int extension_release_validate(
                 char **extension_release,
                 ImageClass image_class);
 
-/* Parse hierarchy variables and if not set, return "/usr /opt" for sysext and "/etc" for confext */
+/* Parse hierarchy variables and if not set, return "/usr /opt" for sysext and SYSCONF_DIR for confext */
 int parse_env_extension_hierarchies(char ***ret_hierarchies, const char *hierarchy_env);
 
 /* Insist that extension images do not overwrite the underlying OS release file (it's fine if they place one

@@ -72,7 +72,7 @@ TEST(libmount_unescaping) {
                         "729 38 0:59 / /tmp/„zupa\\040zębowa” rw,relatime shared:395 - tmpfs die\\040Brühe rw,seclabel",
                         false,
                         "die Brühe",
-                        "/tmp/„zupa zębowa”"
+                        SYSTEM_TMPDIR "/„zupa zębowa”"
         );
 
         test_libmount_unescaping_one(
@@ -80,7 +80,7 @@ TEST(libmount_unescaping) {
                         "729 38 0:59 / /tmp/x\\012y rw,relatime shared:395 - tmpfs newline rw,seclabel",
                         false,
                         "newline",
-                        "/tmp/x\ny"
+                        SYSTEM_TMPDIR "/x\ny"
         );
 
         /* The result of "mount -t tmpfs '' /tmp/emptysource".
@@ -92,7 +92,7 @@ TEST(libmount_unescaping) {
                         "760 38 0:60 / /tmp/emptysource rw,relatime shared:410 - tmpfs  rw,seclabel",
                         true,
                         "",
-                        "/tmp/emptysource"
+                        SYSTEM_TMPDIR "/emptysource"
         );
 
         /* The kernel leaves \r as is.
@@ -103,7 +103,7 @@ TEST(libmount_unescaping) {
                         "790 38 0:61 / /tmp/foo\rbar rw,relatime shared:425 - tmpfs tmpfs rw,seclabel",
                         true,
                         "tmpfs",
-                        "/tmp/foo\rbar"
+                        SYSTEM_TMPDIR "/foo\rbar"
         );
 }
 

@@ -484,7 +484,7 @@ static int context_load_install_conf(Context *c) {
 static int context_load_machine_info(Context *c) {
         _cleanup_fclose_ FILE *f = NULL;
         _cleanup_free_ char *machine_id = NULL, *layout = NULL;
-        static const char *path = "/etc/machine-info";
+        static const char *path = SYSCONF_DIR "/machine-info";
         int r;
 
         assert(c);
@@ -682,7 +682,7 @@ static int context_load_plugins(Context *c) {
                         ".install",
                         c->rfd,
                         CONF_FILES_EXECUTABLE | CONF_FILES_REGULAR | CONF_FILES_FILTER_MASKED | CONF_FILES_WARN,
-                        STRV_MAKE_CONST("/etc/kernel/install.d", "/usr/lib/kernel/install.d"));
+                        STRV_MAKE_CONST(SYSCONF_DIR "/kernel/install.d", "/usr/lib/kernel/install.d"));
         if (r < 0)
                 return log_error_errno(r, "Failed to find plugins: %m");
 

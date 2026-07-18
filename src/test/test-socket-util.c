@@ -223,7 +223,7 @@ TEST(passfd_read) {
                 /* Child */
                 pair[0] = safe_close(pair[0]);
 
-                char tmpfile[] = "/tmp/test-socket-util-passfd-read-XXXXXX";
+                char tmpfile[] = SYSTEM_TMPDIR "/test-socket-util-passfd-read-XXXXXX";
                 ASSERT_OK_ZERO(write_tmpfile(tmpfile, file_contents));
 
                 _cleanup_close_ int tmpfd = ASSERT_OK_ERRNO(open(tmpfile, O_RDONLY));
@@ -261,7 +261,7 @@ TEST(passfd_contents_read) {
         if (r == 0) {
                 /* Child */
                 struct iovec iov = IOVEC_MAKE_STRING(wire_contents);
-                char tmpfile[] = "/tmp/test-socket-util-passfd-contents-read-XXXXXX";
+                char tmpfile[] = SYSTEM_TMPDIR "/test-socket-util-passfd-contents-read-XXXXXX";
 
                 pair[0] = safe_close(pair[0]);
 
@@ -451,13 +451,13 @@ TEST(sockaddr_un_set_path) {
         union sockaddr_union sa;
         _cleanup_close_ int fd1, fd2, fd3;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaXXXXXX", &t));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaXXXXXX", &t));
         ASSERT_GT(strlen(t), SUN_PATH_LEN);
 
         ASSERT_NOT_NULL(j = path_join(t, "sock"));
         ASSERT_ERROR(sockaddr_un_set_path(&sa.un, j), ENAMETOOLONG); /* too long for AF_UNIX socket */
 
-        ASSERT_OK_ERRNO(asprintf(&sh, "/tmp/%" PRIx64, random_u64()));
+        ASSERT_OK_ERRNO(asprintf(&sh, SYSTEM_TMPDIR "/%" PRIx64, random_u64()));
         ASSERT_OK_ERRNO(symlink(t, sh)); /* create temporary symlink, to access it anyway */
 
         free(j);

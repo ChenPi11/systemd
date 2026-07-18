@@ -725,7 +725,7 @@ int user_check_linger_file(const User *u) {
         if (!cc)
                 return -ENOMEM;
 
-        p = strjoina("/var/lib/systemd/linger/", cc);
+        p = strjoina(LOCALSTATEDIR "/lib/systemd/linger/", cc);
         if (access(p, F_OK) < 0) {
                 if (errno != ENOENT)
                         return -errno;

@@ -421,8 +421,8 @@ int bpf_devices_allow_list_static(
                 "/dev/tty\0" "rwm\0"
                 "/dev/ptmx\0" "rwm\0"
                 /* Allow /run/systemd/inaccessible/{chr,blk} devices for mapping InaccessiblePaths */
-                "/run/systemd/inaccessible/chr\0" "rwm\0"
-                "/run/systemd/inaccessible/blk\0" "rwm\0";
+                RUNSTATEDIR "/systemd/inaccessible/chr\0" "rwm\0"
+                RUNSTATEDIR "/systemd/inaccessible/blk\0" "rwm\0";
         int r = 0, k;
 
         NULSTR_FOREACH_PAIR(node, acc, auto_devices) {

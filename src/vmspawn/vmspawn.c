@@ -110,7 +110,7 @@
 /* Well-known endpoints for the host's TDX Quote Generation Service (qgsd), auto-discovered so the
  * guest can obtain TD Quotes. The Intel reference qgsd listens on a unix socket; the common
  * deployment listens on vsock port 4050 (cid 2 = host). */
-#define TDX_QGS_UNIX_SOCKET_PATH "/run/tdx-qgs/qgs.socket"
+#define TDX_QGS_UNIX_SOCKET_PATH RUNSTATEDIR "/tdx-qgs/qgs.socket"
 #define TDX_QGS_VSOCK_CID        "2"
 #define TDX_QGS_VSOCK_PORT       "4050"
 
@@ -3447,7 +3447,7 @@ static int run_virtual_machine(int kvm_device_fd, int vhost_device_fd) {
         }
 
         _cleanup_(rm_rf_physical_and_freep) char *smbios_dir = NULL;
-        _cleanup_close_ int smbios_dir_fd = mkdtemp_open("/var/tmp/vmspawn-smbios-XXXXXX", /* flags= */ 0, &smbios_dir);
+        _cleanup_close_ int smbios_dir_fd = mkdtemp_open(LOCALSTATEDIR SYSTEM_TMPDIR "/vmspawn-smbios-XXXXXX", /* flags= */ 0, &smbios_dir);
         if (smbios_dir_fd < 0)
                 return log_error_errno(smbios_dir_fd, "Failed to create temporary directory: %m");
 

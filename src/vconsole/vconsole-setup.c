@@ -117,7 +117,7 @@ static int context_read_env(Context *c) {
         assert(c);
 
         r = parse_env_file(
-                        NULL, "/etc/vconsole.conf",
+                        NULL, SYSCONF_DIR "/vconsole.conf",
                         "KEYMAP",        &v.keymap,
                         "KEYMAP_TOGGLE", &v.keymap_toggle,
                         "FONT",          &v.font,

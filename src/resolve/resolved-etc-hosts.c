@@ -88,18 +88,18 @@ static int parse_line(EtcHosts *hosts, unsigned nr, const char *line) {
 
         r = extract_first_word(&line, &address_str, NULL, EXTRACT_RELAX);
         if (r < 0)
-                return log_error_errno(r, "/etc/hosts:%u: failed to extract address: %m", nr);
+                return log_error_errno(r, SYSCONF_DIR "/hosts:%u: failed to extract address: %m", nr);
         assert(r > 0); /* We already checked that the line is not empty, so it should contain *something* */
 
         r = in_addr_ifindex_from_string_auto(address_str, &address.family, &address.address, NULL);
         if (r < 0) {
-                log_warning_errno(r, "/etc/hosts:%u: address '%s' is invalid, ignoring: %m", nr, address_str);
+                log_warning_errno(r, SYSCONF_DIR "/hosts:%u: address '%s' is invalid, ignoring: %m", nr, address_str);
                 return 0;
         }
 
         r = in_addr_data_is_null(&address);
         if (r < 0) {
-                log_warning_errno(r, "/etc/hosts:%u: address '%s' is invalid, ignoring: %m", nr, address_str);
+                log_warning_errno(r, SYSCONF_DIR "/hosts:%u: address '%s' is invalid, ignoring: %m", nr, address_str);
                 return 0;
         }
         if (r > 0)
@@ -135,16 +135,16 @@ static int parse_line(EtcHosts *hosts, unsigned nr, const char *line) {
 
                 r = extract_first_word(&line, &name, NULL, EXTRACT_RELAX);
                 if (r < 0)
-                        return log_error_errno(r, "/etc/hosts:%u: couldn't extract hostname: %m", nr);
+                        return log_error_errno(r, SYSCONF_DIR "/hosts:%u: couldn't extract hostname: %m", nr);
                 if (r == 0)
                         break;
 
                 r = dns_name_is_valid_ldh(name);
                 if (r <= 0) {
                         if (r < 0)
-                                log_warning_errno(r, "/etc/hosts:%u: Failed to check the validity of hostname \"%s\", ignoring: %m", nr, name);
+                                log_warning_errno(r, SYSCONF_DIR "/hosts:%u: Failed to check the validity of hostname \"%s\", ignoring: %m", nr, name);
                         else
-                                log_warning("/etc/hosts:%u: hostname \"%s\" is not valid, ignoring.", nr, name);
+                                log_warning(SYSCONF_DIR "/hosts:%u: hostname \"%s\" is not valid, ignoring.", nr, name);
                         continue;
                 }
 
@@ -212,7 +212,7 @@ static int parse_line(EtcHosts *hosts, unsigned nr, const char *line) {
         }
 
         if (!found)
-                log_warning("/etc/hosts:%u: line is missing any valid hostnames", nr);
+                log_warning(SYSCONF_DIR "/hosts:%u: line is missing any valid hostnames", nr);
 
         return 0;
 }
@@ -351,7 +351,7 @@ static int manager_etc_hosts_read(Manager *m) {
         m->etc_hosts_last = ts;
 
         if (stat_is_set(&m->etc_hosts_stat)) {
-                if (stat("/etc/hosts", &st) < 0) {
+                if (stat(SYSCONF_DIR "/hosts", &st) < 0) {
                         if (errno != ENOENT)
                                 return log_error_errno(errno, "Failed to stat /etc/hosts: %m");
 
@@ -364,10 +364,10 @@ static int manager_etc_hosts_read(Manager *m) {
                         return 0;
         }
 
-        f = fopen("/etc/hosts", "re");
+        f = fopen(SYSCONF_DIR "/hosts", "re");
         if (!f) {
                 if (errno != ENOENT)
-                        return log_error_errno(errno, "Failed to open %s: %m", "/etc/hosts");
+                        return log_error_errno(errno, "Failed to open %s: %m", SYSCONF_DIR "/hosts");
 
                 manager_etc_hosts_flush(m);
                 return 0;

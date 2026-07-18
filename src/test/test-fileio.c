@@ -24,7 +24,7 @@
 #include "tmpfile-util.h"
 
 TEST(script_get_shebang_interpreter) {
-        _cleanup_(unlink_tempfilep) char t[] = "/tmp/test-fileio-XXXXXX";
+        _cleanup_(unlink_tempfilep) char t[] = SYSTEM_TMPDIR "/test-fileio-XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
         _cleanup_free_ char *command = NULL;
 
@@ -66,7 +66,7 @@ TEST(get_proc_field) {
 }
 
 TEST(read_one_line_file) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-fileio-1lf-XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-fileio-1lf-XXXXXX";
         int fd;
         _cleanup_fclose_ FILE *f = NULL;
         _cleanup_free_ char *buf, *buf2, *buf3, *buf4, *buf5;
@@ -100,7 +100,7 @@ TEST(read_one_line_file) {
 }
 
 TEST(write_string_stream) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-write_string_stream-XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-write_string_stream-XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
         int fd;
 
@@ -129,7 +129,7 @@ TEST(write_string_stream) {
 }
 
 TEST(write_string_file) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-write_string_file-XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-write_string_file-XXXXXX";
         char buf[64] = {};
         _cleanup_close_ int fd = -EBADF;
 
@@ -142,7 +142,7 @@ TEST(write_string_file) {
 }
 
 TEST(write_string_file_no_create) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-write_string_file_no_create-XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-write_string_file_no_create-XXXXXX";
         _cleanup_close_ int fd = -EBADF;
         char buf[64] = {};
 
@@ -179,11 +179,11 @@ TEST(write_string_file_verify) {
 
 TEST(search_and_fopen) {
         static const char* const dirs[] = {
-                "/tmp/foo/bar",
-                "/tmp",
+                SYSTEM_TMPDIR "/foo/bar",
+                SYSTEM_TMPDIR,
                 NULL
         };
-        char name[] = "/tmp/test-search_and_fopen.XXXXXX";
+        char name[] = SYSTEM_TMPDIR "/test-search_and_fopen.XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
         _cleanup_free_ char *p = NULL, *bn = NULL;
         _cleanup_close_ int fd = -EBADF;
@@ -193,12 +193,12 @@ TEST(search_and_fopen) {
 
         ASSERT_OK(path_extract_filename(name, &bn));
         ASSERT_OK(search_and_fopen(bn, "re", NULL, (const char**) dirs, &f, &p));
-        ASSERT_STREQ(bn, path_startswith(p, "/tmp/"));
+        ASSERT_STREQ(bn, path_startswith(p, SYSTEM_TMPDIR "/"));
         f = safe_fclose(f);
         p = mfree(p);
 
         ASSERT_OK(search_and_fopen(bn, NULL, NULL, (const char**) dirs, NULL, &p));
-        ASSERT_STREQ(bn, path_startswith(p, "/tmp/"));
+        ASSERT_STREQ(bn, path_startswith(p, SYSTEM_TMPDIR "/"));
         p = mfree(p);
 
         ASSERT_OK(search_and_fopen(name, "re", NULL, (const char**) dirs, &f, &p));
@@ -211,12 +211,12 @@ TEST(search_and_fopen) {
         p = mfree(p);
 
         ASSERT_OK(search_and_fopen(bn, "re", "/", (const char**) dirs, &f, &p));
-        ASSERT_STREQ(bn, path_startswith(p, "/tmp/"));
+        ASSERT_STREQ(bn, path_startswith(p, SYSTEM_TMPDIR "/"));
         f = safe_fclose(f);
         p = mfree(p);
 
         ASSERT_OK(search_and_fopen(bn, NULL, "/", (const char**) dirs, NULL, &p));
-        ASSERT_STREQ(bn, path_startswith(p, "/tmp/"));
+        ASSERT_STREQ(bn, path_startswith(p, SYSTEM_TMPDIR "/"));
         p = mfree(p);
 
         ASSERT_ERROR(search_and_fopen("/a/file/which/does/not/exist/i/guess", "re", NULL, (const char**) dirs, &f, &p), ENOENT);
@@ -232,10 +232,10 @@ TEST(search_and_fopen) {
 
 TEST(search_and_fopen_nulstr) {
         static const char dirs[] =
-                "/tmp/foo/bar\0"
+                SYSTEM_TMPDIR "/foo/bar\0"
                 "/tmp\0";
 
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-search_and_fopen.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-search_and_fopen.XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
         _cleanup_free_ char *p = NULL, *bn = NULL;
         _cleanup_close_ int fd = -EBADF;
@@ -245,7 +245,7 @@ TEST(search_and_fopen_nulstr) {
 
         ASSERT_OK(path_extract_filename(name, &bn));
         ASSERT_OK(search_and_fopen_nulstr(bn, "re", NULL, dirs, &f, &p));
-        ASSERT_STREQ(bn, path_startswith(p, "/tmp/"));
+        ASSERT_STREQ(bn, path_startswith(p, SYSTEM_TMPDIR "/"));
         f = safe_fclose(f);
         p = mfree(p);
 
@@ -382,7 +382,7 @@ TEST(read_line_one_file_1) {
 }
 
 TEST(reaad_line_one_file_2) {
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-fileio.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-fileio.XXXXXX";
         int fd;
         _cleanup_fclose_ FILE *f = NULL;
 
@@ -616,7 +616,7 @@ static void test_read_virtual_file_one(size_t max_size) {
 
         FOREACH_STRING(filename,
                        "/proc/1/cmdline",
-                       "/etc/nsswitch.conf",
+                       SYSCONF_DIR "/nsswitch.conf",
                        "/sys/kernel/uevent_seqnum",
                        "/proc/kcore",
                        "/proc/kallsyms",
@@ -700,7 +700,7 @@ TEST(write_data_file_atomic_at) {
         _cleanup_(rm_rf_physical_and_freep) char *t = NULL;
         int r;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-wdfaa-XXXXXX", &t));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-wdfaa-XXXXXX", &t));
         ASSERT_TRUE(path_is_absolute(t));
 
         const char *abs_wdfa = strjoina(t, "/wdfa");
@@ -765,7 +765,7 @@ TEST(read_one_line_file_at_xat_fdroot) {
         _cleanup_(rm_rf_physical_and_freep) char *t = NULL;
         _cleanup_free_ char *fn = NULL, *buf = NULL;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-r1lf-xatfd-XXXXXX", &t));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-r1lf-xatfd-XXXXXX", &t));
         ASSERT_TRUE(path_is_absolute(t));
 
         ASSERT_NOT_NULL(fn = path_join(t, "hello"));
@@ -838,7 +838,7 @@ TEST(read_one_line_file_at_xat_fdroot) {
 }
 
 TEST(read_boolean_file) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-read-boolean-file-XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-read-boolean-file-XXXXXX";
         _cleanup_close_ int fd = -EBADF, dfd = -EBADF;
         const char *rel;
 
@@ -858,7 +858,7 @@ TEST(read_boolean_file) {
         ASSERT_OK(write_string_file(fn, "garbage", WRITE_STRING_FILE_TRUNCATE));
         ASSERT_ERROR(read_boolean_file(fn), EINVAL);
 
-        ASSERT_ERROR(read_boolean_file("/tmp/this-file-better-not-exist-XXX"), ENOENT);
+        ASSERT_ERROR(read_boolean_file(SYSTEM_TMPDIR "/this-file-better-not-exist-XXX"), ENOENT);
 
         /* Now test XAT_FDROOT: filename is relative, looked up against "/" */
         ASSERT_TRUE(path_startswith(fn, "/"));
@@ -884,7 +884,7 @@ TEST(read_boolean_file) {
         ASSERT_OK_ERRNO(chdir(cwd));
 
         /* Also test the dir_fd >= 0 path using an actual fd for /tmp. */
-        ASSERT_OK(dfd = open("/tmp", O_DIRECTORY|O_CLOEXEC));
+        ASSERT_OK(dfd = open(SYSTEM_TMPDIR, O_DIRECTORY|O_CLOEXEC));
         ASSERT_OK(write_string_file(fn, "1", WRITE_STRING_FILE_TRUNCATE));
         _cleanup_free_ char *bn = NULL;
         ASSERT_OK(path_extract_filename(fn, &bn));

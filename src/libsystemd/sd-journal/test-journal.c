@@ -35,7 +35,7 @@ static void test_non_empty_one(void) {
         Object *o, *d;
         uint64_t p;
         sd_id128_t fake_boot_id;
-        char t[] = "/var/tmp/journal-XXXXXX";
+        char t[] = LOCALSTATEDIR SYSTEM_TMPDIR "/journal-XXXXXX";
 
         ASSERT_NOT_NULL(m = mmap_cache_new());
 
@@ -130,7 +130,7 @@ TEST(non_empty) {
 static void test_empty_one(void) {
         _cleanup_(mmap_cache_unrefp) MMapCache *m = NULL;
         JournalFile *f1, *f2, *f3, *f4;
-        char t[] = "/var/tmp/journal-XXXXXX";
+        char t[] = LOCALSTATEDIR SYSTEM_TMPDIR "/journal-XXXXXX";
 
         ASSERT_NOT_NULL(m = mmap_cache_new());
 
@@ -182,7 +182,7 @@ static bool check_compressed(uint64_t compress_threshold, uint64_t data_size) {
         struct iovec iovec;
         Object *o;
         uint64_t p;
-        char t[] = "/var/tmp/journal-XXXXXX";
+        char t[] = LOCALSTATEDIR SYSTEM_TMPDIR "/journal-XXXXXX";
         char data[2048] = "FIELD=";
         bool is_compressed;
 
@@ -310,7 +310,7 @@ static void test_recover_truncated_linear_one(bool zeroed_tail) {
         EntryArrayCut cut;
         uint64_t p, file_size, c;
         usec_t from, to, last_realtime = 0;
-        char t[] = "/var/tmp/journal-XXXXXX";
+        char t[] = LOCALSTATEDIR SYSTEM_TMPDIR "/journal-XXXXXX";
 
         /* When a journal's header records more arena than reached disk, make sure reads recover the on disk
          * prefix. */
@@ -411,7 +411,7 @@ static void test_recover_truncated_indexed_one(bool zeroed_tail) {
         EntryArrayCut cut;
         uint64_t file_size;
         static const char field[] = "FOO=bar";
-        char t[] = "/var/tmp/journal-XXXXXX";
+        char t[] = LOCALSTATEDIR SYSTEM_TMPDIR "/journal-XXXXXX";
 
         /* The same vague idea as above with the truncation, but this time it's the bisection case since the
          * per-data entry array is missing. */
@@ -494,7 +494,7 @@ static void test_recover_truncated_hash_chain_one(bool field, bool zeroed_tail) 
         dual_timestamp ts;
         JournalFile *f;
         uint64_t lost_offset, file_size, buckets, bucket;
-        char lost_key[64], lost_value[64], t[] = "/var/tmp/journal-XXXXXX";
+        char lost_key[64], lost_value[64], t[] = LOCALSTATEDIR SYSTEM_TMPDIR "/journal-XXXXXX";
 
         /* A lookup must tolerate a hash bucket whose tail node was lost to truncation, returning the
          * surviving prefix instead of failing. The lost value is chosen to share a bucket with the surviving
@@ -585,8 +585,8 @@ static int intro(void) {
         arg_keep = saved_argc > 1;
 
         /* journal_file_open() requires a valid machine id */
-        if (access("/etc/machine-id", F_OK) != 0)
-                return log_tests_skipped("/etc/machine-id not found");
+        if (access(SYSCONF_DIR "/machine-id", F_OK) != 0)
+                return log_tests_skipped(SYSCONF_DIR "/machine-id not found");
 
         journal_auth_init();
 

@@ -45,7 +45,7 @@ int config_directory_generic(RuntimeScope scope, const char *suffix, char **ret)
                 return xdg_user_config_dir(suffix, ret);
 
         case RUNTIME_SCOPE_SYSTEM: {
-                char *d = path_join("/etc", suffix);
+                char *d = path_join(SYSCONF_DIR, suffix);
                 if (!d)
                         return -ENOMEM;
                 *ret = d;
@@ -164,7 +164,7 @@ int state_directory_generic(RuntimeScope scope, const char *suffix, char **ret) 
                 return xdg_user_state_dir(suffix, ret);
 
         case RUNTIME_SCOPE_SYSTEM: {
-                char *d = path_join("/var/lib", suffix);
+                char *d = path_join(LOCALSTATEDIR "/lib", suffix);
                 if (!d)
                         return -ENOMEM;
                 *ret = d;
@@ -187,7 +187,7 @@ static const char* const user_data_unit_paths[] = {
 
 static const char* const user_config_unit_paths[] = {
         USER_CONFIG_UNIT_DIR,
-        "/etc/systemd/user",
+        PKGSYSCONFDIR "/user",
         NULL
 };
 
@@ -301,11 +301,11 @@ static int acquire_lookup_dirs(
                         [RUNTIME_SCOPE_USER]   = { "systemd/user",         "systemd/user"        },
                 },
                 [LOOKUP_DIR_CONTROL] = {
-                        [RUNTIME_SCOPE_SYSTEM] = { "/etc/systemd/system.control", RUNSTATEDIR "/systemd/system.control" },
+                        [RUNTIME_SCOPE_SYSTEM] = { PKGSYSCONFDIR "/system.control", RUNSTATEDIR "/systemd/system.control" },
                         [RUNTIME_SCOPE_USER]   = { "systemd/user.control",        "systemd/user.control"        },
                 },
                 [LOOKUP_DIR_ATTACHED] = {
-                        [RUNTIME_SCOPE_SYSTEM] = { "/etc/systemd/system.attached", RUNSTATEDIR "/systemd/system.attached" },
+                        [RUNTIME_SCOPE_SYSTEM] = { PKGSYSCONFDIR "/system.attached", RUNSTATEDIR "/systemd/system.attached" },
                         [RUNTIME_SCOPE_USER]   = { "systemd/user.attached",        "systemd/user.attached"        },
                 },
         };
@@ -593,7 +593,7 @@ int lookup_paths_init(
                                        STRV_IFNOTNULL(generator_early),
                                        persistent_config,
                                        SYSTEM_CONFIG_UNIT_DIR,
-                                       "/etc/systemd/system",
+                                       PKGSYSCONFDIR "/system",
                                        ASSERT_PTR(persistent_attached),
                                        ASSERT_PTR(runtime_config),
                                        RUNSTATEDIR "/systemd/system",
@@ -620,7 +620,7 @@ int lookup_paths_init(
 
                         add = strv_new(persistent_config,
                                        USER_CONFIG_UNIT_DIR,
-                                       "/etc/systemd/user",
+                                       PKGSYSCONFDIR "/user",
                                        ASSERT_PTR(runtime_config),
                                        RUNSTATEDIR "/systemd/user",
                                        "/usr/local/share/systemd/user",
@@ -766,7 +766,7 @@ void lookup_paths_log(LookupPaths *lp) {
 
 static const char* const system_generator_paths[] = {
         RUNSTATEDIR "/systemd/system-generators",
-        "/etc/systemd/system-generators",
+        PKGSYSCONFDIR "/system-generators",
         "/usr/local/lib/systemd/system-generators",
         SYSTEM_GENERATOR_DIR,
         NULL,
@@ -774,7 +774,7 @@ static const char* const system_generator_paths[] = {
 
 static const char* const user_generator_paths[] = {
         RUNSTATEDIR "/systemd/user-generators",
-        "/etc/systemd/user-generators",
+        PKGSYSCONFDIR "/user-generators",
         "/usr/local/lib/systemd/user-generators",
         USER_GENERATOR_DIR,
         NULL,
@@ -782,7 +782,7 @@ static const char* const user_generator_paths[] = {
 
 static const char* const system_env_generator_paths[] = {
         RUNSTATEDIR "/systemd/system-environment-generators",
-        "/etc/systemd/system-environment-generators",
+        PKGSYSCONFDIR "/system-environment-generators",
         "/usr/local/lib/systemd/system-environment-generators",
         SYSTEM_ENV_GENERATOR_DIR,
         NULL,
@@ -790,7 +790,7 @@ static const char* const system_env_generator_paths[] = {
 
 static const char* const user_env_generator_paths[] = {
         RUNSTATEDIR "/systemd/user-environment-generators",
-        "/etc/systemd/user-environment-generators",
+        PKGSYSCONFDIR "/user-environment-generators",
         "/usr/local/lib/systemd/user-environment-generators",
         USER_ENV_GENERATOR_DIR,
         NULL,

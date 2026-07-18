@@ -37,13 +37,13 @@
 /* Return a nulstr for a standard cascade of configuration paths, suitable to pass to
  * conf_files_list_nulstr() to implement drop-in directories for extending configuration files. */
 #define CONF_PATHS_NULSTR(n)                    \
-        "/etc/" n "\0"                          \
+        SYSCONF_DIR "/" n "\0"                          \
         RUNSTATEDIR "/" n "\0"                          \
         "/usr/local/lib/" n "\0"                \
         "/usr/lib/" n "\0"
 
 #define CONF_PATHS(n)                           \
-        "/etc/" n,                              \
+        SYSCONF_DIR "/" n,                              \
         RUNSTATEDIR "/" n,                              \
         "/usr/local/lib/" n,                    \
         "/usr/lib/" n

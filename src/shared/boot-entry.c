@@ -65,7 +65,7 @@ static int entry_token_load(int rfd, const char *conf_root, BootEntryTokenType *
         if (conf_root)
                 return entry_token_load_one(rfd, conf_root, type, token);
 
-        FOREACH_STRING(path, "/etc/kernel", "/usr/lib/kernel") {
+        FOREACH_STRING(path, SYSCONF_DIR "/kernel", "/usr/lib/kernel") {
                 r = entry_token_load_one(rfd, path, type, token);
                 if (r != 0)
                         return r;

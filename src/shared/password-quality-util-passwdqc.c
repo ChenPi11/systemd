@@ -43,7 +43,7 @@ static int pwqc_allocate_context(passwdqc_params_t **ret) {
 
         sym_passwdqc_params_reset(params);
 
-        r = sym_passwdqc_params_load(params, &load_reason, "/etc/passwdqc.conf");
+        r = sym_passwdqc_params_load(params, &load_reason, SYSCONF_DIR "/passwdqc.conf");
         if (r < 0) {
                 if (!load_reason)
                         return log_oom();

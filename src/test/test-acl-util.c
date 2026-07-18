@@ -17,7 +17,7 @@
 #include "user-util.h"
 
 TEST_RET(add_acls_for_user) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-empty.XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-empty.XXXXXX";
         _cleanup_close_ int fd = -EBADF;
         char *cmd;
         uid_t uid;
@@ -73,7 +73,7 @@ TEST_RET(add_acls_for_user) {
 }
 
 TEST_RET(fd_acl_make_read_only) {
-        _cleanup_(unlink_tempfilep) char fn[] = "/tmp/test-empty.XXXXXX";
+        _cleanup_(unlink_tempfilep) char fn[] = SYSTEM_TMPDIR "/test-empty.XXXXXX";
         _cleanup_close_ int fd = -EBADF;
         const char *cmd;
         struct stat st;

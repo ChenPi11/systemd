@@ -663,9 +663,9 @@ static int persistent_storage_open(void) {
         if (r <= 0)
                 return -EBADF;
 
-        fd = open("/var/lib/systemd/network/", O_CLOEXEC | O_DIRECTORY);
+        fd = open(LOCALSTATEDIR "/lib/systemd/network/", O_CLOEXEC | O_DIRECTORY);
         if (fd < 0)
-                return log_debug_errno(errno, "Failed to open %s, ignoring: %m", "/var/lib/systemd/network/");
+                return log_debug_errno(errno, "Failed to open %s, ignoring: %m", LOCALSTATEDIR "/lib/systemd/network/");
 
         r = fd_is_read_only_fs(fd);
         if (r < 0)

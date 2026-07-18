@@ -30,7 +30,7 @@ static int xdg_base_dirs(char ***ret_config_dirs, char ***ret_data_dirs) {
         if (e)
                 config_dirs = strv_split(e, ":");
         else
-                config_dirs = strv_new("/etc/xdg");
+                config_dirs = strv_new(SYSCONF_DIR "/xdg");
         if (!config_dirs)
                 return -ENOMEM;
 

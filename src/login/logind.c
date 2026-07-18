@@ -290,12 +290,12 @@ static int manager_enumerate_linger_users(Manager *m) {
 
         assert(m);
 
-        d = opendir("/var/lib/systemd/linger");
+        d = opendir(LOCALSTATEDIR "/lib/systemd/linger");
         if (!d) {
                 if (errno == ENOENT)
                         return 0;
 
-                return log_error_errno(errno, "Failed to open %s: %m", "/var/lib/systemd/linger/");
+                return log_error_errno(errno, "Failed to open %s: %m", LOCALSTATEDIR "/lib/systemd/linger/");
         }
 
         FOREACH_DIRENT(de, d, return -errno) {

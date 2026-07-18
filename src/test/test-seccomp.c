@@ -902,7 +902,7 @@ TEST(restrict_suid_sgid) {
 
         r = ASSERT_OK(pidref_safe_fork("(suid-sgid)", FORK_LOG|FORK_WAIT, NULL));
         if (r == 0) {
-                char path[] = "/tmp/suidsgidXXXXXX", dir[] = "/tmp/suidsgiddirXXXXXX";
+                char path[] = SYSTEM_TMPDIR "/suidsgidXXXXXX", dir[] = SYSTEM_TMPDIR "/suidsgiddirXXXXXX";
                 int fd = -EBADF, k = -EBADF;
                 const char *z;
 
@@ -1094,7 +1094,7 @@ static void test_seccomp_suppress_sync_child(void) {
         _cleanup_(unlink_and_freep) char *path = NULL;
         _cleanup_close_ int fd = -EBADF;
 
-        ASSERT_OK(tempfn_random("/tmp/seccomp_suppress_sync", NULL, &path));
+        ASSERT_OK(tempfn_random(SYSTEM_TMPDIR "/seccomp_suppress_sync", NULL, &path));
         fd = open(path, O_RDWR | O_CREAT | O_SYNC | O_CLOEXEC, 0666);
         /* We might be running in an environment where sync() is already suppressed. */
         if (fd >= 0) {

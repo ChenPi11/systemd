@@ -253,10 +253,10 @@ static int write_onlycap_list(void) {
         size_t len = 0;
         int r;
 
-        f = fopen("/etc/smack/onlycap", "re");
+        f = fopen(SYSCONF_DIR "/smack/onlycap", "re");
         if (!f) {
                 if (errno != ENOENT)
-                        log_warning_errno(errno, "Failed to open %s: %m", "/etc/smack/onlycap");
+                        log_warning_errno(errno, "Failed to open %s: %m", SYSCONF_DIR "/smack/onlycap");
 
                 return errno == ENOENT ? ENOENT : -errno;
         }
@@ -267,7 +267,7 @@ static int write_onlycap_list(void) {
 
                 r = read_line(f, LONG_LINE_MAX, &buf);
                 if (r < 0)
-                        return log_error_errno(r, "%s: failed to read line: %m", "/etc/smack/onlycap");
+                        return log_error_errno(r, "%s: failed to read line: %m", SYSCONF_DIR "/smack/onlycap");
                 if (r == 0)
                         break;
 
@@ -311,7 +311,7 @@ int mac_smack_setup(bool *loaded_policy) {
 
         assert(loaded_policy);
 
-        r = write_access2_rules("/etc/smack/accesses.d");
+        r = write_access2_rules(SYSCONF_DIR "/smack/accesses.d");
         switch (r) {
         case -ENOENT:
                 log_debug("Smack is not enabled in the kernel.");
@@ -343,7 +343,7 @@ int mac_smack_setup(bool *loaded_policy) {
                 log_warning_errno(r, "Failed to set SMACK netlabel rule \"127.0.0.1 -CIPSO\": %m");
 #endif
 
-        r = write_cipso2_rules("/etc/smack/cipso.d");
+        r = write_cipso2_rules(SYSCONF_DIR "/smack/cipso.d");
         switch (r) {
         case -ENOENT:
                 log_debug("Smack/CIPSO is not enabled in the kernel.");
@@ -358,7 +358,7 @@ int mac_smack_setup(bool *loaded_policy) {
                 log_warning_errno(r, "Failed to load Smack/CIPSO access rules, ignoring: %m");
         }
 
-        r = write_netlabel_rules("/etc/smack/netlabel.d");
+        r = write_netlabel_rules(SYSCONF_DIR "/smack/netlabel.d");
         switch (r) {
         case -ENOENT:
                 log_debug("Smack/CIPSO is not enabled in the kernel.");

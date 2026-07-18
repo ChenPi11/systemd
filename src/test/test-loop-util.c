@@ -192,7 +192,7 @@ TEST(loop_block) {
         _cleanup_(loop_device_unrefp) LoopDevice *loop = NULL;
         _cleanup_close_ int fd = -EBADF;
 
-        ASSERT_OK(tempfn_random_child("/var/tmp", "sfdisk", &p));
+        ASSERT_OK(tempfn_random_child(LOCALSTATEDIR SYSTEM_TMPDIR, "sfdisk", &p));
         fd = ASSERT_OK_ERRNO(open(p, O_CREAT|O_EXCL|O_RDWR|O_CLOEXEC|O_NOFOLLOW, 0666));
         ASSERT_OK_ERRNO(ftruncate(fd, 256*1024*1024));
 
@@ -375,7 +375,7 @@ static int make_test_image(int *ret_fd) {
         _cleanup_free_ char *p = NULL, *cmd = NULL;
         _cleanup_pclose_ FILE *sfdisk = NULL;
 
-        ASSERT_OK(tempfn_random_child("/var/tmp", "sfdisk", &p));
+        ASSERT_OK(tempfn_random_child(LOCALSTATEDIR SYSTEM_TMPDIR, "sfdisk", &p));
         int fd = ASSERT_OK_ERRNO(open(p, O_CREAT|O_EXCL|O_RDWR|O_CLOEXEC|O_NOFOLLOW, 0666));
         ASSERT_OK_ERRNO(ftruncate(fd, 256*1024*1024));
 
@@ -593,7 +593,7 @@ TEST(partscan_not_needed_without_partition_table) {
          * the loop device (https://github.com/systemd/systemd/issues/42520). A loop device is only ever needed
          * to expose a nested partition table though, so any device without one — here simply an empty device —
          * must take the shortcut. */
-        ASSERT_OK(tempfn_random_child("/var/tmp", "loop-util", &p));
+        ASSERT_OK(tempfn_random_child(LOCALSTATEDIR SYSTEM_TMPDIR, "loop-util", &p));
         fd = ASSERT_OK_ERRNO(open(p, O_CREAT|O_EXCL|O_RDWR|O_CLOEXEC|O_NOFOLLOW, 0666));
         ASSERT_OK_ERRNO(ftruncate(fd, 256*1024*1024));
         (void) unlink(p);
@@ -640,7 +640,7 @@ static void test_nested_partition_table_one(const char *nested_table) {
         }
 
         /* Build an image with a single root partition spanning the whole disk. */
-        ASSERT_OK(tempfn_random_child("/var/tmp", "sfdisk", &p));
+        ASSERT_OK(tempfn_random_child(LOCALSTATEDIR SYSTEM_TMPDIR, "sfdisk", &p));
         fd = ASSERT_OK_ERRNO(open(p, O_CREAT|O_EXCL|O_RDWR|O_CLOEXEC|O_NOFOLLOW, 0666));
         ASSERT_OK_ERRNO(ftruncate(fd, 256*1024*1024));
 

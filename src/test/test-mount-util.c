@@ -154,7 +154,7 @@ TEST(bind_remount_recursive) {
 
         CHECK_PRIV;
 
-        assert_se(mkdtemp_malloc("/tmp/XXXXXX", &tmp) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/XXXXXX", &tmp) >= 0);
         subdir = path_join(tmp, "subdir");
         assert_se(subdir);
         assert_se(mkdir(subdir, 0755) >= 0);
@@ -202,8 +202,8 @@ TEST(bind_remount_one) {
 
                 assert_se(fopen_unlocked("/proc/self/mountinfo", "re", &proc_self_mountinfo) >= 0);
 
-                assert_se(bind_remount_one_with_mountinfo("/run", MS_RDONLY, MS_RDONLY, proc_self_mountinfo) >= 0);
-                assert_se(bind_remount_one_with_mountinfo("/run", MS_NOEXEC, MS_RDONLY|MS_NOEXEC, proc_self_mountinfo) >= 0);
+                assert_se(bind_remount_one_with_mountinfo(RUNSTATEDIR, MS_RDONLY, MS_RDONLY, proc_self_mountinfo) >= 0);
+                assert_se(bind_remount_one_with_mountinfo(RUNSTATEDIR, MS_NOEXEC, MS_RDONLY|MS_NOEXEC, proc_self_mountinfo) >= 0);
                 assert_se(bind_remount_one_with_mountinfo("/proc/idontexist", MS_RDONLY, MS_RDONLY, proc_self_mountinfo) == -ENOENT);
                 assert_se(bind_remount_one_with_mountinfo("/proc/self", MS_RDONLY, MS_RDONLY, proc_self_mountinfo) == -EINVAL);
                 assert_se(bind_remount_one_with_mountinfo("/", MS_RDONLY, MS_RDONLY, proc_self_mountinfo) >= 0);
@@ -213,8 +213,8 @@ TEST(bind_remount_one) {
 
         r = ASSERT_OK(pidref_safe_fork("(remount-one)", FORK_COMMON_FLAGS, NULL));
         if (r == 0) { /* child */
-                assert_se(bind_remount_one("/run", MS_RDONLY, MS_RDONLY) >= 0);
-                assert_se(bind_remount_one("/run", MS_NOEXEC, MS_RDONLY|MS_NOEXEC) >= 0);
+                assert_se(bind_remount_one(RUNSTATEDIR, MS_RDONLY, MS_RDONLY) >= 0);
+                assert_se(bind_remount_one(RUNSTATEDIR, MS_NOEXEC, MS_RDONLY|MS_NOEXEC) >= 0);
                 assert_se(bind_remount_one("/proc/idontexist", MS_RDONLY, MS_RDONLY) == -ENOENT);
                 assert_se(bind_remount_one("/proc/self", MS_RDONLY, MS_RDONLY) == -EINVAL);
                 assert_se(bind_remount_one("/", MS_RDONLY, MS_RDONLY) >= 0);
@@ -317,7 +317,7 @@ TEST(umount_recursive) {
                         .keep = {},
                 },
                 {
-                        .prefix = "/run",
+                        .prefix = RUNSTATEDIR,
                         .keep = {},
                 },
                 {
@@ -545,7 +545,7 @@ TEST(path_is_network_fs_harder) {
 
         ASSERT_OK(dir_fd = open("/", O_PATH | O_CLOEXEC));
         FOREACH_STRING(s,
-                       "/", "/dev/", "/proc/", "/run/", "/sys/", "/tmp/", "/usr/", "/var/tmp/",
+                       "/", "/dev/", "/proc/", RUNSTATEDIR "/", "/sys/", SYSTEM_TMPDIR "/", "/usr/", LOCALSTATEDIR SYSTEM_TMPDIR "/",
                        "", ".", "../../../", "/this/path/should/not/exist/for/test-mount-util/") {
 
                 r = path_is_network_fs_harder(s);
@@ -559,7 +559,7 @@ TEST(path_is_network_fs_harder) {
         CHECK_PRIV;
 
         _cleanup_(rm_rf_physical_and_freep) char *t = NULL;
-        assert_se(mkdtemp_malloc("/tmp/test-mount-util.path_is_network_fs_harder.XXXXXXX", &t) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/test-mount-util.path_is_network_fs_harder.XXXXXXX", &t) >= 0);
 
         r = ASSERT_OK(pidref_safe_fork("(path-is-network-fs-harder)", FORK_COMMON_FLAGS, NULL));
         if (r == 0) {

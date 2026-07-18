@@ -1714,7 +1714,7 @@ const char* etc_localtime(void) {
         static const char *cached = NULL;
 
         if (!cached)
-                cached = secure_getenv("SYSTEMD_ETC_LOCALTIME") ?: "/etc/localtime";
+                cached = secure_getenv("SYSTEMD_ETC_LOCALTIME") ?: SYSCONF_DIR "/localtime";
 
         return cached;
 }

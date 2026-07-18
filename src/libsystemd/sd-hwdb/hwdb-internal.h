@@ -82,7 +82,7 @@ struct trie_value_entry2_f {
 } _packed_;
 
 #define HWDB_BIN_PATHS                          \
-        "/etc/systemd/hwdb/hwdb.bin\0"          \
-        "/etc/udev/hwdb.bin\0"                  \
+        PKGSYSCONFDIR "/hwdb/hwdb.bin\0"          \
+        SYSCONF_DIR "/udev/hwdb.bin\0"                  \
         "/usr/lib/systemd/hwdb/hwdb.bin\0"      \
         UDEVLIBEXECDIR "/hwdb.bin\0"

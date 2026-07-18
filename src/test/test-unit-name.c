@@ -331,7 +331,7 @@ TEST_RET(unit_printf, .sd_booted = true) {
         Unit *u;
         int r;
 
-        _cleanup_(unlink_tempfilep) char filename[] = "/tmp/test-unit_printf.XXXXXX";
+        _cleanup_(unlink_tempfilep) char filename[] = SYSTEM_TMPDIR "/test-unit_printf.XXXXXX";
         fd = mkostemp_safe(filename);
         assert_se(fd >= 0);
 
@@ -433,7 +433,7 @@ TEST_RET(unit_printf, .sd_booted = true) {
         expect(u, "%P", "blah");
         expect(u, "%f", "/blah");
         expect(u, "%y", filename);
-        expect(u, "%Y", "/tmp");
+        expect(u, "%Y", SYSTEM_TMPDIR);
         expect(u, "%C", m->prefix[EXEC_DIRECTORY_CACHE]);
         expect(u, "%d", "*/credentials/blah.service");
         expect(u, "%E", m->prefix[EXEC_DIRECTORY_CONFIGURATION]);
@@ -468,7 +468,7 @@ TEST_RET(unit_printf, .sd_booted = true) {
         expect(u, "%P", "blah");
         expect(u, "%f", "/foo/foo");
         expect(u, "%y", filename);
-        expect(u, "%Y", "/tmp");
+        expect(u, "%Y", SYSTEM_TMPDIR);
         expect(u, "%C", m->prefix[EXEC_DIRECTORY_CACHE]);
         expect(u, "%d", "*/credentials/blah@foo-foo.service");
         expect(u, "%E", m->prefix[EXEC_DIRECTORY_CONFIGURATION]);

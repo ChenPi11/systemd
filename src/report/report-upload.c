@@ -16,7 +16,7 @@
 #include "varlink-util.h"
 #include "version.h"
 
-#define REPORT_UPLOAD_DIR "/run/systemd/report.upload"
+#define REPORT_UPLOAD_DIR RUNSTATEDIR "/systemd/report.upload"
 #define SERVER_ANSWER_MAX (1U * 1024U * 1024U)
 
 #if HAVE_LIBCURL

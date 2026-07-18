@@ -47,7 +47,7 @@ int read_login_defs(UGIDAllocationRange *ret_defs, const char *path, const char 
         int r;
 
         if (!path)
-                path = "/etc/login.defs";
+                path = SYSCONF_DIR "/login.defs";
 
         r = chase_and_fopen_unlocked(path, root, CHASE_PREFIX_ROOT, "re", NULL, &f);
         if (r == -ENOENT)

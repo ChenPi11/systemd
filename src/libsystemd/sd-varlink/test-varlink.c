@@ -1111,7 +1111,7 @@ TEST(respond_upgrade) {
         _cleanup_(sd_future_unrefp) sd_future *f = NULL;
         const char *sp;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/varlink-test-XXXXXX", &tmpdir));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/varlink-test-XXXXXX", &tmpdir));
         sp = strjoina(tmpdir, "/socket");
 
         ASSERT_OK(sd_event_new(&e));

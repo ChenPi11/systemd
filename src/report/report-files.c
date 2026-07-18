@@ -26,9 +26,9 @@
  * (typically symlinks to the actual files to report) dropped into any of these are reported as metrics, keyed
  * by their name. Entries in earlier directories override identically named ones in later directories. */
 static const char* const report_files_dirs[] = {
-        "/etc/systemd/report.files",
-        "/run/systemd/report.files",
-        "/var/lib/systemd/report.files",
+        PKGSYSCONFDIR "/report.files",
+        RUNSTATEDIR "/systemd/report.files",
+        LOCALSTATEDIR "/lib/systemd/report.files",
         "/usr/local/lib/systemd/report.files",
         "/usr/lib/systemd/report.files",
         NULL,

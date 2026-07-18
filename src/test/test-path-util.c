@@ -390,7 +390,7 @@ TEST(find_executable_full) {
         char *p, *bp;
         _cleanup_free_ char *test_file_name = NULL;
         _cleanup_close_ int fd = -EBADF;
-        char fn[] = "/tmp/test-XXXXXX";
+        char fn[] = SYSTEM_TMPDIR "/test-XXXXXX";
 
         assert_se(find_executable_full("sh", NULL, NULL, true, &p, NULL) == 0);
         puts(p);
@@ -435,13 +435,13 @@ TEST(find_executable_full) {
 
         ASSERT_OK(path_extract_filename(fn, &test_file_name));
 
-        assert_se(find_executable_full(test_file_name, NULL, STRV_MAKE("/doesnotexist", "/tmp", "/bin"), false, &p, NULL) == 0);
+        assert_se(find_executable_full(test_file_name, NULL, STRV_MAKE("/doesnotexist", SYSTEM_TMPDIR, "/bin"), false, &p, NULL) == 0);
         puts(p);
         ASSERT_STREQ(p, fn);
         free(p);
 
         (void) unlink(fn);
-        assert_se(find_executable_full(test_file_name, NULL, STRV_MAKE("/doesnotexist", "/tmp", "/bin"), false, &p, NULL) == -ENOENT);
+        assert_se(find_executable_full(test_file_name, NULL, STRV_MAKE("/doesnotexist", SYSTEM_TMPDIR, "/bin"), false, &p, NULL) == -ENOENT);
 }
 
 TEST(find_executable) {
@@ -708,7 +708,7 @@ TEST(path_make_relative_parent) {
 }
 
 TEST(path_strv_resolve) {
-        char tmp_dir[] = "/tmp/test-path-util-XXXXXX";
+        char tmp_dir[] = SYSTEM_TMPDIR "/test-path-util-XXXXXX";
         _cleanup_strv_free_ char **search_dirs = NULL;
         _cleanup_strv_free_ char **absolute_dirs = NULL;
 

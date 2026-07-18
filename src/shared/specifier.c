@@ -417,7 +417,7 @@ int specifier_var_tmp_dir(char specifier, const void *data, const char *root, co
         assert(ret);
 
         if (root)
-                p = "/var/tmp";
+                p = LOCALSTATEDIR SYSTEM_TMPDIR;
         else {
                 r = var_tmp_dir(&p);
                 if (r < 0)

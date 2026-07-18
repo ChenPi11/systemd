@@ -42,7 +42,7 @@ TEST(chase) {
         const char *top, *p, *pslash, *q, *qslash;
         struct stat st;
 
-        temp = strjoina(arg_test_dir ?: "/tmp", "/test-chase.XXXXXX");
+        temp = strjoina(arg_test_dir ?: SYSTEM_TMPDIR, "/test-chase.XXXXXX");
         ASSERT_NOT_NULL(mkdtemp(temp));
 
         top = strjoina(temp, "/top");
@@ -195,16 +195,16 @@ TEST(chase) {
 
         /* Paths using . */
 
-        ASSERT_OK_POSITIVE(chase("/etc/./.././", NULL, 0, &result, NULL));
+        ASSERT_OK_POSITIVE(chase(SYSCONF_DIR "/./.././", NULL, 0, &result, NULL));
         ASSERT_PATH_EQ(result, "/");
         result = mfree(result);
 
-        ASSERT_OK_POSITIVE(chase("/etc/./.././", "/etc", 0, &result, NULL));
-        ASSERT_PATH_EQ(result, "/etc");
+        ASSERT_OK_POSITIVE(chase(SYSCONF_DIR "/./.././", SYSCONF_DIR, 0, &result, NULL));
+        ASSERT_PATH_EQ(result, SYSCONF_DIR);
         result = mfree(result);
 
         ASSERT_OK_POSITIVE(chase("/../.././//../../etc", NULL, 0, &result, NULL));
-        ASSERT_STREQ(result, "/etc");
+        ASSERT_STREQ(result, SYSCONF_DIR);
         result = mfree(result);
 
         ASSERT_OK_ZERO(chase("/../.././//../../test-chase.fsldajfl", NULL, CHASE_NONEXISTENT, &result, NULL));
@@ -212,7 +212,7 @@ TEST(chase) {
         result = mfree(result);
 
         ASSERT_OK_POSITIVE(chase("/../.././//../../etc", "/", CHASE_PREFIX_ROOT, &result, NULL));
-        ASSERT_STREQ(result, "/etc");
+        ASSERT_STREQ(result, SYSCONF_DIR);
         result = mfree(result);
 
         ASSERT_OK_ZERO(chase("/../.././//../../test-chase.fsldajfl", "/", CHASE_PREFIX_ROOT|CHASE_NONEXISTENT, &result, NULL));
@@ -224,7 +224,7 @@ TEST(chase) {
         ASSERT_STREQ(result, q);
         result = mfree(result);
 
-        ASSERT_TRUE(IN_SET(chase("/etc/machine-id/foo", NULL, 0, &result, NULL), -ENOTDIR, -ENOENT));
+        ASSERT_TRUE(IN_SET(chase(SYSCONF_DIR "/machine-id/foo", NULL, 0, &result, NULL), -ENOTDIR, -ENOENT));
         result = mfree(result);
 
         /* Path that loops back to self */
@@ -302,7 +302,7 @@ TEST(chase) {
                 ASSERT_ERROR(chase(q, NULL, CHASE_SAFE, NULL, NULL), ENOLINK);
 
                 ASSERT_OK_ERRNO(rmdir(q));
-                ASSERT_OK_ERRNO(symlink("/etc/passwd", q));
+                ASSERT_OK_ERRNO(symlink(SYSCONF_DIR "/passwd", q));
                 ASSERT_ERROR(chase(q, NULL, CHASE_SAFE, NULL, NULL), ENOLINK);
 
                 ASSERT_OK_ERRNO(chown(p, 0, 0));
@@ -394,7 +394,7 @@ TEST(chase) {
         result = mfree(result);
 
         /* Make sure that symlinks in the "root" path are not resolved, but those below are */
-        p = strjoina("/etc/..", temp, "/self");
+        p = strjoina(SYSCONF_DIR "/..", temp, "/self");
         ASSERT_OK_ERRNO(symlink(".", p));
         q = strjoina(p, "/top/dot/dotdota");
         ASSERT_OK_POSITIVE(chase(q, p, 0, &result, NULL));
@@ -452,14 +452,14 @@ TEST(chase_and_open) {
 
         /* CHASE_EXTRACT_FILENAME on a regular file (regression test for a bug where chase_and_open()
          * reopened the parent directory instead of the target file). */
-        fd = ASSERT_OK(chase_and_open("/etc/os-release", NULL, CHASE_EXTRACT_FILENAME, O_PATH|O_CLOEXEC, &result));
+        fd = ASSERT_OK(chase_and_open(SYSCONF_DIR "/os-release", NULL, CHASE_EXTRACT_FILENAME, O_PATH|O_CLOEXEC, &result));
         ASSERT_STREQ(result, "os-release");
         ASSERT_OK(fd_verify_regular(fd));
         fd = safe_close(fd);
         result = mfree(result);
 
         /* CHASE_PARENT through a symlink — symlink is followed, parent of the target is opened. */
-        fd = ASSERT_OK(chase_and_open("/etc/os-release", NULL, CHASE_PARENT, O_PATH|O_DIRECTORY|O_CLOEXEC, &result));
+        fd = ASSERT_OK(chase_and_open(SYSCONF_DIR "/os-release", NULL, CHASE_PARENT, O_PATH|O_DIRECTORY|O_CLOEXEC, &result));
         ASSERT_OK(fd_verify_directory(fd));
         ASSERT_NOT_NULL(result);
         fd = safe_close(fd);
@@ -467,16 +467,16 @@ TEST(chase_and_open) {
 
         /* CHASE_PARENT|CHASE_NOFOLLOW through a symlink — symlink is NOT followed, parent of the
          * symlink is opened. */
-        fd = ASSERT_OK(chase_and_open("/etc/os-release", NULL, CHASE_PARENT|CHASE_NOFOLLOW, O_PATH|O_DIRECTORY|O_CLOEXEC, &result));
+        fd = ASSERT_OK(chase_and_open(SYSCONF_DIR "/os-release", NULL, CHASE_PARENT|CHASE_NOFOLLOW, O_PATH|O_DIRECTORY|O_CLOEXEC, &result));
         ASSERT_OK(fd_verify_directory(fd));
         ASSERT_OK_ERRNO(faccessat(fd, "os-release", F_OK, AT_SYMLINK_NOFOLLOW));
-        ASSERT_STREQ(result, "/etc/os-release");
+        ASSERT_STREQ(result, SYSCONF_DIR "/os-release");
         fd = safe_close(fd);
         result = mfree(result);
 
         /* CHASE_PARENT|CHASE_NOFOLLOW|CHASE_EXTRACT_FILENAME through a symlink — parent of the symlink
          * is opened, returns just the symlink name. */
-        fd = ASSERT_OK(chase_and_open("/etc/os-release", NULL, CHASE_PARENT|CHASE_NOFOLLOW|CHASE_EXTRACT_FILENAME, O_PATH|O_DIRECTORY|O_CLOEXEC, &result));
+        fd = ASSERT_OK(chase_and_open(SYSCONF_DIR "/os-release", NULL, CHASE_PARENT|CHASE_NOFOLLOW|CHASE_EXTRACT_FILENAME, O_PATH|O_DIRECTORY|O_CLOEXEC, &result));
         ASSERT_OK(fd_verify_directory(fd));
         ASSERT_OK_ERRNO(faccessat(fd, "os-release", F_OK, AT_SYMLINK_NOFOLLOW));
         ASSERT_STREQ(result, "os-release");
@@ -964,7 +964,7 @@ TEST(chaseat_separate_root_and_dir) {
 
         /* Symlink pointing to an absolute host path that does NOT exist under our root must fail, not
          * leak to the host. /etc almost always exists on the host; under our tmp root it doesn't. */
-        ASSERT_OK_ERRNO(symlinkat("/etc", sub_fd, "escape_host"));
+        ASSERT_OK_ERRNO(symlinkat(SYSCONF_DIR, sub_fd, "escape_host"));
         ASSERT_ERROR(chaseat(root_fd, sub_fd, "escape_host/hosts", 0, NULL, NULL), ENOENT);
 
         /* Chasing just ".." from root_fd itself stays at root. */
@@ -1079,7 +1079,7 @@ TEST(trailing_dot_dot) {
 
 TEST(use_chase_as_mkdir_p) {
         _cleanup_free_ char *p = NULL;
-        ASSERT_OK_ERRNO(asprintf(&p, "/tmp/chasemkdir%" PRIu64 "/a/b/c", random_u64()));
+        ASSERT_OK_ERRNO(asprintf(&p, SYSTEM_TMPDIR "/chasemkdir%" PRIu64 "/a/b/c", random_u64()));
 
         _cleanup_close_ int fd = -EBADF;
         ASSERT_OK(chase(p, NULL, CHASE_PREFIX_ROOT|CHASE_MKDIR_0755, NULL, &fd));

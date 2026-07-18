@@ -352,7 +352,7 @@ int home_save_record(Home *h) {
         if (r < 0)
                 return r;
 
-        (void) mkdir("/var/lib/systemd/", 0755);
+        (void) mkdir(LOCALSTATEDIR "/lib/systemd/", 0755);
         (void) mkdir(home_record_dir(), 0700);
 
         fn = strjoina(home_record_dir(), "/", h->user_name, ".identity");

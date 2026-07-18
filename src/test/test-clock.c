@@ -14,7 +14,7 @@
 #include "tmpfile-util.h"
 
 TEST(clock_is_localtime) {
-        _cleanup_(unlink_tempfilep) char adjtime[] = "/tmp/test-adjtime.XXXXXX";
+        _cleanup_(unlink_tempfilep) char adjtime[] = SYSTEM_TMPDIR "/test-adjtime.XXXXXX";
         _cleanup_fclose_ FILE* f = NULL;
 
         static const struct scenario {
@@ -59,8 +59,8 @@ TEST(clock_is_localtime_system) {
         int r;
         r = clock_is_localtime(NULL);
 
-        if (access("/etc/adjtime", R_OK) == 0) {
-                log_info("/etc/adjtime is readable, clock_is_localtime() == %i", r);
+        if (access(SYSCONF_DIR "/adjtime", R_OK) == 0) {
+                log_info(SYSCONF_DIR "/adjtime is readable, clock_is_localtime() == %i", r);
                 /* if /etc/adjtime exists we expect some answer, no error or
                  * crash */
                 ASSERT_TRUE(IN_SET(r, 0, 1));

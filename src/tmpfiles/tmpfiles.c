@@ -3742,7 +3742,7 @@ static int patch_var_run(const char *fname, unsigned line, char **path) {
          * document that and require that on systemd systems the former is a symlink to the latter. Moreover
          * files below this path are by far the primary use case for tmpfiles.d/. */
 
-        k = path_startswith(*path, "/var/run/");
+        k = path_startswith(*path, LOCALSTATEDIR RUNSTATEDIR "/");
         if (isempty(k)) /* Don't complain about paths other than under /var/run,
                          * and not about /var/run itself either. */
                 return 0;

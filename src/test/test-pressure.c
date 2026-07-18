@@ -548,7 +548,7 @@ _noreturn_ static void real_pressure_eat_io(int pipe_fd) {
         for (;;) {
                 _cleanup_close_ int fd = -EBADF;
 
-                fd = open("/var/tmp/.io-pressure-test", O_WRONLY|O_CREAT|O_TRUNC|O_CLOEXEC, 0600);
+                fd = open(LOCALSTATEDIR SYSTEM_TMPDIR "/.io-pressure-test", O_WRONLY|O_CREAT|O_TRUNC|O_CLOEXEC, 0600);
                 if (fd < 0)
                         continue;
 
@@ -645,7 +645,7 @@ TEST(real_io_pressure) {
         ASSERT_OK(sd_bus_message_open_container(m, 'r', "sv"));
         ASSERT_OK(sd_bus_message_append(m, "s", "IOWriteBandwidthMax"));
         ASSERT_OK(sd_bus_message_open_container(m, 'v', "a(st)"));
-        ASSERT_OK(sd_bus_message_append(m, "a(st)", 1, "/var/tmp", (uint64_t) 1024*1024)); /* 1M/s */
+        ASSERT_OK(sd_bus_message_append(m, "a(st)", 1, LOCALSTATEDIR SYSTEM_TMPDIR, (uint64_t) 1024*1024)); /* 1M/s */
         ASSERT_OK(sd_bus_message_close_container(m));
         ASSERT_OK(sd_bus_message_close_container(m));
         ASSERT_OK(sd_bus_message_close_container(m));
@@ -664,7 +664,7 @@ TEST(real_io_pressure) {
 }
 
 static int outro(void) {
-        (void) unlink("/var/tmp/.io-pressure-test");
+        (void) unlink(LOCALSTATEDIR SYSTEM_TMPDIR "/.io-pressure-test");
         hashmap_trim_pools();
         return 0;
 }

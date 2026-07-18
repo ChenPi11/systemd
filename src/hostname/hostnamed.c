@@ -207,7 +207,7 @@ static void context_read_os_release(Context *c) {
 
         assert(c);
 
-        if ((stat("/etc/os-release", &current_stat) >= 0 ||
+        if ((stat(SYSCONF_DIR "/os-release", &current_stat) >= 0 ||
              stat("/usr/lib/os-release", &current_stat) >= 0) &&
             stat_inode_unmodified(&c->etc_os_release_stat, &current_stat))
                 return;
@@ -1500,7 +1500,7 @@ static int method_set_static_hostname(sd_bus_message *m, void *userdata, sd_bus_
                 if (ERRNO_IS_PRIVILEGE(r))
                         return sd_bus_error_set(error, BUS_ERROR_FILE_IS_PROTECTED, "Not allowed to update /etc/hostname.");
                 if (r == -EROFS)
-                        return sd_bus_error_set(error, BUS_ERROR_READ_ONLY_FILESYSTEM, "/etc/hostname is in a read-only filesystem.");
+                        return sd_bus_error_set(error, BUS_ERROR_READ_ONLY_FILESYSTEM, SYSCONF_DIR "/hostname is in a read-only filesystem.");
                 return sd_bus_error_set_errnof(error, r, "Failed to set static hostname: %m");
         }
 
@@ -1576,7 +1576,7 @@ static int set_machine_info(Context *c, sd_bus_message *m, int prop, sd_bus_mess
                 if (ERRNO_IS_PRIVILEGE(r))
                         return sd_bus_error_set(error, BUS_ERROR_FILE_IS_PROTECTED, "Not allowed to update /etc/machine-info.");
                 if (r == -EROFS)
-                        return sd_bus_error_set(error, BUS_ERROR_READ_ONLY_FILESYSTEM, "/etc/machine-info is in a read-only filesystem.");
+                        return sd_bus_error_set(error, BUS_ERROR_READ_ONLY_FILESYSTEM, SYSCONF_DIR "/machine-info is in a read-only filesystem.");
                 return sd_bus_error_set_errnof(error, r, "Failed to write machine info: %m");
         }
 
@@ -1660,7 +1660,7 @@ static int bus_error_from_tags_write(sd_bus_error *error, int r) {
         if (ERRNO_IS_PRIVILEGE(r))
                 return sd_bus_error_set(error, BUS_ERROR_FILE_IS_PROTECTED, "Not allowed to update /etc/machine-info.");
         if (r == -EROFS)
-                return sd_bus_error_set(error, BUS_ERROR_READ_ONLY_FILESYSTEM, "/etc/machine-info is in a read-only filesystem.");
+                return sd_bus_error_set(error, BUS_ERROR_READ_ONLY_FILESYSTEM, SYSCONF_DIR "/machine-info is in a read-only filesystem.");
         return sd_bus_error_set_errnof(error, r, "Failed to write machine info: %m");
 }
 

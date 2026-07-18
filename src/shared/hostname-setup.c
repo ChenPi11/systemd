@@ -218,7 +218,7 @@ void hostname_update_source_hint(const char *hostname, HostnameSource source) {
                 r = write_string_file(RUNSTATEDIR "/systemd/default-hostname", hostname,
                                       WRITE_STRING_FILE_CREATE | WRITE_STRING_FILE_ATOMIC);
                 if (r < 0)
-                        log_warning_errno(r, "Failed to create \"/run/systemd/default-hostname\", ignoring: %m");
+                        log_warning_errno(r, "Failed to create \"" RUNSTATEDIR "/systemd/default-hostname" "\", ignoring: %m");
         } else
                 (void) unlink_or_warn(RUNSTATEDIR "/systemd/default-hostname");
 }

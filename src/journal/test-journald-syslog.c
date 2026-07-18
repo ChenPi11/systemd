@@ -90,7 +90,7 @@ TEST(syslog_socket_replaces_existing_event_source) {
         ASSERT_OK(sd_event_new(&event));
         m.event = event;
 
-        ASSERT_OK(mkdtemp_malloc("/tmp/test-journald-syslog-XXXXXX", &tmpdir));
+        ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/test-journald-syslog-XXXXXX", &tmpdir));
         syslog_socket = path_join(tmpdir, "dev-log");
         ASSERT_NOT_NULL(syslog_socket);
 

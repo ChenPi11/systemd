@@ -334,7 +334,7 @@ static int add_config_to_edit(
 
         /* If we're supposed to edit main config file in /run/, but a config with the same name is present
          * under /etc/, we bail out since the one in /etc/ always overrides that in /run/. */
-        if (arg_runtime && !arg_drop_in && path_startswith(path, "/etc"))
+        if (arg_runtime && !arg_drop_in && path_startswith(path, SYSCONF_DIR))
                 return log_error_errno(SYNTHETIC_ERRNO(EEXIST),
                                        "Cannot edit runtime config file: overridden by %s", path);
 
@@ -360,7 +360,7 @@ static int add_config_to_edit(
                 return log_error_errno(r, "Failed to acquire drop-in '%s': %m", arg_drop_in);
         if (r > 0) {
                 /* See the explanation above */
-                if (arg_runtime && path_startswith(old_dropin, "/etc"))
+                if (arg_runtime && path_startswith(old_dropin, SYSCONF_DIR))
                         return log_error_errno(SYNTHETIC_ERRNO(EEXIST),
                                                "Cannot edit runtime config file: overridden by %s", old_dropin);
 
@@ -671,7 +671,7 @@ int verb_mask(int argc, char *argv[], uintptr_t _data, void *userdata) {
                         /* At this point, we have found a config under mutable dir (/run/ or /etc/),
                          * so masking through /run/ (--runtime) is not possible. If it's under /etc/,
                          * then it doesn't work without --runtime either. */
-                        if (arg_runtime || path_startswith(config_path, "/etc"))
+                        if (arg_runtime || path_startswith(config_path, SYSCONF_DIR))
                                 return log_error_errno(SYNTHETIC_ERRNO(EEXIST),
                                                        "Cannot mask network config %s: %s exists",
                                                        *name, config_path);

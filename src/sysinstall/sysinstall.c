@@ -1271,7 +1271,7 @@ static int maybe_reboot(void) {
                    emoji_enabled() ? glyph(GLYPH_CIRCLE_ARROW) : "", emoji_enabled() ? " " : "");
 
         _cleanup_(sd_varlink_unrefp) sd_varlink *link = NULL;
-        r = sd_varlink_connect_address(&link, "/run/systemd/io.systemd.Shutdown");
+        r = sd_varlink_connect_address(&link, RUNSTATEDIR "/systemd/io.systemd.Shutdown");
         if (r < 0)
                 return log_error_errno(r, "Failed to connect to systemd-logind: %m");
 

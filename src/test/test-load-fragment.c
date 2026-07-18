@@ -467,11 +467,11 @@ TEST(config_parse_log_extra_fields) {
 
 TEST(install_printf, .sd_booted = true) {
         char    name[] = "name.service",
-                path[] = "/run/systemd/system/name.service";
+                path[] = RUNSTATEDIR "/systemd/system/name.service";
         InstallInfo i = { .name = name, .path = path, };
         InstallInfo i2 = { .name= name, .path = path, };
         char    name3[] = "name@inst.service",
-                path3[] = "/run/systemd/system/name.service";
+                path3[] = RUNSTATEDIR "/systemd/system/name.service";
         InstallInfo i3 = { .name = name3, .path = path3, };
         InstallInfo i4 = { .name = name3, .path = path3, };
 

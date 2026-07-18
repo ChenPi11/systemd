@@ -36,7 +36,7 @@ static const char * const modaliases[] = {
 };
 
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
-        _cleanup_(unlink_tempfilep) char filename[] = "/tmp/fuzz-hwdb.XXXXXX";
+        _cleanup_(unlink_tempfilep) char filename[] = SYSTEM_TMPDIR "/fuzz-hwdb.XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
         _cleanup_(sd_hwdb_unrefp) sd_hwdb *hwdb = NULL;
 

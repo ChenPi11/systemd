@@ -35,7 +35,7 @@ TEST(path_is_encrypted) {
         log_info("/* %s (sd_booted=%d) */", __func__, booted);
 
         test_path_is_encrypted_one("/home", -1);
-        test_path_is_encrypted_one("/var", -1);
+        test_path_is_encrypted_one(LOCALSTATEDIR, -1);
         test_path_is_encrypted_one("/", -1);
         test_path_is_encrypted_one("/proc", false);
         test_path_is_encrypted_one("/sys", false);

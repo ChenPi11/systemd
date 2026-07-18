@@ -626,7 +626,7 @@ int main(int argc, char *argv[]) {
                         execv("/shutdown", argv);
                         log_error_errno(errno, "Failed to execute shutdown binary: %m");
                 } else
-                        log_error_errno(r, "Failed to switch root to \"/run/initramfs\": %m");
+                        log_error_errno(r, "Failed to switch root to \"" RUNSTATEDIR "/initramfs" "\": %m");
         }
 
         if (need_umount || need_swapoff || need_loop_detach || need_dm_detach || need_md_detach)

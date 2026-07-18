@@ -1419,7 +1419,7 @@ static int add_volatile_var(void) {
         return add_mount("/proc/cmdline",
                          arg_dest_late,
                          "tmpfs",
-                         "/var",
+                         LOCALSTATEDIR,
                          /* original_where= */ NULL,
                          "tmpfs",
                          "mode=0755" TMPFS_LIMITS_VAR,

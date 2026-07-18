@@ -122,7 +122,7 @@ TEST(mnt_id) {
 
 TEST(path_is_mount_point) {
         int fd;
-        char tmp_dir[] = "/tmp/test-path-is-mount-point-XXXXXX";
+        char tmp_dir[] = SYSTEM_TMPDIR "/test-path-is-mount-point-XXXXXX";
         _cleanup_free_ char *file1 = NULL, *file2 = NULL, *link1 = NULL, *link2 = NULL;
         _cleanup_free_ char *dir1 = NULL, *dir1file = NULL, *dirlink1 = NULL, *dirlink1file = NULL;
         _cleanup_free_ char *dir2 = NULL, *dir2file = NULL;
@@ -295,10 +295,10 @@ TEST(is_mount_point_at) {
         ASSERT_OK_ZERO(is_mount_point_at(fd, "usr/lib", /* flags= */ 0));
 
         safe_close(fd);
-        fd = open("/tmp", O_RDONLY|O_CLOEXEC|O_DIRECTORY|O_NOCTTY);
+        fd = open(SYSTEM_TMPDIR, O_RDONLY|O_CLOEXEC|O_DIRECTORY|O_NOCTTY);
         assert_se(fd >= 0);
 
-        assert_se(mkdtemp_malloc("/tmp/not-mounted-XXXXXX", &tmpdir) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/not-mounted-XXXXXX", &tmpdir) >= 0);
         ASSERT_OK(path_extract_filename(tmpdir, &tmpdir_basename));
         ASSERT_OK_ZERO(is_mount_point_at(fd, tmpdir_basename, 0));
         ASSERT_OK_ZERO(is_mount_point_at(fd, strjoina(tmpdir_basename, "/"), 0));
@@ -404,21 +404,21 @@ TEST(path_get_mnt_id_at_null) {
         _cleanup_close_ int root_fd = -EBADF, run_fd = -EBADF;
         int id1, id2;
 
-        assert_se(path_get_mnt_id_at(AT_FDCWD, "/run/", &id1) >= 0);
+        assert_se(path_get_mnt_id_at(AT_FDCWD, RUNSTATEDIR "/", &id1) >= 0);
         assert_se(id1 > 0);
 
-        assert_se(path_get_mnt_id_at(AT_FDCWD, "/run", &id2) >= 0);
+        assert_se(path_get_mnt_id_at(AT_FDCWD, RUNSTATEDIR, &id2) >= 0);
         assert_se(id1 == id2);
         id2 = -1;
 
         root_fd = open("/", O_DIRECTORY|O_CLOEXEC);
         assert_se(root_fd >= 0);
 
-        assert_se(path_get_mnt_id_at(root_fd, "/run/", &id2) >= 0);
+        assert_se(path_get_mnt_id_at(root_fd, RUNSTATEDIR "/", &id2) >= 0);
         assert_se(id1 = id2);
         id2 = -1;
 
-        assert_se(path_get_mnt_id_at(root_fd, "/run", &id2) >= 0);
+        assert_se(path_get_mnt_id_at(root_fd, RUNSTATEDIR, &id2) >= 0);
         assert_se(id1 = id2);
         id2 = -1;
 

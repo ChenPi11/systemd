@@ -100,8 +100,8 @@ TEST(decompress_blob_zstd_frame_at_buffer_boundary) {
 
         _cleanup_close_ int src = -EBADF, dst = -EBADF;
         _cleanup_(unlink_tempfilep) char
-                src_pattern[] = "/tmp/systemd-test.zstd-boundary-src.XXXXXX",
-                dst_pattern[] = "/tmp/systemd-test.zstd-boundary.XXXXXX";
+                src_pattern[] = SYSTEM_TMPDIR "/systemd-test.zstd-boundary-src.XXXXXX",
+                dst_pattern[] = SYSTEM_TMPDIR "/systemd-test.zstd-boundary.XXXXXX";
         struct stat st;
 
         ASSERT_OK(src = mkostemp_safe(src_pattern));
@@ -148,8 +148,8 @@ TEST(decompress_blob_zstd_unknown_size) {
 
         _cleanup_close_ int src = -EBADF, dst = -EBADF;
         _cleanup_(unlink_tempfilep) char
-                src_pattern[] = "/tmp/systemd-test.zstd-unknown-src.XXXXXX",
-                pattern[] = "/tmp/systemd-test.zstd-unknown.XXXXXX";
+                src_pattern[] = SYSTEM_TMPDIR "/systemd-test.zstd-unknown-src.XXXXXX",
+                pattern[] = SYSTEM_TMPDIR "/systemd-test.zstd-unknown.XXXXXX";
         struct stat st;
 
         ASSERT_OK(src = mkostemp_safe(src_pattern));
@@ -216,8 +216,8 @@ TEST(decompress_blob_zstd_unknown_size) {
          * report "too short" (0), not a corruption error. */
         _cleanup_close_ int short_src = -EBADF, short_dst = -EBADF;
         _cleanup_(unlink_tempfilep) char
-                short_src_pattern[] = "/tmp/systemd-test.zstd-short-src.XXXXXX",
-                short_pattern[] = "/tmp/systemd-test.zstd-short.XXXXXX";
+                short_src_pattern[] = SYSTEM_TMPDIR "/systemd-test.zstd-short-src.XXXXXX",
+                short_pattern[] = SYSTEM_TMPDIR "/systemd-test.zstd-short.XXXXXX";
         static const char short_text[] = "hi";
         struct stat short_st;
 
@@ -369,8 +369,8 @@ TEST(compress_decompress_stream) {
 
                 _cleanup_close_ int src = -EBADF, dst = -EBADF, dst2 = -EBADF;
                 _cleanup_(unlink_tempfilep) char
-                        pattern[] = "/tmp/systemd-test.compressed.XXXXXX",
-                        pattern2[] = "/tmp/systemd-test.compressed.XXXXXX";
+                        pattern[] = SYSTEM_TMPDIR "/systemd-test.compressed.XXXXXX",
+                        pattern2[] = SYSTEM_TMPDIR "/systemd-test.compressed.XXXXXX";
                 _cleanup_free_ char *cmd = NULL, *cmd2 = NULL;
                 struct stat st = {};
                 uint64_t uncompressed_size;
@@ -431,9 +431,9 @@ TEST(decompress_stream_sparse) {
 
                 _cleanup_close_ int src = -EBADF, compressed = -EBADF, decompressed = -EBADF;
                 _cleanup_(unlink_tempfilep) char
-                        pattern_src[] = "/tmp/systemd-test.sparse-src.XXXXXX",
-                        pattern_compressed[] = "/tmp/systemd-test.sparse-compressed.XXXXXX",
-                        pattern_decompressed[] = "/tmp/systemd-test.sparse-decompressed.XXXXXX";
+                        pattern_src[] = SYSTEM_TMPDIR "/systemd-test.sparse-src.XXXXXX",
+                        pattern_compressed[] = SYSTEM_TMPDIR "/systemd-test.sparse-compressed.XXXXXX",
+                        pattern_decompressed[] = SYSTEM_TMPDIR "/systemd-test.sparse-decompressed.XXXXXX";
                 /* Create a sparse-like input: 4K of data, 64K of zeros, 4K of data, 64K trailing zeros.
                  * Total apparent size: 136K, but most of it is zeros. */
                 uint8_t data_block[4096];
@@ -503,9 +503,9 @@ TEST(decompress_stream_sparse) {
                 {
                         _cleanup_close_ int zsrc = -EBADF, zcompressed = -EBADF, zdecompressed = -EBADF;
                         _cleanup_(unlink_tempfilep) char
-                                zp_src[] = "/tmp/systemd-test.sparse-zero-src.XXXXXX",
-                                zp_compressed[] = "/tmp/systemd-test.sparse-zero-compressed.XXXXXX",
-                                zp_decompressed[] = "/tmp/systemd-test.sparse-zero-decompressed.XXXXXX";
+                                zp_src[] = SYSTEM_TMPDIR "/systemd-test.sparse-zero-src.XXXXXX",
+                                zp_compressed[] = SYSTEM_TMPDIR "/systemd-test.sparse-zero-compressed.XXXXXX",
+                                zp_decompressed[] = SYSTEM_TMPDIR "/systemd-test.sparse-zero-decompressed.XXXXXX";
                         struct stat zst;
                         uint64_t zsize;
                         uint8_t zeros[65536] = {};
@@ -538,9 +538,9 @@ TEST(decompress_stream_sparse) {
                 {
                         _cleanup_close_ int dsrc = -EBADF, dcompressed = -EBADF, ddecompressed = -EBADF;
                         _cleanup_(unlink_tempfilep) char
-                                dp_src[] = "/tmp/systemd-test.sparse-end-src.XXXXXX",
-                                dp_compressed[] = "/tmp/systemd-test.sparse-end-compressed.XXXXXX",
-                                dp_decompressed[] = "/tmp/systemd-test.sparse-end-decompressed.XXXXXX";
+                                dp_src[] = SYSTEM_TMPDIR "/systemd-test.sparse-end-src.XXXXXX",
+                                dp_compressed[] = SYSTEM_TMPDIR "/systemd-test.sparse-end-compressed.XXXXXX",
+                                dp_decompressed[] = SYSTEM_TMPDIR "/systemd-test.sparse-end-decompressed.XXXXXX";
                         struct stat dst;
                         uint64_t dsize;
                         uint8_t zeros[65536] = {};

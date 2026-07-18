@@ -15,7 +15,7 @@
 #include "time-util.h"
 #include "varlink-util.h"
 
-#define REPORT_SIGN_DIR "/run/systemd/report.sign"
+#define REPORT_SIGN_DIR RUNSTATEDIR "/systemd/report.sign"
 #define REPORT_SIGN_TIMEOUT_USEC USEC_PER_MINUTE
 
 typedef struct Signature {

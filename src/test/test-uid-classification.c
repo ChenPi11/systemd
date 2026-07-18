@@ -12,7 +12,7 @@
 static void test_read_login_defs_one(const char *path) {
         log_info("/* %s(\"%s\") */", __func__, path ?: "<custom>");
 
-        _cleanup_(unlink_tempfilep) char name[] = "/tmp/test-user-record.XXXXXX";
+        _cleanup_(unlink_tempfilep) char name[] = SYSTEM_TMPDIR "/test-user-record.XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
         if (!path) {
                 assert_se(fmkostemp_safe(name, "r+", &f) == 0);
@@ -52,7 +52,7 @@ static void test_read_login_defs_one(const char *path) {
 
 TEST(read_login_defs) {
         test_read_login_defs_one("/dev/null");
-        test_read_login_defs_one("/etc/login.defs");
+        test_read_login_defs_one(SYSCONF_DIR "/login.defs");
         test_read_login_defs_one(NULL);
 }
 

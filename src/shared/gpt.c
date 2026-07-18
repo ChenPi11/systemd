@@ -122,7 +122,7 @@ static const char *const partition_mountpoint_table[_PARTITION_DESIGNATOR_MAX] =
         [PARTITION_SRV]                       = "/srv\0",
         [PARTITION_ESP]                       = "/efi\0/boot\0",
         [PARTITION_XBOOTLDR]                  = "/boot\0",
-        [PARTITION_TMP]                       = "/var/tmp\0",
+        [PARTITION_TMP]                       = LOCALSTATEDIR "/tmp\0",
         [PARTITION_VAR]                       = "/var\0",
 };
 

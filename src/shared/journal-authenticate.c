@@ -84,7 +84,7 @@ static int journal_auth_load(JournalAuthContext **ret) {
                 return r;
 
         _cleanup_free_ char *path = NULL;
-        if (asprintf(&path, "/var/log/journal/" SD_ID128_FORMAT_STR "/fss",
+        if (asprintf(&path, LOCALSTATEDIR "/log/journal/" SD_ID128_FORMAT_STR "/fss",
                      SD_ID128_FORMAT_VAL(machine)) < 0)
                 return -ENOMEM;
 

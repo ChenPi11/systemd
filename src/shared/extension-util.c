@@ -146,13 +146,13 @@ int parse_env_extension_hierarchies(char ***ret_hierarchies, const char *hierarc
         if (r == -ENXIO) {
                 if (streq(hierarchy_env, "SYSTEMD_CONFEXT_HIERARCHIES"))
                         /* Default for confext when unset */
-                        l = strv_new("/etc");
+                        l = strv_new(SYSCONF_DIR);
                 else if (streq(hierarchy_env, "SYSTEMD_SYSEXT_HIERARCHIES"))
                         /* Default for sysext when unset */
                         l = strv_new("/usr", "/opt");
                 else if (streq(hierarchy_env, "SYSTEMD_SYSEXT_AND_CONFEXT_HIERARCHIES"))
                         /* Combined sysext and confext directories */
-                        l = strv_new("/usr", "/opt", "/etc");
+                        l = strv_new("/usr", "/opt", SYSCONF_DIR);
                 else
                         return -ENXIO;
         } else if (r < 0)

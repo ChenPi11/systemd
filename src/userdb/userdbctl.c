@@ -1262,7 +1262,7 @@ static int load_credential_one(
         if (!user && !group)
                 return 0;
 
-        const char *userdb_dir = transient ? RUNSTATEDIR "/userdb" : "/etc/userdb";
+        const char *userdb_dir = transient ? RUNSTATEDIR "/userdb" : SYSCONF_DIR "/userdb";
 
         int *userdb_dir_fd = transient ? userdb_dir_transient_fd : userdb_dir_persist_fd;
         if (*userdb_dir_fd == -EBADF) {

@@ -1874,7 +1874,7 @@ static int get_settings_path(const char *name, char **ret_path) {
         assert(name);
         assert(ret_path);
 
-        FOREACH_STRING(i, "/etc/systemd/nspawn", RUNSTATEDIR "/systemd/nspawn", "/var/lib/machines") {
+        FOREACH_STRING(i, PKGSYSCONFDIR "/nspawn", RUNSTATEDIR "/systemd/nspawn", LOCALSTATEDIR "/lib/machines") {
                 _cleanup_free_ char *path = NULL;
 
                 path = path_join(i, name);
@@ -1933,7 +1933,7 @@ static int verb_edit_settings(int argc, char *argv[], uintptr_t _data, void *use
                 if (r == -ENOENT) {
                         log_debug("No existing settings file for machine '%s' found, creating a new file.", *name);
 
-                        path = path_join("/etc/systemd/nspawn", file);
+                        path = path_join(PKGSYSCONFDIR "/nspawn", file);
                         if (!path)
                                 return log_oom();
 
@@ -1945,10 +1945,10 @@ static int verb_edit_settings(int argc, char *argv[], uintptr_t _data, void *use
                 if (r < 0)
                         return log_error_errno(r, "Failed to get the path of the settings file: %m");
 
-                if (path_startswith(path, "/var/lib/machines")) {
+                if (path_startswith(path, LOCALSTATEDIR "/lib/machines")) {
                         _cleanup_free_ char *new_path = NULL;
 
-                        new_path = path_join("/etc/systemd/nspawn", file);
+                        new_path = path_join(PKGSYSCONFDIR "/nspawn", file);
                         if (!new_path)
                                 return log_oom();
 

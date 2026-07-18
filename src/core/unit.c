@@ -1329,13 +1329,13 @@ int unit_add_exec_dependencies(Unit *u, ExecContext *c) {
         }
 
         if (c->private_var_tmp == PRIVATE_TMP_CONNECTED) {
-                r = unit_add_mounts_for(u, "/var/tmp/", UNIT_DEPENDENCY_FILE, UNIT_MOUNT_WANTS);
+                r = unit_add_mounts_for(u, LOCALSTATEDIR SYSTEM_TMPDIR "/", UNIT_DEPENDENCY_FILE, UNIT_MOUNT_WANTS);
                 if (r < 0)
                         return r;
         } else if (c->private_var_tmp == PRIVATE_TMP_DISCONNECTED && !exec_context_with_rootfs(c)) {
                 /* Even if PrivateTmp=disconnected, we still require /var/tmp/ mountpoint to be present,
                  * i.e. /var/ needs to be mounted. See comments in unit_patch_contexts(). */
-                r = unit_add_mounts_for(u, "/var/", UNIT_DEPENDENCY_FILE, UNIT_MOUNT_WANTS);
+                r = unit_add_mounts_for(u, LOCALSTATEDIR "/", UNIT_DEPENDENCY_FILE, UNIT_MOUNT_WANTS);
                 if (r < 0)
                         return r;
         }
@@ -4389,7 +4389,7 @@ static PrivateTmp unit_get_private_var_tmp(const Unit *u, const ExecContext *c) 
         /* Even if DefaultDependencies=no, enable disconnected tmpfs when
          * RequiresMountsFor=/WantsMountsFor=/var/ is explicitly set. */
         for (UnitMountDependencyType t = 0; t < _UNIT_MOUNT_DEPENDENCY_TYPE_MAX; t++)
-                if (hashmap_contains(u->mounts_for[t], "/var/"))
+                if (hashmap_contains(u->mounts_for[t], LOCALSTATEDIR "/"))
                         return PRIVATE_TMP_DISCONNECTED;
 
         /* Check the same but for After=. */

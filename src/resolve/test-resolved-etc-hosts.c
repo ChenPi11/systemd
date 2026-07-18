@@ -18,7 +18,7 @@
 TEST(parse_etc_hosts_system) {
         _cleanup_fclose_ FILE *f = NULL;
 
-        f = fopen("/etc/hosts", "re");
+        f = fopen(SYSCONF_DIR "/hosts", "re");
         if (!f) {
                 assert_se(errno == ENOENT);
                 return;

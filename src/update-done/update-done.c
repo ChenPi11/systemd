@@ -145,8 +145,8 @@ static int run(int argc, char *argv[]) {
                 return r;
 
         r = 0;
-        RET_GATHER(r, save_timestamp("/etc/", &st.st_mtim));
-        RET_GATHER(r, save_timestamp("/var/", &st.st_mtim));
+        RET_GATHER(r, save_timestamp(SYSCONF_DIR "/", &st.st_mtim));
+        RET_GATHER(r, save_timestamp(LOCALSTATEDIR "/", &st.st_mtim));
         return r;
 }
 

@@ -23,7 +23,7 @@ static const char *arg_dest = NULL;
 static int generate_symlink(void) {
         int r;
 
-        FOREACH_STRING(p, "/system-update", "/etc/system-update") {
+        FOREACH_STRING(p, "/system-update", SYSCONF_DIR "/system-update") {
                 r = access_nofollow(p, F_OK);
                 if (r < 0) {
                         if (r != -ENOENT)

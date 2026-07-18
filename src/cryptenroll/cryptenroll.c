@@ -259,7 +259,7 @@ static int determine_default_node(void) {
                 candidates[n_candidates++] = "/sysroot/var";
                 candidates[n_candidates++] = "/sysroot";
         } else
-                candidates[n_candidates++] = "/var";
+                candidates[n_candidates++] = LOCALSTATEDIR;
 
         FOREACH_ARRAY(path, candidates, n_candidates) {
                 r = resolve_default_node(*path, &arg_node);

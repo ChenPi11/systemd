@@ -34,7 +34,7 @@ int manager_check_resolv_conf(const Manager *m) {
         if (m->dns_stub_listener_mode != DNS_STUB_LISTENER_NO)
                 return 0;
 
-        if (stat("/etc/resolv.conf", &st) < 0) {
+        if (stat(SYSCONF_DIR "/resolv.conf", &st) < 0) {
                 if (errno == ENOENT)
                         return 0;
 
@@ -84,7 +84,7 @@ int manager_read_resolv_conf(Manager *m) {
         if (!m->read_resolv_conf)
                 return 0;
 
-        r = stat("/etc/resolv.conf", &st);
+        r = stat(SYSCONF_DIR "/resolv.conf", &st);
         if (r < 0) {
                 if (errno == ENOENT)
                         return 0;
@@ -100,12 +100,12 @@ int manager_read_resolv_conf(Manager *m) {
         if (file_is_our_own(&st))
                 return 0;
 
-        f = fopen("/etc/resolv.conf", "re");
+        f = fopen(SYSCONF_DIR "/resolv.conf", "re");
         if (!f) {
                 if (errno == ENOENT)
                         return 0;
 
-                r = log_warning_errno(errno, "Failed to open %s: %m", "/etc/resolv.conf");
+                r = log_warning_errno(errno, "Failed to open %s: %m", SYSCONF_DIR "/resolv.conf");
                 goto clear;
         }
 
@@ -157,7 +157,7 @@ int manager_read_resolv_conf(Manager *m) {
                         continue;
                 }
 
-                log_syntax(NULL, LOG_DEBUG, "/etc/resolv.conf", n, 0, "Ignoring resolv.conf line: %s", line);
+                log_syntax(NULL, LOG_DEBUG, SYSCONF_DIR "/resolv.conf", n, 0, "Ignoring resolv.conf line: %s", line);
         }
 
         m->resolv_conf_stat = st;
@@ -398,7 +398,7 @@ int resolv_conf_mode(void) {
 
         struct stat system_st;
 
-        if (stat("/etc/resolv.conf", &system_st) < 0) {
+        if (stat(SYSCONF_DIR "/resolv.conf", &system_st) < 0) {
                 if (errno == ENOENT)
                         return RESOLV_CONF_MISSING;
 

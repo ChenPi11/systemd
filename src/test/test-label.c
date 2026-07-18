@@ -118,7 +118,7 @@ TEST(label_ops_pre) {
         assert_se(label_ops_pre(fd, "file1.txt", 0644) == 0);
         assert_se(label_ops_pre(fd, "/restricted_directory", 0644) == -EACCES);
         assert_se(label_ops_pre(fd, "", 0700) == -EINVAL);
-        assert_se(label_ops_pre(fd, "/tmp", 0700) == 0);
+        assert_se(label_ops_pre(fd, SYSTEM_TMPDIR, 0700) == 0);
         assert_se(label_ops_pre(fd, "wekrgoierhgoierhqgherhgwklegnlweehgorwfkryrit", 0644) == -ENAMETOOLONG);
 }
 

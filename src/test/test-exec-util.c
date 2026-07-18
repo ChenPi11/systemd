@@ -62,8 +62,8 @@ static void test_execute_directory_one(bool gather_stdout) {
 
         log_info("/* %s (%s) */", __func__, gather_stdout ? "gathering stdout" : "asynchronous");
 
-        assert_se(mkdtemp_malloc("/tmp/test-exec-util.lo.XXXXXXX", &tmp_lo) >= 0);
-        assert_se(mkdtemp_malloc("/tmp/test-exec-util.hi.XXXXXXX", &tmp_hi) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/test-exec-util.lo.XXXXXXX", &tmp_lo) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/test-exec-util.hi.XXXXXXX", &tmp_hi) >= 0);
 
         const char * dirs[] = { tmp_hi, tmp_lo, NULL };
 
@@ -142,8 +142,8 @@ TEST(execution_order) {
         const char *output, *t;
         _cleanup_free_ char *contents = NULL;
 
-        assert_se(mkdtemp_malloc("/tmp/test-exec-util-lo.XXXXXXX", &tmp_lo) >= 0);
-        assert_se(mkdtemp_malloc("/tmp/test-exec-util-hi.XXXXXXX", &tmp_hi) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/test-exec-util-lo.XXXXXXX", &tmp_lo) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/test-exec-util-hi.XXXXXXX", &tmp_hi) >= 0);
 
         const char *dirs[] = { tmp_hi, tmp_lo, NULL };
 
@@ -247,7 +247,7 @@ TEST(stdout_gathering) {
 
         void* args[] = {&tmp, &tmp, &output};
 
-        assert_se(mkdtemp_malloc("/tmp/test-exec-util.XXXXXXX", &tmpdir) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/test-exec-util.XXXXXXX", &tmpdir) >= 0);
 
         const char *dirs[] = { tmpdir, NULL };
 
@@ -293,7 +293,7 @@ TEST(environment_gathering) {
 
         void* const args[] = { &tmp, &tmp, &env };
 
-        assert_se(mkdtemp_malloc("/tmp/test-exec-util.XXXXXXX", &tmpdir) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/test-exec-util.XXXXXXX", &tmpdir) >= 0);
 
         const char *dirs[] = { tmpdir, NULL };
 
@@ -381,7 +381,7 @@ TEST(error_catching) {
         const char *name, *name2, *name3;
         int r;
 
-        assert_se(mkdtemp_malloc("/tmp/test-exec-util.XXXXXXX", &tmpdir) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/test-exec-util.XXXXXXX", &tmpdir) >= 0);
 
         const char *dirs[] = { tmpdir, NULL };
 

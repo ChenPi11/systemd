@@ -666,7 +666,7 @@ int var_tmp_dir(const char **ret) {
          * returned preferably however. Note that both this function and tmp_dir() below are affected by $TMPDIR,
          * making it a variable that overrides all temporary file storage locations. */
 
-        return tmp_dir_internal("/var/tmp", ret);
+        return tmp_dir_internal(LOCALSTATEDIR SYSTEM_TMPDIR, ret);
 }
 
 int tmp_dir(const char **ret) {

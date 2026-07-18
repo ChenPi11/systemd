@@ -16,7 +16,7 @@ static void test_paths_one(RuntimeScope scope) {
         _cleanup_(lookup_paths_done) LookupPaths lp_with_env = {};
         char *systemd_unit_path;
 
-        assert_se(mkdtemp_malloc("/tmp/test-path-lookup.XXXXXXX", &tmp) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/test-path-lookup.XXXXXXX", &tmp) >= 0);
 
         assert_se(unsetenv("SYSTEMD_UNIT_PATH") == 0);
         assert_se(lookup_paths_init(&lp_without_env, scope, 0, NULL) >= 0);
@@ -78,7 +78,7 @@ static void test_generator_binary_paths_one(RuntimeScope scope) {
         char *systemd_generator_path = NULL;
         char *systemd_env_generator_path = NULL;
 
-        assert_se(mkdtemp_malloc("/tmp/test-path-lookup.XXXXXXX", &tmp) >= 0);
+        assert_se(mkdtemp_malloc(SYSTEM_TMPDIR "/test-path-lookup.XXXXXXX", &tmp) >= 0);
 
         assert_se(unsetenv("SYSTEMD_GENERATOR_PATH") == 0);
         assert_se(unsetenv("SYSTEMD_ENVIRONMENT_GENERATOR_PATH") == 0);

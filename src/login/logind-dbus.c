@@ -1652,8 +1652,8 @@ static int method_set_user_linger(sd_bus_message *message, void *userdata, sd_bu
         if (r == 0)
                 return 1; /* No authorization for now, but the async polkit stuff will call us again when it has it */
 
-        (void) mkdir_p_label("/var/lib/systemd", 0755);
-        r = mkdir_safe_label("/var/lib/systemd/linger", 0755, 0, 0, MKDIR_WARN_MODE);
+        (void) mkdir_p_label(LOCALSTATEDIR "/lib/systemd", 0755);
+        r = mkdir_safe_label(LOCALSTATEDIR "/lib/systemd/linger", 0755, 0, 0, MKDIR_WARN_MODE);
         if (r < 0)
                 return r;
 
@@ -1665,7 +1665,7 @@ static int method_set_user_linger(sd_bus_message *message, void *userdata, sd_bu
         if (!escaped)
                 return -ENOMEM;
 
-        path = strjoina("/var/lib/systemd/linger/", escaped);
+        path = strjoina(LOCALSTATEDIR "/lib/systemd/linger/", escaped);
 
         if (enable) {
                 r = touch(path);
@@ -1747,7 +1747,7 @@ static int attach_device(Manager *m, const char *seat, const char *sysfs, sd_bus
         if (sd_device_get_property_value(d, "ID_FOR_SEAT", &id_for_seat) < 0)
                 return sd_bus_error_set_errnof(error, ENODEV, "Device '%s' lacks 'ID_FOR_SEAT' udev property.", sysfs);
 
-        if (asprintf(&file, "/etc/udev/rules.d/72-seat-%s.rules", id_for_seat) < 0)
+        if (asprintf(&file, SYSCONF_DIR "/udev/rules.d/72-seat-%s.rules", id_for_seat) < 0)
                 return -ENOMEM;
 
         r = write_string_filef(
@@ -1765,10 +1765,10 @@ static int flush_devices(Manager *m) {
 
         assert(m);
 
-        d = opendir("/etc/udev/rules.d");
+        d = opendir(SYSCONF_DIR "/udev/rules.d");
         if (!d) {
                 if (errno != ENOENT)
-                        log_warning_errno(errno, "Failed to open %s: %m", "/etc/udev/rules.d");
+                        log_warning_errno(errno, "Failed to open %s: %m", SYSCONF_DIR "/udev/rules.d");
         } else
                 FOREACH_DIRENT_ALL(de, d, break) {
                         if (!dirent_is_file(de))

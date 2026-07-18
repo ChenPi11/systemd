@@ -2522,9 +2522,9 @@ int manager_init(Manager *m) {
         if (e)
                 m->system_storage.path = strdup(e);
         else if (m->namespace)
-                m->system_storage.path = strjoin("/var/log/journal/", MANAGER_MACHINE_ID(m), ".", m->namespace);
+                m->system_storage.path = strjoin(LOCALSTATEDIR "/log/journal/", MANAGER_MACHINE_ID(m), ".", m->namespace);
         else
-                m->system_storage.path = strjoin("/var/log/journal/", MANAGER_MACHINE_ID(m));
+                m->system_storage.path = strjoin(LOCALSTATEDIR "/log/journal/", MANAGER_MACHINE_ID(m));
         if (!m->system_storage.path)
                 return log_oom();
 

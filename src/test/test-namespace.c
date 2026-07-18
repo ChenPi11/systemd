@@ -36,7 +36,7 @@ TEST(namespace_cleanup_tmpdir) {
 
         {
                 _cleanup_(namespace_cleanup_tmpdirp) char *dir = NULL;
-                ASSERT_OK(mkdtemp_malloc("/tmp/systemd-test-namespace.XXXXXX", &dir));
+                ASSERT_OK(mkdtemp_malloc(SYSTEM_TMPDIR "/systemd-test-namespace.XXXXXX", &dir));
         }
 }
 
@@ -45,8 +45,8 @@ static void test_tmpdir_one(const char *id, const char *A, const char *B) {
         struct stat x, y;
         char *c, *d;
 
-        ASSERT_OK(setup_tmp_dir_one(id, "/tmp", &a));
-        ASSERT_OK(setup_tmp_dir_one(id, "/var/tmp", &b));
+        ASSERT_OK(setup_tmp_dir_one(id, SYSTEM_TMPDIR, &a));
+        ASSERT_OK(setup_tmp_dir_one(id, LOCALSTATEDIR SYSTEM_TMPDIR, &b));
 
         ASSERT_OK_ERRNO(stat(a, &x));
         ASSERT_OK_ERRNO(stat(b, &y));
@@ -57,7 +57,7 @@ static void test_tmpdir_one(const char *id, const char *A, const char *B) {
         if (!streq(a, RUN_SYSTEMD_EMPTY)) {
                 ASSERT_TRUE(startswith(a, A));
                 ASSERT_EQ((x.st_mode & 01777), 0700U);
-                ASSERT_NOT_NULL(c = strjoina(a, "/tmp"));
+                ASSERT_NOT_NULL(c = strjoina(a, SYSTEM_TMPDIR));
                 ASSERT_OK_ERRNO(stat(c, &x));
                 ASSERT_TRUE(S_ISDIR(x.st_mode));
                 ASSERT_TRUE(FLAGS_SET(x.st_mode, 01777));
@@ -68,7 +68,7 @@ static void test_tmpdir_one(const char *id, const char *A, const char *B) {
         if (!streq(b, RUN_SYSTEMD_EMPTY)) {
                 ASSERT_TRUE(startswith(b, B));
                 ASSERT_EQ((y.st_mode & 01777), 0700U);
-                ASSERT_NOT_NULL(d = strjoina(b, "/tmp"));
+                ASSERT_NOT_NULL(d = strjoina(b, SYSTEM_TMPDIR));
                 ASSERT_OK_ERRNO(stat(d, &y));
                 ASSERT_TRUE(S_ISDIR(y.st_mode));
                 ASSERT_TRUE(FLAGS_SET(y.st_mode, 01777));
@@ -83,13 +83,13 @@ TEST(tmpdir) {
 
         ASSERT_OK(sd_id128_get_boot(&bid));
 
-        ASSERT_NOT_NULL(x = strjoin("/tmp/systemd-private-", SD_ID128_TO_STRING(bid), "-abcd.service-"));
-        ASSERT_NOT_NULL(y = strjoin("/var/tmp/systemd-private-", SD_ID128_TO_STRING(bid), "-abcd.service-"));
+        ASSERT_NOT_NULL(x = strjoin(SYSTEM_TMPDIR "/systemd-private-", SD_ID128_TO_STRING(bid), "-abcd.service-"));
+        ASSERT_NOT_NULL(y = strjoin(LOCALSTATEDIR SYSTEM_TMPDIR "/systemd-private-", SD_ID128_TO_STRING(bid), "-abcd.service-"));
 
         test_tmpdir_one("abcd.service", x, y);
 
-        ASSERT_NOT_NULL(z = strjoin("/tmp/systemd-private-", SD_ID128_TO_STRING(bid), "-sys-devices-pci0000:00-0000:00:1a.0-usb3-3\\x2d1-3\\x2d1:1.0-bluetooth-hci0.device-"));
-        ASSERT_NOT_NULL(zz = strjoin("/var/tmp/systemd-private-", SD_ID128_TO_STRING(bid), "-sys-devices-pci0000:00-0000:00:1a.0-usb3-3\\x2d1-3\\x2d1:1.0-bluetooth-hci0.device-"));
+        ASSERT_NOT_NULL(z = strjoin(SYSTEM_TMPDIR "/systemd-private-", SD_ID128_TO_STRING(bid), "-sys-devices-pci0000:00-0000:00:1a.0-usb3-3\\x2d1-3\\x2d1:1.0-bluetooth-hci0.device-"));
+        ASSERT_NOT_NULL(zz = strjoin(LOCALSTATEDIR SYSTEM_TMPDIR "/systemd-private-", SD_ID128_TO_STRING(bid), "-sys-devices-pci0000:00-0000:00:1a.0-usb3-3\\x2d1-3\\x2d1:1.0-bluetooth-hci0.device-"));
 
         test_tmpdir_one("sys-devices-pci0000:00-0000:00:1a.0-usb3-3\\x2d1-3\\x2d1:1.0-bluetooth-hci0.device", z, zz);
 }
@@ -239,11 +239,11 @@ TEST(protect_kernel_logs) {
 }
 
 TEST(idmapping_supported) {
-        ASSERT_OK(is_idmapping_supported("/run"));
-        ASSERT_OK(is_idmapping_supported("/var/lib"));
-        ASSERT_OK(is_idmapping_supported("/var/cache"));
-        ASSERT_OK(is_idmapping_supported("/var/log"));
-        ASSERT_OK(is_idmapping_supported("/etc"));
+        ASSERT_OK(is_idmapping_supported(RUNSTATEDIR));
+        ASSERT_OK(is_idmapping_supported(LOCALSTATEDIR "/lib"));
+        ASSERT_OK(is_idmapping_supported(LOCALSTATEDIR "/cache"));
+        ASSERT_OK(is_idmapping_supported(LOCALSTATEDIR "/log"));
+        ASSERT_OK(is_idmapping_supported(SYSCONF_DIR));
 }
 
 TEST(namespace_is_init) {

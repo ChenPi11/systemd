@@ -583,7 +583,7 @@ static int patch_var_run(
 
         assert(path);
 
-        e = path_startswith(*path, "/var/run/");
+        e = path_startswith(*path, LOCALSTATEDIR RUNSTATEDIR "/");
         if (!e)
                 return 0;
 

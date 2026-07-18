@@ -26,7 +26,7 @@ bool in_initrd(void) {
         if (r >= 0)
                 saved_in_initrd = r > 0;
         else {
-                r = RET_NERRNO(access("/etc/initrd-release", F_OK));
+                r = RET_NERRNO(access(SYSCONF_DIR "/initrd-release", F_OK));
                 if (r < 0 && r != -ENOENT)
                         log_debug_errno(r, "Failed to check if /etc/initrd-release exists, assuming it does not: %m");
                 saved_in_initrd = r >= 0;

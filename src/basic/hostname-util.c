@@ -163,7 +163,7 @@ const char* etc_hostname(void) {
         static const char *cached = NULL;
 
         if (!cached)
-                cached = secure_getenv("SYSTEMD_ETC_HOSTNAME") ?: "/etc/hostname";
+                cached = secure_getenv("SYSTEMD_ETC_HOSTNAME") ?: SYSCONF_DIR "/hostname";
 
         return cached;
 }
@@ -172,7 +172,7 @@ const char* etc_machine_info(void) {
         static const char *cached = NULL;
 
         if (!cached)
-                cached = secure_getenv("SYSTEMD_ETC_MACHINE_INFO") ?: "/etc/machine-info";
+                cached = secure_getenv("SYSTEMD_ETC_MACHINE_INFO") ?: SYSCONF_DIR "/machine-info";
 
         return cached;
 }

@@ -134,7 +134,7 @@ static int allocate_temporary_source(CustomMount *m) {
         assert(!m->source);
         assert(!m->rm_rf_tmpdir);
 
-        r = mkdtemp_malloc("/var/tmp/nspawn-temp-XXXXXX", &m->rm_rf_tmpdir);
+        r = mkdtemp_malloc(LOCALSTATEDIR SYSTEM_TMPDIR "/nspawn-temp-XXXXXX", &m->rm_rf_tmpdir);
         if (r < 0)
                 return log_error_errno(r, "Failed to acquire temporary directory: %m");
 
@@ -606,7 +606,7 @@ int mount_all(const char *dest,
                   MOUNT_FATAL|MOUNT_MKDIR },
                 { RUNSTATEDIR "/host",              RUNSTATEDIR "/host",                    NULL,    NULL,                             MS_BIND,
                   MOUNT_FATAL|MOUNT_MKDIR|MOUNT_PREFIX_ROOT }, /* Prepare this so that we can make it read-only when we are done */
-                { "/etc/os-release",        RUNSTATEDIR "/host/os-release",         NULL,    NULL,                             MS_BIND,
+                { SYSCONF_DIR "/os-release",        RUNSTATEDIR "/host/os-release",         NULL,    NULL,                             MS_BIND,
                   MOUNT_TOUCH }, /* As per kernel interface requirements, bind mount first (creating mount points) and make read-only later */
                 { "/usr/lib/os-release",    RUNSTATEDIR "/host/os-release",         NULL,    NULL,                             MS_BIND,
                   MOUNT_FATAL }, /* If /etc/os-release doesn't exist use the version in /usr/lib as fallback */
@@ -1134,7 +1134,7 @@ static int setup_volatile_state_after_remount_idmap(const char *directory, uid_t
 
         /* Then, after remount_idmap(), overmount /var/ with a tmpfs. */
 
-        _cleanup_free_ char *p = path_join(directory, "/var");
+        _cleanup_free_ char *p = path_join(directory, LOCALSTATEDIR);
         if (!p)
                 return log_oom();
 

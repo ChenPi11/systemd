@@ -13,7 +13,7 @@ TEST(link_config_load_reload) {
          * memory. */
 
         _cleanup_(link_config_ctx_freep) LinkConfigContext *ctx = NULL;
-        _cleanup_(unlink_tempfilep) char filename[] = "/tmp/test-link-config.XXXXXX";
+        _cleanup_(unlink_tempfilep) char filename[] = SYSTEM_TMPDIR "/test-link-config.XXXXXX";
         _cleanup_fclose_ FILE *f = NULL;
 
         ASSERT_OK(link_config_ctx_new(&ctx));

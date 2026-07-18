@@ -71,9 +71,9 @@
  * CONF_PATHS_NULSTR() here since we want to insert /var/lib/systemd/home/ in the middle. And we insert that
  * since we want to auto-generate a persistent private/public key pair if we need to. */
 #define KEY_PATHS_NULSTR                        \
-        "/etc/systemd/home/\0"                  \
-        "/run/systemd/home/\0"                  \
-        "/var/lib/systemd/home/\0"              \
+        PKGSYSCONFDIR "/home/\0"                  \
+        RUNSTATEDIR "/systemd/home/\0"                  \
+        LOCALSTATEDIR "/lib/systemd/home/\0"              \
         "/usr/local/lib/systemd/home/\0"        \
         "/usr/lib/systemd/home/\0"
 
@@ -537,7 +537,7 @@ static int search_quota(uid_t uid, const char *exclude_quota_path) {
          * comprehensive, but should cover most cases. Note that in an ideal world every user would be
          * registered in NSS and avoid our own UID range, but for all other cases, it's a good idea to be
          * paranoid and check quota if we can. */
-        FOREACH_STRING(where, get_home_root(), SYSTEM_TMPDIR "/", "/var/", "/var/mail/", "/var/tmp/", "/var/spool/") {
+        FOREACH_STRING(where, get_home_root(), SYSTEM_TMPDIR "/", LOCALSTATEDIR "/", LOCALSTATEDIR "/mail/", LOCALSTATEDIR SYSTEM_TMPDIR "/", LOCALSTATEDIR "/spool/") {
                 struct dqblk req;
                 struct stat st;
 
@@ -1378,10 +1378,10 @@ static int manager_generate_key_pair(Manager *m) {
 
         log_info("Successfully created Ed25519 key pair.");
 
-        (void) mkdir_p("/var/lib/systemd/home", 0755);
+        (void) mkdir_p(LOCALSTATEDIR "/lib/systemd/home", 0755);
 
         /* Write out public key (note that we only do that as a help to the user, we don't make use of this ever */
-        r = fopen_temporary("/var/lib/systemd/home/local.public", &fpublic, &temp_public);
+        r = fopen_temporary(LOCALSTATEDIR "/lib/systemd/home/local.public", &fpublic, &temp_public);
         if (r < 0)
                 return log_error_errno(r, "Failed to open key file for writing: %m");
 
@@ -1397,7 +1397,7 @@ static int manager_generate_key_pair(Manager *m) {
         fpublic = safe_fclose(fpublic);
 
         /* Write out the private key (this actually writes out both private and public, OpenSSL is confusing) */
-        r = fopen_temporary("/var/lib/systemd/home/local.private", &fprivate, &temp_private);
+        r = fopen_temporary(LOCALSTATEDIR "/lib/systemd/home/local.private", &fprivate, &temp_private);
         if (r < 0)
                 return log_error_errno(r, "Failed to open key file for writing: %m");
 
@@ -1414,18 +1414,18 @@ static int manager_generate_key_pair(Manager *m) {
 
         /* Both are written now, move them into place */
 
-        if (rename(temp_public, "/var/lib/systemd/home/local.public") < 0)
+        if (rename(temp_public, LOCALSTATEDIR "/lib/systemd/home/local.public") < 0)
                 return log_error_errno(errno, "Failed to move public key file into place: %m");
         temp_public = mfree(temp_public);
 
-        r = RET_NERRNO(rename(temp_private, "/var/lib/systemd/home/local.private"));
+        r = RET_NERRNO(rename(temp_private, LOCALSTATEDIR "/lib/systemd/home/local.private"));
         if (r < 0) {
-                (void) unlink("/var/lib/systemd/home/local.public"); /* try to remove the file we already created */
+                (void) unlink(LOCALSTATEDIR "/lib/systemd/home/local.public"); /* try to remove the file we already created */
                 return log_error_errno(r, "Failed to move private key file into place: %m");
         }
         temp_private = mfree(temp_private);
 
-        r = fsync_path_at(AT_FDCWD, "/var/lib/systemd/home/");
+        r = fsync_path_at(AT_FDCWD, LOCALSTATEDIR "/lib/systemd/home/");
         if (r < 0)
                 log_warning_errno(r, "Failed to sync /var/lib/systemd/home/, ignoring: %m");
 
