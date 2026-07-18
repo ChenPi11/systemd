@@ -1,7 +1,10 @@
 /* SPDX-License-Identifier: LGPL-2.1-or-later */
 #pragma once
 
+/* bionic does not have <bits/hwcap.h>, so skip #include_next there */
+#if __has_include_next(<bits/hwcap.h>)
 #include_next <bits/hwcap.h> /* IWYU pragma: export */
+#endif
 
 /* All other capabilities are defined in glibc-2.34 / musl 1.2.6 or earlier */
 #if defined(__aarch64__)
