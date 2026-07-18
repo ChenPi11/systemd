@@ -1,18 +1,52 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/system-alphabet/assets/raw/refs/heads/main/icon-with-name-dark-transparent.svg">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/system-alphabet/assets/raw/refs/heads/main/icon-with-name-light-transparent.svg">
+  <img alt="Fallback icon" src="https://github.com/system-alphabet/assets/raw/refs/heads/main/icon-with-name-light-transparent.svg" style="width: 40%; max-width: 600px; height: auto;">
+</picture>
+
 ![Systemd](http://brand.systemd.io/assets/page-logo.png)
 
-System and Service Manager
+System and Service Manager — **SystemA fork with bionic support**
 
-[![OBS Packages Status](https://build.opensuse.org/projects/system:systemd/packages/systemd/badge.svg?type=default)](https://build.opensuse.org/project/show/system:systemd)<br/>
-[![Semaphore CI 2.0 Build Status](https://the-real-systemd.semaphoreci.com/badges/systemd/branches/main.svg?style=shields)](https://the-real-systemd.semaphoreci.com/projects/systemd)<br/>
-[![Coverity Scan Status](https://scan.coverity.com/projects/350/badge.svg)](https://scan.coverity.com/projects/systemd)<br/>
-[![OSS-Fuzz Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/systemd.svg)](https://oss-fuzz-build-logs.storage.googleapis.com/index.html#systemd)<br/>
-[![CIFuzz](https://github.com/systemd/systemd/actions/workflows/cifuzz.yml/badge.svg)](https://github.com/systemd/systemd/actions/workflows/cifuzz.yml)</br>
-[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1369/badge)](https://bestpractices.coreinfrastructure.org/projects/1369)<br/>
-[![Fossies codespell report](https://fossies.org/linux/test/systemd-main.tar.gz/codespell.svg)](https://fossies.org/linux/test/systemd-main.tar.gz/codespell.html)</br>
-[![Translation status](https://translate.fedoraproject.org/widget/systemd/svg-badge.svg)](https://translate.fedoraproject.org/engage/systemd/)</br>
-[![Coverage Status](https://coveralls.io/repos/github/systemd/systemd/badge.svg?branch=main)](https://coveralls.io/github/systemd/systemd?branch=main)</br>
-[![Packaging status](https://repology.org/badge/tiny-repos/systemd.svg)](https://repology.org/project/systemd/versions)</br>
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/systemd/systemd/badge)](https://securityscorecards.dev/viewer/?platform=github.com&org=systemd&repo=systemd)
+## SysA forking utilities
+
+- `tools/check-hardcoded-paths.py` — scans source and test files for hardcoded paths.
+- `tools/replace-hardcoded-paths.py` — bulk-replaces hardcoded paths with compile-time macros.
+
+[![(upstream) OBS Packages Status](https://build.opensuse.org/projects/system:systemd/packages/systemd/badge.svg?type=default)](https://build.opensuse.org/project/show/system:systemd)<br/>
+[![(upstream) Semaphore CI 2.0 Build Status](https://the-real-systemd.semaphoreci.com/badges/systemd/branches/main.svg?style=shields)](https://the-real-systemd.semaphoreci.com/projects/systemd)<br/>
+[![(upstream) Coverity Scan Status](https://scan.coverity.com/projects/350/badge.svg)](https://scan.coverity.com/projects/systemd)<br/>
+[![(upstream) OSS-Fuzz Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/systemd.svg)](https://oss-fuzz-build-logs.storage.googleapis.com/index.html#systemd)<br/>
+[![(upstream) CIFuzz](https://github.com/systemd/systemd/actions/workflows/cifuzz.yml/badge.svg)](https://github.com/systemd/systemd/actions/workflows/cifuzz.yml)</br>
+[![(upstream) CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1369/badge)](https://bestpractices.coreinfrastructure.org/projects/1369)<br/>
+[![(upstream) Fossies codespell report](https://fossies.org/linux/test/systemd-main.tar.gz/codespell.svg)](https://fossies.org/linux/test/systemd-main.tar.gz/codespell.html)</br>
+[![(upstream) Translation status](https://translate.fedoraproject.org/widget/systemd/svg-badge.svg)](https://translate.fedoraproject.org/engage/systemd/)</br>
+[![(upstream) Coverage Status](https://coveralls.io/repos/github/systemd/systemd/badge.svg?branch=main)](https://coveralls.io/github/systemd/systemd?branch=main)</br>
+[![(upstream) Packaging status](https://repology.org/badge/tiny-repos/systemd.svg)](https://repology.org/project/systemd/versions)</br>
+[![(upstream) OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/systemd/systemd/badge)](https://securityscorecards.dev/viewer/?platform=github.com&org=systemd&repo=systemd)
+
+## About This Fork
+
+This fork adapts systemd to compile and run on **Android/Termux** (bionic libc) without a functioning systemd as PID 1.
+
+Key changes:
+
+- **Bionic libc support** — Support for bionic libc.
+
+- **Hardcoded path replacement** — all hardcoded `/run/`, `/tmp/`, `/var/`, `/etc/`, `/etc/systemd/` paths replaced with compile‑time macros (`RUNSTATEDIR`, `SYSTEM_TMPDIR`, `LOCALSTATEDIR`, `SYSCONF_DIR`, `PKGSYSCONFDIR`) so paths resolve to Termux‑writable directories
+
+### Build
+
+```text
+meson setup build \
+  -Dlibc=bionic \
+  -Dsbat-distro=android \
+  -Dtmpdir=$TMPDIR \
+  -Drunstatedir=$TMPDIR/run \
+  -Dlocalstatedir=$PREFIX/var \
+  -Dsysconfdir=$PREFIX/etc
+meson compile -C build
+```
 
 ## Details
 
