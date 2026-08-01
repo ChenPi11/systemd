@@ -10,8 +10,9 @@ System and Service Manager — **SystemA fork with bionic support**
 
 ## SysA forking utilities
 
-- `tools/check-hardcoded-paths.py` — scans source and test files for hardcoded paths.
-- `tools/replace-hardcoded-paths.py` — bulk-replaces hardcoded paths with compile-time macros.
+- `fork-utils/check-hardcoded-paths.py` — Scans source and test files for hardcoded paths.
+- `fork-utils/replace-hardcoded-paths.py` — Bulk-replaces hardcoded paths with compile-time macros.
+- `fork-utils/generate-dbus-api.py` — Generate D-Bus API documentation (YAML) from systemd's --bus-introspect output.
 
 [![(upstream) OBS Packages Status](https://build.opensuse.org/projects/system:systemd/packages/systemd/badge.svg?type=default)](https://build.opensuse.org/project/show/system:systemd)<br/>
 [![(upstream) Semaphore CI 2.0 Build Status](https://the-real-systemd.semaphoreci.com/badges/systemd/branches/main.svg?style=shields)](https://the-real-systemd.semaphoreci.com/projects/systemd)<br/>
