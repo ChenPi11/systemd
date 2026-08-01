@@ -1,0 +1,449 @@
+interface: org.freedesktop.systemd1.Slice
+methods:
+- annotations: {}
+  in_args: []
+  name: GetProcesses
+  out_args:
+  - name: processes
+    type: a(sus)
+- annotations: {}
+  in_args:
+  - name: subcgroup
+    type: s
+  - name: pids
+    type: au
+  name: AttachProcesses
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: subcgroup
+    type: s
+  - name: flags
+    type: t
+  name: RemoveSubgroup
+  out_args: []
+object_path: /org/freedesktop/systemd1/unit
+properties:
+- access: read
+  annotations: {}
+  name: ConcurrencyHardMax
+  type: u
+- access: read
+  annotations: {}
+  name: ConcurrencySoftMax
+  type: u
+- access: read
+  annotations: {}
+  name: NCurrentlyActive
+  type: u
+- access: read
+  annotations: {}
+  name: Slice
+  type: s
+- access: read
+  annotations: {}
+  name: ControlGroup
+  type: s
+- access: read
+  annotations: {}
+  name: ControlGroupId
+  type: t
+- access: read
+  annotations: {}
+  name: MemoryCurrent
+  type: t
+- access: read
+  annotations: {}
+  name: MemoryPeak
+  type: t
+- access: read
+  annotations: {}
+  name: MemorySwapCurrent
+  type: t
+- access: read
+  annotations: {}
+  name: MemorySwapPeak
+  type: t
+- access: read
+  annotations: {}
+  name: MemoryZSwapCurrent
+  type: t
+- access: read
+  annotations: {}
+  name: MemoryAvailable
+  type: t
+- access: read
+  annotations: {}
+  name: EffectiveMemoryMax
+  type: t
+- access: read
+  annotations: {}
+  name: EffectiveMemoryHigh
+  type: t
+- access: read
+  annotations: {}
+  name: CPUUsageNSec
+  type: t
+- access: read
+  annotations: {}
+  name: EffectiveCPUs
+  type: ay
+- access: read
+  annotations: {}
+  name: EffectiveMemoryNodes
+  type: ay
+- access: read
+  annotations: {}
+  name: TasksCurrent
+  type: t
+- access: read
+  annotations: {}
+  name: EffectiveTasksMax
+  type: t
+- access: read
+  annotations: {}
+  name: IPIngressBytes
+  type: t
+- access: read
+  annotations: {}
+  name: IPIngressPackets
+  type: t
+- access: read
+  annotations: {}
+  name: IPEgressBytes
+  type: t
+- access: read
+  annotations: {}
+  name: IPEgressPackets
+  type: t
+- access: read
+  annotations: {}
+  name: IOReadBytes
+  type: t
+- access: read
+  annotations: {}
+  name: IOReadOperations
+  type: t
+- access: read
+  annotations: {}
+  name: IOWriteBytes
+  type: t
+- access: read
+  annotations: {}
+  name: IOWriteOperations
+  type: t
+- access: read
+  annotations: {}
+  name: OOMKills
+  type: t
+- access: read
+  annotations: {}
+  name: ManagedOOMKills
+  type: t
+- access: read
+  annotations: {}
+  name: Delegate
+  type: b
+- access: read
+  annotations: {}
+  name: DelegateControllers
+  type: as
+- access: read
+  annotations: {}
+  name: DelegateSubgroup
+  type: s
+- access: read
+  annotations: {}
+  name: CPUWeight
+  type: t
+- access: read
+  annotations: {}
+  name: StartupCPUWeight
+  type: t
+- access: read
+  annotations: {}
+  name: CPUQuotaPerSecUSec
+  type: t
+- access: read
+  annotations: {}
+  name: CPUQuotaPeriodUSec
+  type: t
+- access: read
+  annotations: {}
+  name: AllowedCPUs
+  type: ay
+- access: read
+  annotations: {}
+  name: StartupAllowedCPUs
+  type: ay
+- access: read
+  annotations: {}
+  name: AllowedMemoryNodes
+  type: ay
+- access: read
+  annotations: {}
+  name: StartupAllowedMemoryNodes
+  type: ay
+- access: read
+  annotations: {}
+  name: IOAccounting
+  type: b
+- access: read
+  annotations: {}
+  name: IOWeight
+  type: t
+- access: read
+  annotations: {}
+  name: StartupIOWeight
+  type: t
+- access: read
+  annotations: {}
+  name: IODeviceWeight
+  type: a(st)
+- access: read
+  annotations: {}
+  name: IOReadBandwidthMax
+  type: a(st)
+- access: read
+  annotations: {}
+  name: IOWriteBandwidthMax
+  type: a(st)
+- access: read
+  annotations: {}
+  name: IOReadIOPSMax
+  type: a(st)
+- access: read
+  annotations: {}
+  name: IOWriteIOPSMax
+  type: a(st)
+- access: read
+  annotations: {}
+  name: IODeviceLatencyTargetUSec
+  type: a(st)
+- access: read
+  annotations: {}
+  name: MemoryAccounting
+  type: b
+- access: read
+  annotations: {}
+  name: MemoryMin
+  type: t
+- access: read
+  annotations: {}
+  name: MemoryLow
+  type: t
+- access: read
+  annotations: {}
+  name: StartupMemoryLow
+  type: t
+- access: read
+  annotations: {}
+  name: MemoryHigh
+  type: t
+- access: read
+  annotations: {}
+  name: StartupMemoryHigh
+  type: t
+- access: read
+  annotations: {}
+  name: MemoryMax
+  type: t
+- access: read
+  annotations: {}
+  name: StartupMemoryMax
+  type: t
+- access: read
+  annotations: {}
+  name: MemorySwapMax
+  type: t
+- access: read
+  annotations: {}
+  name: StartupMemorySwapMax
+  type: t
+- access: read
+  annotations: {}
+  name: MemoryZSwapMax
+  type: t
+- access: read
+  annotations: {}
+  name: StartupMemoryZSwapMax
+  type: t
+- access: read
+  annotations: {}
+  name: MemoryZSwapWriteback
+  type: b
+- access: read
+  annotations: {}
+  name: DevicePolicy
+  type: s
+- access: read
+  annotations: {}
+  name: DeviceAllow
+  type: a(ss)
+- access: read
+  annotations: {}
+  name: TasksAccounting
+  type: b
+- access: read
+  annotations: {}
+  name: TasksMax
+  type: t
+- access: read
+  annotations: {}
+  name: IPAccounting
+  type: b
+- access: read
+  annotations: {}
+  name: IPAddressAllow
+  type: a(iayu)
+- access: read
+  annotations: {}
+  name: IPAddressDeny
+  type: a(iayu)
+- access: read
+  annotations: {}
+  name: IPIngressFilterPath
+  type: as
+- access: read
+  annotations: {}
+  name: IPEgressFilterPath
+  type: as
+- access: read
+  annotations: {}
+  name: DisableControllers
+  type: as
+- access: read
+  annotations: {}
+  name: ManagedOOMSwap
+  type: s
+- access: read
+  annotations: {}
+  name: ManagedOOMMemoryPressure
+  type: s
+- access: read
+  annotations: {}
+  name: ManagedOOMMemoryPressureLimit
+  type: u
+- access: read
+  annotations: {}
+  name: ManagedOOMMemoryPressureDurationUSec
+  type: t
+- access: read
+  annotations: {}
+  name: ManagedOOMPreference
+  type: s
+- access: read
+  annotations: {}
+  name: BPFProgram
+  type: a(ss)
+- access: read
+  annotations: {}
+  name: SocketBindAllow
+  type: a(iiqq)
+- access: read
+  annotations: {}
+  name: SocketBindDeny
+  type: a(iiqq)
+- access: read
+  annotations: {}
+  name: RestrictNetworkInterfaces
+  type: (bas)
+- access: read
+  annotations: {}
+  name: BindNetworkInterface
+  type: s
+- access: read
+  annotations: {}
+  name: MemoryPressureWatch
+  type: s
+- access: read
+  annotations: {}
+  name: MemoryPressureThresholdUSec
+  type: t
+- access: read
+  annotations: {}
+  name: CPUPressureWatch
+  type: s
+- access: read
+  annotations: {}
+  name: CPUPressureThresholdUSec
+  type: t
+- access: read
+  annotations: {}
+  name: IOPressureWatch
+  type: s
+- access: read
+  annotations: {}
+  name: IOPressureThresholdUSec
+  type: t
+- access: read
+  annotations: {}
+  name: NFTSet
+  type: a(iiss)
+- access: read
+  annotations: {}
+  name: CoredumpReceive
+  type: b
+signals: []
+standard_interfaces:
+- interface: org.freedesktop.DBus.Peer
+  methods:
+  - annotations: {}
+    in_args: []
+    name: Ping
+    out_args: []
+  - annotations: {}
+    in_args: []
+    name: GetMachineId
+    out_args:
+    - name: machine_uuid
+      type: s
+  signals: []
+- interface: org.freedesktop.DBus.Introspectable
+  methods:
+  - annotations: {}
+    in_args: []
+    name: Introspect
+    out_args:
+    - name: xml_data
+      type: s
+  signals: []
+- interface: org.freedesktop.DBus.Properties
+  methods:
+  - annotations: {}
+    in_args:
+    - name: interface_name
+      type: s
+    - name: property_name
+      type: s
+    name: Get
+    out_args:
+    - name: value
+      type: v
+  - annotations: {}
+    in_args:
+    - name: interface_name
+      type: s
+    name: GetAll
+    out_args:
+    - name: props
+      type: a{sv}
+  - annotations: {}
+    in_args:
+    - name: interface_name
+      type: s
+    - name: property_name
+      type: s
+    - name: value
+      type: v
+    name: Set
+    out_args: []
+  signals:
+  - args:
+    - name: interface_name
+      type: s
+    - name: changed_properties
+      type: a{sv}
+    - name: invalidated_properties
+      type: as
+    name: PropertiesChanged

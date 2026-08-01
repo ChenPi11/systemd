@@ -1,0 +1,1429 @@
+interface: org.freedesktop.systemd1.Manager
+methods:
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  name: GetUnit
+  out_args:
+  - name: unit
+    type: o
+- annotations: {}
+  in_args:
+  - name: pid
+    type: u
+  name: GetUnitByPID
+  out_args:
+  - name: unit
+    type: o
+- annotations: {}
+  in_args:
+  - name: invocation_id
+    type: ay
+  name: GetUnitByInvocationID
+  out_args:
+  - name: unit
+    type: o
+- annotations: {}
+  in_args:
+  - name: cgroup
+    type: s
+  name: GetUnitByControlGroup
+  out_args:
+  - name: unit
+    type: o
+- annotations: {}
+  in_args:
+  - name: pidfd
+    type: h
+  name: GetUnitByPIDFD
+  out_args:
+  - name: unit
+    type: o
+  - name: unit_id
+    type: s
+  - name: invocation_id
+    type: ay
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  name: LoadUnit
+  out_args:
+  - name: unit
+    type: o
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: mode
+    type: s
+  name: StartUnit
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: mode
+    type: s
+  - name: flags
+    type: t
+  name: StartUnitWithFlags
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: old_unit
+    type: s
+  - name: new_unit
+    type: s
+  - name: mode
+    type: s
+  name: StartUnitReplace
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: mode
+    type: s
+  name: StopUnit
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: mode
+    type: s
+  name: ReloadUnit
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: mode
+    type: s
+  name: RestartUnit
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: mode
+    type: s
+  name: TryRestartUnit
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: mode
+    type: s
+  name: ReloadOrRestartUnit
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: mode
+    type: s
+  name: ReloadOrTryRestartUnit
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: job_type
+    type: s
+  - name: job_mode
+    type: s
+  name: EnqueueUnitJob
+  out_args:
+  - name: job_id
+    type: u
+  - name: job_path
+    type: o
+  - name: unit_id
+    type: s
+  - name: unit_path
+    type: o
+  - name: job_type
+    type: s
+  - name: affected_jobs
+    type: a(uosos)
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: whom
+    type: s
+  - name: signal
+    type: i
+  name: KillUnit
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: whom
+    type: s
+  - name: subgroup
+    type: s
+  - name: signal
+    type: i
+  name: KillUnitSubgroup
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: whom
+    type: s
+  - name: signal
+    type: i
+  - name: value
+    type: i
+  name: QueueSignalUnit
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: mask
+    type: as
+  name: CleanUnit
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  name: FreezeUnit
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  name: ThawUnit
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  name: ResetFailedUnit
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: runtime
+    type: b
+  - name: properties
+    type: a(sv)
+  name: SetUnitProperties
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: source
+    type: s
+  - name: destination
+    type: s
+  - name: read_only
+    type: b
+  - name: mkdir
+    type: b
+  name: BindMountUnit
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: source
+    type: s
+  - name: destination
+    type: s
+  - name: read_only
+    type: b
+  - name: mkdir
+    type: b
+  - name: options
+    type: a(ss)
+  name: MountImageUnit
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  name: RefUnit
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  name: UnrefUnit
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: mode
+    type: s
+  - name: properties
+    type: a(sv)
+  - name: aux
+    type: a(sa(sv))
+  name: StartTransientUnit
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  name: GetUnitProcesses
+  out_args:
+  - name: processes
+    type: a(sus)
+- annotations: {}
+  in_args:
+  - name: unit_name
+    type: s
+  - name: subcgroup
+    type: s
+  - name: pids
+    type: au
+  name: AttachProcessesToUnit
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: unit_name
+    type: s
+  - name: subcgroup
+    type: s
+  - name: flags
+    type: t
+  name: RemoveSubgroupFromUnit
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  name: AbandonScope
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: id
+    type: u
+  name: GetJob
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: id
+    type: u
+  name: GetJobAfter
+  out_args:
+  - name: jobs
+    type: a(usssoo)
+- annotations: {}
+  in_args:
+  - name: id
+    type: u
+  name: GetJobBefore
+  out_args:
+  - name: jobs
+    type: a(usssoo)
+- annotations: {}
+  in_args:
+  - name: id
+    type: u
+  name: CancelJob
+  out_args: []
+- annotations: {}
+  in_args: []
+  name: ClearJobs
+  out_args: []
+- annotations: {}
+  in_args: []
+  name: ResetFailed
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: mode
+    type: s
+  name: SetShowStatus
+  out_args: []
+- annotations: {}
+  in_args: []
+  name: ListUnits
+  out_args:
+  - name: units
+    type: a(ssssssouso)
+- annotations: {}
+  in_args:
+  - name: states
+    type: as
+  name: ListUnitsFiltered
+  out_args:
+  - name: units
+    type: a(ssssssouso)
+- annotations: {}
+  in_args:
+  - name: states
+    type: as
+  - name: patterns
+    type: as
+  name: ListUnitsByPatterns
+  out_args:
+  - name: units
+    type: a(ssssssouso)
+- annotations: {}
+  in_args:
+  - name: names
+    type: as
+  name: ListUnitsByNames
+  out_args:
+  - name: units
+    type: a(ssssssouso)
+- annotations: {}
+  in_args: []
+  name: ListJobs
+  out_args:
+  - name: jobs
+    type: a(usssoo)
+- annotations: {}
+  in_args: []
+  name: Subscribe
+  out_args: []
+- annotations: {}
+  in_args: []
+  name: Unsubscribe
+  out_args: []
+- annotations: {}
+  in_args: []
+  name: Dump
+  out_args:
+  - name: output
+    type: s
+- annotations: {}
+  in_args:
+  - name: patterns
+    type: as
+  name: DumpUnitsMatchingPatterns
+  out_args:
+  - name: output
+    type: s
+- annotations: {}
+  in_args: []
+  name: DumpByFileDescriptor
+  out_args:
+  - name: fd
+    type: h
+- annotations: {}
+  in_args:
+  - name: patterns
+    type: as
+  name: DumpUnitsMatchingPatternsByFileDescriptor
+  out_args:
+  - name: fd
+    type: h
+- annotations: {}
+  in_args: []
+  name: Reload
+  out_args: []
+- annotations:
+    no_reply: true
+  in_args: []
+  name: Reexecute
+  out_args: []
+- annotations:
+    privileged: true
+  in_args: []
+  name: Exit
+  out_args: []
+- annotations:
+    privileged: true
+  in_args: []
+  name: Reboot
+  out_args: []
+- annotations:
+    privileged: true
+  in_args:
+  - name: new_root
+    type: s
+  name: SoftReboot
+  out_args: []
+- annotations:
+    privileged: true
+  in_args: []
+  name: PowerOff
+  out_args: []
+- annotations:
+    privileged: true
+  in_args: []
+  name: Halt
+  out_args: []
+- annotations:
+    privileged: true
+  in_args: []
+  name: KExec
+  out_args: []
+- annotations:
+    privileged: true
+  in_args:
+  - name: new_root
+    type: s
+  - name: init
+    type: s
+  name: SwitchRoot
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: assignments
+    type: as
+  name: SetEnvironment
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: names
+    type: as
+  name: UnsetEnvironment
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: names
+    type: as
+  - name: assignments
+    type: as
+  name: UnsetAndSetEnvironment
+  out_args: []
+- annotations: {}
+  in_args: []
+  name: EnqueueMarkedJobs
+  out_args:
+  - name: jobs
+    type: ao
+- annotations: {}
+  in_args: []
+  name: ListUnitFiles
+  out_args:
+  - name: unit_files
+    type: a(ss)
+- annotations: {}
+  in_args:
+  - name: states
+    type: as
+  - name: patterns
+    type: as
+  name: ListUnitFilesByPatterns
+  out_args:
+  - name: unit_files
+    type: a(ss)
+- annotations: {}
+  in_args:
+  - name: file
+    type: s
+  name: GetUnitFileState
+  out_args:
+  - name: state
+    type: s
+- annotations: {}
+  in_args:
+  - name: files
+    type: as
+  - name: runtime
+    type: b
+  - name: force
+    type: b
+  name: EnableUnitFiles
+  out_args:
+  - name: carries_install_info
+    type: b
+  - name: changes
+    type: a(sss)
+- annotations: {}
+  in_args:
+  - name: files
+    type: as
+  - name: runtime
+    type: b
+  name: DisableUnitFiles
+  out_args:
+  - name: changes
+    type: a(sss)
+- annotations: {}
+  in_args:
+  - name: files
+    type: as
+  - name: flags
+    type: t
+  name: EnableUnitFilesWithFlags
+  out_args:
+  - name: carries_install_info
+    type: b
+  - name: changes
+    type: a(sss)
+- annotations: {}
+  in_args:
+  - name: files
+    type: as
+  - name: flags
+    type: t
+  name: DisableUnitFilesWithFlags
+  out_args:
+  - name: changes
+    type: a(sss)
+- annotations: {}
+  in_args:
+  - name: files
+    type: as
+  - name: flags
+    type: t
+  name: DisableUnitFilesWithFlagsAndInstallInfo
+  out_args:
+  - name: carries_install_info
+    type: b
+  - name: changes
+    type: a(sss)
+- annotations: {}
+  in_args:
+  - name: files
+    type: as
+  - name: runtime
+    type: b
+  - name: force
+    type: b
+  name: ReenableUnitFiles
+  out_args:
+  - name: carries_install_info
+    type: b
+  - name: changes
+    type: a(sss)
+- annotations: {}
+  in_args:
+  - name: files
+    type: as
+  - name: runtime
+    type: b
+  - name: force
+    type: b
+  name: LinkUnitFiles
+  out_args:
+  - name: changes
+    type: a(sss)
+- annotations: {}
+  in_args:
+  - name: files
+    type: as
+  - name: runtime
+    type: b
+  - name: force
+    type: b
+  name: PresetUnitFiles
+  out_args:
+  - name: carries_install_info
+    type: b
+  - name: changes
+    type: a(sss)
+- annotations: {}
+  in_args:
+  - name: files
+    type: as
+  - name: mode
+    type: s
+  - name: runtime
+    type: b
+  - name: force
+    type: b
+  name: PresetUnitFilesWithMode
+  out_args:
+  - name: carries_install_info
+    type: b
+  - name: changes
+    type: a(sss)
+- annotations: {}
+  in_args:
+  - name: files
+    type: as
+  - name: runtime
+    type: b
+  - name: force
+    type: b
+  name: MaskUnitFiles
+  out_args:
+  - name: changes
+    type: a(sss)
+- annotations: {}
+  in_args:
+  - name: files
+    type: as
+  - name: runtime
+    type: b
+  name: UnmaskUnitFiles
+  out_args:
+  - name: changes
+    type: a(sss)
+- annotations: {}
+  in_args:
+  - name: files
+    type: as
+  name: RevertUnitFiles
+  out_args:
+  - name: changes
+    type: a(sss)
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: force
+    type: b
+  name: SetDefaultTarget
+  out_args:
+  - name: changes
+    type: a(sss)
+- annotations: {}
+  in_args: []
+  name: GetDefaultTarget
+  out_args:
+  - name: name
+    type: s
+- annotations: {}
+  in_args:
+  - name: mode
+    type: s
+  - name: runtime
+    type: b
+  - name: force
+    type: b
+  name: PresetAllUnitFiles
+  out_args:
+  - name: changes
+    type: a(sss)
+- annotations: {}
+  in_args:
+  - name: files
+    type: as
+  - name: target
+    type: s
+  - name: type
+    type: s
+  - name: runtime
+    type: b
+  - name: force
+    type: b
+  name: AddDependencyUnitFiles
+  out_args:
+  - name: changes
+    type: a(sss)
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  - name: runtime
+    type: b
+  name: GetUnitFileLinks
+  out_args:
+  - name: links
+    type: as
+- annotations: {}
+  in_args:
+  - name: number
+    type: y
+  name: SetExitCode
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  name: LookupDynamicUserByName
+  out_args:
+  - name: uid
+    type: u
+- annotations: {}
+  in_args:
+  - name: uid
+    type: u
+  name: LookupDynamicUserByUID
+  out_args:
+  - name: name
+    type: s
+- annotations: {}
+  in_args: []
+  name: GetDynamicUsers
+  out_args:
+  - name: users
+    type: a(us)
+- annotations: {}
+  in_args:
+  - name: name
+    type: s
+  name: DumpUnitFileDescriptorStore
+  out_args:
+  - name: entries
+    type: a(suuutuusu)
+object_path: /org/freedesktop/systemd1
+properties:
+- access: read
+  annotations: {}
+  name: Version
+  type: s
+- access: read
+  annotations: {}
+  name: Features
+  type: s
+- access: read
+  annotations: {}
+  name: Virtualization
+  type: s
+- access: read
+  annotations: {}
+  name: ConfidentialVirtualization
+  type: s
+- access: read
+  annotations: {}
+  name: Architecture
+  type: s
+- access: read
+  annotations: {}
+  name: Tainted
+  type: s
+- access: read
+  annotations: {}
+  name: FirmwareTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: FirmwareTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: LoaderTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: LoaderTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: KernelTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: KernelTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: InitRDTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: InitRDTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: UserspaceTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: UserspaceTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: FinishTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: FinishTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: ShutdownStartTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: ShutdownStartTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: SecurityStartTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: SecurityStartTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: SecurityFinishTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: SecurityFinishTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: GeneratorsStartTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: GeneratorsStartTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: GeneratorsFinishTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: GeneratorsFinishTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: UnitsLoadStartTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: UnitsLoadStartTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: UnitsLoadFinishTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: UnitsLoadFinishTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: UnitsLoadTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: UnitsLoadTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: InitRDSecurityStartTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: InitRDSecurityStartTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: InitRDSecurityFinishTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: InitRDSecurityFinishTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: InitRDGeneratorsStartTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: InitRDGeneratorsStartTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: InitRDGeneratorsFinishTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: InitRDGeneratorsFinishTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: InitRDUnitsLoadStartTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: InitRDUnitsLoadStartTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: InitRDUnitsLoadFinishTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: InitRDUnitsLoadFinishTimestampMonotonic
+  type: t
+- access: readwrite
+  annotations:
+    privileged: true
+  name: LogLevel
+  type: s
+- access: readwrite
+  annotations:
+    privileged: true
+  name: LogTarget
+  type: s
+- access: read
+  annotations: {}
+  name: NNames
+  type: u
+- access: read
+  annotations: {}
+  name: NFailedUnits
+  type: u
+- access: read
+  annotations: {}
+  name: NJobs
+  type: u
+- access: read
+  annotations: {}
+  name: NInstalledJobs
+  type: u
+- access: read
+  annotations: {}
+  name: NFailedJobs
+  type: u
+- access: read
+  annotations: {}
+  name: TransactionsWithOrderingCycle
+  type: at
+- access: read
+  annotations: {}
+  name: Progress
+  type: d
+- access: read
+  annotations: {}
+  name: Environment
+  type: as
+- access: read
+  annotations: {}
+  name: ConfirmSpawn
+  type: b
+- access: read
+  annotations: {}
+  name: ShowStatus
+  type: b
+- access: read
+  annotations: {}
+  name: UnitPath
+  type: as
+- access: read
+  annotations: {}
+  name: DefaultStandardOutput
+  type: s
+- access: read
+  annotations: {}
+  name: DefaultStandardError
+  type: s
+- access: read
+  annotations: {}
+  name: WatchdogDevice
+  type: s
+- access: read
+  annotations: {}
+  name: WatchdogLastPingTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: WatchdogLastPingTimestampMonotonic
+  type: t
+- access: readwrite
+  annotations:
+    privileged: true
+  name: RuntimeWatchdogUSec
+  type: t
+- access: readwrite
+  annotations:
+    privileged: true
+  name: RuntimeWatchdogPreUSec
+  type: t
+- access: readwrite
+  annotations:
+    privileged: true
+  name: RuntimeWatchdogPreGovernor
+  type: s
+- access: readwrite
+  annotations:
+    privileged: true
+  name: RebootWatchdogUSec
+  type: t
+- access: readwrite
+  annotations:
+    privileged: true
+  name: KExecWatchdogUSec
+  type: t
+- access: readwrite
+  annotations:
+    privileged: true
+  name: ServiceWatchdogs
+  type: b
+- access: read
+  annotations: {}
+  name: ControlGroup
+  type: s
+- access: read
+  annotations: {}
+  name: SystemState
+  type: s
+- access: read
+  annotations: {}
+  name: ExitCode
+  type: y
+- access: read
+  annotations: {}
+  name: DefaultTimerAccuracyUSec
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultTimeoutStartUSec
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultTimeoutStopUSec
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultTimeoutAbortUSec
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultDeviceTimeoutUSec
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultRestartUSec
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultStartLimitIntervalUSec
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultStartLimitBurst
+  type: u
+- access: read
+  annotations: {}
+  name: DefaultIOAccounting
+  type: b
+- access: read
+  annotations: {}
+  name: DefaultIPAccounting
+  type: b
+- access: read
+  annotations: {}
+  name: DefaultMemoryAccounting
+  type: b
+- access: read
+  annotations: {}
+  name: DefaultTasksAccounting
+  type: b
+- access: read
+  annotations: {}
+  name: DefaultLimitCPU
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitCPUSoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitFSIZE
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitFSIZESoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitDATA
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitDATASoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitSTACK
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitSTACKSoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitCORE
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitCORESoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitRSS
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitRSSSoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitNOFILE
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitNOFILESoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitAS
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitASSoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitNPROC
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitNPROCSoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitMEMLOCK
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitMEMLOCKSoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitLOCKS
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitLOCKSSoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitSIGPENDING
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitSIGPENDINGSoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitMSGQUEUE
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitMSGQUEUESoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitNICE
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitNICESoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitRTPRIO
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitRTPRIOSoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitRTTIME
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultLimitRTTIMESoft
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultTasksMax
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultMemoryPressureThresholdUSec
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultMemoryPressureWatch
+  type: s
+- access: read
+  annotations: {}
+  name: DefaultCPUPressureThresholdUSec
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultCPUPressureWatch
+  type: s
+- access: read
+  annotations: {}
+  name: DefaultIOPressureThresholdUSec
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultIOPressureWatch
+  type: s
+- access: read
+  annotations: {}
+  name: TimerSlackNSec
+  type: t
+- access: read
+  annotations: {}
+  name: DefaultOOMPolicy
+  type: s
+- access: read
+  annotations: {}
+  name: DefaultOOMScoreAdjust
+  type: i
+- access: read
+  annotations: {}
+  name: DefaultRestrictSUIDSGID
+  type: b
+- access: read
+  annotations: {}
+  name: CtrlAltDelBurstAction
+  type: s
+- access: read
+  annotations: {}
+  name: SoftRebootsCount
+  type: u
+- access: read
+  annotations: {}
+  name: DefaultMemoryZSwapWriteback
+  type: b
+signals:
+- args:
+  - name: id
+    type: s
+  - name: unit
+    type: o
+  name: UnitNew
+- args:
+  - name: id
+    type: s
+  - name: unit
+    type: o
+  name: UnitRemoved
+- args:
+  - name: id
+    type: u
+  - name: job
+    type: o
+  - name: unit
+    type: s
+  name: JobNew
+- args:
+  - name: id
+    type: u
+  - name: job
+    type: o
+  - name: unit
+    type: s
+  - name: result
+    type: s
+  name: JobRemoved
+- args:
+  - name: firmware
+    type: t
+  - name: loader
+    type: t
+  - name: kernel
+    type: t
+  - name: initrd
+    type: t
+  - name: userspace
+    type: t
+  - name: total
+    type: t
+  name: StartupFinished
+- args: []
+  name: UnitFilesChanged
+- args:
+  - name: active
+    type: b
+  name: Reloading
+standard_interfaces:
+- interface: org.freedesktop.DBus.Peer
+  methods:
+  - annotations: {}
+    in_args: []
+    name: Ping
+    out_args: []
+  - annotations: {}
+    in_args: []
+    name: GetMachineId
+    out_args:
+    - name: machine_uuid
+      type: s
+  signals: []
+- interface: org.freedesktop.DBus.Introspectable
+  methods:
+  - annotations: {}
+    in_args: []
+    name: Introspect
+    out_args:
+    - name: xml_data
+      type: s
+  signals: []
+- interface: org.freedesktop.DBus.Properties
+  methods:
+  - annotations: {}
+    in_args:
+    - name: interface_name
+      type: s
+    - name: property_name
+      type: s
+    name: Get
+    out_args:
+    - name: value
+      type: v
+  - annotations: {}
+    in_args:
+    - name: interface_name
+      type: s
+    name: GetAll
+    out_args:
+    - name: props
+      type: a{sv}
+  - annotations: {}
+    in_args:
+    - name: interface_name
+      type: s
+    - name: property_name
+      type: s
+    - name: value
+      type: v
+    name: Set
+    out_args: []
+  signals:
+  - args:
+    - name: interface_name
+      type: s
+    - name: changed_properties
+      type: a{sv}
+    - name: invalidated_properties
+      type: as
+    name: PropertiesChanged

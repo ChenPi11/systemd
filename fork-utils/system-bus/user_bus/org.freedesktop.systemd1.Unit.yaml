@@ -1,0 +1,611 @@
+interface: org.freedesktop.systemd1.Unit
+methods:
+- annotations: {}
+  in_args:
+  - name: mode
+    type: s
+  name: Start
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: mode
+    type: s
+  name: Stop
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: mode
+    type: s
+  name: Reload
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: mode
+    type: s
+  name: Restart
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: mode
+    type: s
+  name: TryRestart
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: mode
+    type: s
+  name: ReloadOrRestart
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: mode
+    type: s
+  name: ReloadOrTryRestart
+  out_args:
+  - name: job
+    type: o
+- annotations: {}
+  in_args:
+  - name: job_type
+    type: s
+  - name: job_mode
+    type: s
+  name: EnqueueJob
+  out_args:
+  - name: job_id
+    type: u
+  - name: job_path
+    type: o
+  - name: unit_id
+    type: s
+  - name: unit_path
+    type: o
+  - name: job_type
+    type: s
+  - name: affected_jobs
+    type: a(uosos)
+- annotations: {}
+  in_args:
+  - name: whom
+    type: s
+  - name: signal
+    type: i
+  name: Kill
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: subgroup
+    type: s
+  - name: signal
+    type: i
+  name: KillSubgroup
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: whom
+    type: s
+  - name: signal
+    type: i
+  - name: value
+    type: i
+  name: QueueSignal
+  out_args: []
+- annotations: {}
+  in_args: []
+  name: ResetFailed
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: runtime
+    type: b
+  - name: properties
+    type: a(sv)
+  name: SetProperties
+  out_args: []
+- annotations: {}
+  in_args: []
+  name: Ref
+  out_args: []
+- annotations: {}
+  in_args: []
+  name: Unref
+  out_args: []
+- annotations: {}
+  in_args:
+  - name: mask
+    type: as
+  name: Clean
+  out_args: []
+- annotations: {}
+  in_args: []
+  name: Freeze
+  out_args: []
+- annotations: {}
+  in_args: []
+  name: Thaw
+  out_args: []
+object_path: /org/freedesktop/systemd1/unit
+properties:
+- access: read
+  annotations: {}
+  name: Id
+  type: s
+- access: read
+  annotations: {}
+  name: Names
+  type: as
+- access: read
+  annotations: {}
+  name: Following
+  type: s
+- access: read
+  annotations: {}
+  name: Requires
+  type: as
+- access: read
+  annotations: {}
+  name: Requisite
+  type: as
+- access: read
+  annotations: {}
+  name: Wants
+  type: as
+- access: read
+  annotations: {}
+  name: BindsTo
+  type: as
+- access: read
+  annotations: {}
+  name: PartOf
+  type: as
+- access: read
+  annotations: {}
+  name: Upholds
+  type: as
+- access: read
+  annotations: {}
+  name: RequiredBy
+  type: as
+- access: read
+  annotations: {}
+  name: RequisiteOf
+  type: as
+- access: read
+  annotations: {}
+  name: WantedBy
+  type: as
+- access: read
+  annotations: {}
+  name: BoundBy
+  type: as
+- access: read
+  annotations: {}
+  name: UpheldBy
+  type: as
+- access: read
+  annotations: {}
+  name: ConsistsOf
+  type: as
+- access: read
+  annotations: {}
+  name: Conflicts
+  type: as
+- access: read
+  annotations: {}
+  name: ConflictedBy
+  type: as
+- access: read
+  annotations: {}
+  name: Before
+  type: as
+- access: read
+  annotations: {}
+  name: After
+  type: as
+- access: read
+  annotations: {}
+  name: OnSuccess
+  type: as
+- access: read
+  annotations: {}
+  name: OnSuccessOf
+  type: as
+- access: read
+  annotations: {}
+  name: OnFailure
+  type: as
+- access: read
+  annotations: {}
+  name: OnFailureOf
+  type: as
+- access: read
+  annotations: {}
+  name: Triggers
+  type: as
+- access: read
+  annotations: {}
+  name: TriggeredBy
+  type: as
+- access: read
+  annotations: {}
+  name: PropagatesReloadTo
+  type: as
+- access: read
+  annotations: {}
+  name: ReloadPropagatedFrom
+  type: as
+- access: read
+  annotations: {}
+  name: PropagatesStopTo
+  type: as
+- access: read
+  annotations: {}
+  name: StopPropagatedFrom
+  type: as
+- access: read
+  annotations: {}
+  name: JoinsNamespaceOf
+  type: as
+- access: read
+  annotations: {}
+  name: SliceOf
+  type: as
+- access: read
+  annotations: {}
+  name: RequiresMountsFor
+  type: as
+- access: read
+  annotations: {}
+  name: WantsMountsFor
+  type: as
+- access: read
+  annotations: {}
+  name: Documentation
+  type: as
+- access: read
+  annotations: {}
+  name: Description
+  type: s
+- access: read
+  annotations: {}
+  name: AccessSELinuxContext
+  type: s
+- access: read
+  annotations: {}
+  name: LoadState
+  type: s
+- access: read
+  annotations: {}
+  name: ActiveState
+  type: s
+- access: read
+  annotations: {}
+  name: FreezerState
+  type: s
+- access: read
+  annotations: {}
+  name: SubState
+  type: s
+- access: read
+  annotations: {}
+  name: FragmentPath
+  type: s
+- access: read
+  annotations: {}
+  name: SourcePath
+  type: s
+- access: read
+  annotations: {}
+  name: DropInPaths
+  type: as
+- access: read
+  annotations: {}
+  name: UnitFileState
+  type: s
+- access: read
+  annotations: {}
+  name: UnitFilePreset
+  type: s
+- access: read
+  annotations: {}
+  name: StateChangeTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: StateChangeTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: InactiveExitTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: InactiveExitTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: ActiveEnterTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: ActiveEnterTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: ActiveExitTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: ActiveExitTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: InactiveEnterTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: InactiveEnterTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: CanStart
+  type: b
+- access: read
+  annotations: {}
+  name: CanStop
+  type: b
+- access: read
+  annotations: {}
+  name: CanReload
+  type: b
+- access: read
+  annotations: {}
+  name: CanIsolate
+  type: b
+- access: read
+  annotations: {}
+  name: CanClean
+  type: as
+- access: read
+  annotations: {}
+  name: CanFreeze
+  type: b
+- access: read
+  annotations: {}
+  name: CanLiveMount
+  type: b
+- access: read
+  annotations: {}
+  name: Job
+  type: (uo)
+- access: read
+  annotations: {}
+  name: StopWhenUnneeded
+  type: b
+- access: read
+  annotations: {}
+  name: RefuseManualStart
+  type: b
+- access: read
+  annotations: {}
+  name: RefuseManualStop
+  type: b
+- access: read
+  annotations: {}
+  name: AllowIsolate
+  type: b
+- access: read
+  annotations: {}
+  name: DefaultDependencies
+  type: b
+- access: read
+  annotations: {}
+  name: SurviveFinalKillSignal
+  type: b
+- access: read
+  annotations: {}
+  name: OnSuccessJobMode
+  type: s
+- access: read
+  annotations: {}
+  name: OnFailureJobMode
+  type: s
+- access: read
+  annotations: {}
+  name: IgnoreOnIsolate
+  type: b
+- access: read
+  annotations: {}
+  name: NeedDaemonReload
+  type: b
+- access: read
+  annotations: {}
+  name: Markers
+  type: as
+- access: read
+  annotations: {}
+  name: JobTimeoutUSec
+  type: t
+- access: read
+  annotations: {}
+  name: JobRunningTimeoutUSec
+  type: t
+- access: read
+  annotations: {}
+  name: JobTimeoutAction
+  type: s
+- access: read
+  annotations: {}
+  name: JobTimeoutRebootArgument
+  type: s
+- access: read
+  annotations: {}
+  name: ConditionResult
+  type: b
+- access: read
+  annotations: {}
+  name: AssertResult
+  type: b
+- access: read
+  annotations: {}
+  name: ConditionTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: ConditionTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: AssertTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: AssertTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: Conditions
+  type: a(sbbsi)
+- access: read
+  annotations: {}
+  name: Asserts
+  type: a(sbbsi)
+- access: read
+  annotations: {}
+  name: LoadError
+  type: (ss)
+- access: read
+  annotations: {}
+  name: Transient
+  type: b
+- access: read
+  annotations: {}
+  name: Perpetual
+  type: b
+- access: read
+  annotations: {}
+  name: StartLimitIntervalUSec
+  type: t
+- access: read
+  annotations: {}
+  name: StartLimitBurst
+  type: u
+- access: read
+  annotations: {}
+  name: StartLimitAction
+  type: s
+- access: read
+  annotations: {}
+  name: FailureAction
+  type: s
+- access: read
+  annotations: {}
+  name: FailureActionExitStatus
+  type: i
+- access: read
+  annotations: {}
+  name: SuccessAction
+  type: s
+- access: read
+  annotations: {}
+  name: SuccessActionExitStatus
+  type: i
+- access: read
+  annotations: {}
+  name: RebootArgument
+  type: s
+- access: read
+  annotations: {}
+  name: InvocationID
+  type: ay
+- access: read
+  annotations: {}
+  name: CollectMode
+  type: s
+- access: read
+  annotations: {}
+  name: Refs
+  type: as
+- access: read
+  annotations: {}
+  name: ActivationDetails
+  type: a(ss)
+- access: read
+  annotations: {}
+  name: DebugInvocation
+  type: b
+signals: []
+standard_interfaces:
+- interface: org.freedesktop.DBus.Peer
+  methods:
+  - annotations: {}
+    in_args: []
+    name: Ping
+    out_args: []
+  - annotations: {}
+    in_args: []
+    name: GetMachineId
+    out_args:
+    - name: machine_uuid
+      type: s
+  signals: []
+- interface: org.freedesktop.DBus.Introspectable
+  methods:
+  - annotations: {}
+    in_args: []
+    name: Introspect
+    out_args:
+    - name: xml_data
+      type: s
+  signals: []
+- interface: org.freedesktop.DBus.Properties
+  methods:
+  - annotations: {}
+    in_args:
+    - name: interface_name
+      type: s
+    - name: property_name
+      type: s
+    name: Get
+    out_args:
+    - name: value
+      type: v
+  - annotations: {}
+    in_args:
+    - name: interface_name
+      type: s
+    name: GetAll
+    out_args:
+    - name: props
+      type: a{sv}
+  - annotations: {}
+    in_args:
+    - name: interface_name
+      type: s
+    - name: property_name
+      type: s
+    - name: value
+      type: v
+    name: Set
+    out_args: []
+  signals:
+  - args:
+    - name: interface_name
+      type: s
+    - name: changed_properties
+      type: a{sv}
+    - name: invalidated_properties
+      type: as
+    name: PropertiesChanged

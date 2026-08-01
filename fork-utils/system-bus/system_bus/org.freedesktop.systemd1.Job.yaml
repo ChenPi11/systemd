@@ -1,0 +1,103 @@
+interface: org.freedesktop.systemd1.Job
+methods:
+- annotations: {}
+  in_args: []
+  name: Cancel
+  out_args: []
+- annotations: {}
+  in_args: []
+  name: GetAfter
+  out_args:
+  - name: jobs
+    type: a(usssoo)
+- annotations: {}
+  in_args: []
+  name: GetBefore
+  out_args:
+  - name: jobs
+    type: a(usssoo)
+object_path: /org/freedesktop/systemd1/job
+properties:
+- access: read
+  annotations: {}
+  name: Id
+  type: u
+- access: read
+  annotations: {}
+  name: Unit
+  type: (so)
+- access: read
+  annotations: {}
+  name: JobType
+  type: s
+- access: read
+  annotations: {}
+  name: State
+  type: s
+- access: read
+  annotations: {}
+  name: ActivationDetails
+  type: a(ss)
+signals: []
+standard_interfaces:
+- interface: org.freedesktop.DBus.Peer
+  methods:
+  - annotations: {}
+    in_args: []
+    name: Ping
+    out_args: []
+  - annotations: {}
+    in_args: []
+    name: GetMachineId
+    out_args:
+    - name: machine_uuid
+      type: s
+  signals: []
+- interface: org.freedesktop.DBus.Introspectable
+  methods:
+  - annotations: {}
+    in_args: []
+    name: Introspect
+    out_args:
+    - name: xml_data
+      type: s
+  signals: []
+- interface: org.freedesktop.DBus.Properties
+  methods:
+  - annotations: {}
+    in_args:
+    - name: interface_name
+      type: s
+    - name: property_name
+      type: s
+    name: Get
+    out_args:
+    - name: value
+      type: v
+  - annotations: {}
+    in_args:
+    - name: interface_name
+      type: s
+    name: GetAll
+    out_args:
+    - name: props
+      type: a{sv}
+  - annotations: {}
+    in_args:
+    - name: interface_name
+      type: s
+    - name: property_name
+      type: s
+    - name: value
+      type: v
+    name: Set
+    out_args: []
+  signals:
+  - args:
+    - name: interface_name
+      type: s
+    - name: changed_properties
+      type: a{sv}
+    - name: invalidated_properties
+      type: as
+    name: PropertiesChanged

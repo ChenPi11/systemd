@@ -1,0 +1,95 @@
+interface: org.freedesktop.systemd1.Path
+methods: []
+object_path: /org/freedesktop/systemd1/unit
+properties:
+- access: read
+  annotations: {}
+  name: Unit
+  type: s
+- access: read
+  annotations: {}
+  name: Paths
+  type: a(ss)
+- access: read
+  annotations: {}
+  name: MakeDirectory
+  type: b
+- access: read
+  annotations: {}
+  name: DirectoryMode
+  type: u
+- access: read
+  annotations: {}
+  name: Result
+  type: s
+- access: read
+  annotations: {}
+  name: TriggerLimitIntervalUSec
+  type: t
+- access: read
+  annotations: {}
+  name: TriggerLimitBurst
+  type: u
+signals: []
+standard_interfaces:
+- interface: org.freedesktop.DBus.Peer
+  methods:
+  - annotations: {}
+    in_args: []
+    name: Ping
+    out_args: []
+  - annotations: {}
+    in_args: []
+    name: GetMachineId
+    out_args:
+    - name: machine_uuid
+      type: s
+  signals: []
+- interface: org.freedesktop.DBus.Introspectable
+  methods:
+  - annotations: {}
+    in_args: []
+    name: Introspect
+    out_args:
+    - name: xml_data
+      type: s
+  signals: []
+- interface: org.freedesktop.DBus.Properties
+  methods:
+  - annotations: {}
+    in_args:
+    - name: interface_name
+      type: s
+    - name: property_name
+      type: s
+    name: Get
+    out_args:
+    - name: value
+      type: v
+  - annotations: {}
+    in_args:
+    - name: interface_name
+      type: s
+    name: GetAll
+    out_args:
+    - name: props
+      type: a{sv}
+  - annotations: {}
+    in_args:
+    - name: interface_name
+      type: s
+    - name: property_name
+      type: s
+    - name: value
+      type: v
+    name: Set
+    out_args: []
+  signals:
+  - args:
+    - name: interface_name
+      type: s
+    - name: changed_properties
+      type: a{sv}
+    - name: invalidated_properties
+      type: as
+    name: PropertiesChanged
