@@ -38,6 +38,13 @@ Scope 单元除继承 `org.freedesktop.systemd1.Unit` 全部属性外，还暴�
 | `RuntimeMaxUSec` | `t` | 最大运行时间（微秒），`0` 表示无限制 |
 | `RuntimeRandomizedExtraUSec` | `t` | 随机附加运行时间（微秒） |
 
+继承自 CGroup 上下文的关键属性：
+
+| 属性名称 | 类型 | 说明 |
+|---------|------|------|
+| `CPUSetPartition` | `s` | cpuset 分区类型，对应 cgroup `cpuset.cpus.partition` 属性：`member`（普通模式，默认）/ `root`（创建分区根，可进一步在子 cgroup 间划分 CPU）/ `isolated`（完全 CPU 隔离，适合实时负载）。要求同时设置 `AllowedCPUs=` |
+| `OOMRules` | `as` | OOM 规则集名称列表。规则集定义于 `.oomrule` 文件（位于 `/etc/systemd/oomd/rules.d/` 等目录）；设置后 `systemd-oomd` 会监控此单元的 cgroup 并评估相应规则集（如内存压力、swap 使用阈值），满足条件时采取定义的动作。默认为空列表 |
+
 ## 使用示例
 
 ```bash

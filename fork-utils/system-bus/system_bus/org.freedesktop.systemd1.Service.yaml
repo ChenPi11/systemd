@@ -94,6 +94,10 @@ properties:
   type: t
 - access: read
   annotations: {}
+  name: RestartRandomizedDelayUSec
+  type: t
+- access: read
+  annotations: {}
   name: RestartUSecNext
   type: t
 - access: read
@@ -184,6 +188,10 @@ properties:
   annotations: {}
   name: FileDescriptorStorePreserve
   type: s
+- access: read
+  annotations: {}
+  name: LUOSession
+  type: as
 - access: read
   annotations: {}
   name: StatusText
@@ -506,6 +514,10 @@ properties:
   type: ay
 - access: read
   annotations: {}
+  name: CPUSetPartition
+  type: s
+- access: read
+  annotations: {}
   name: IOAccounting
   type: b
 - access: read
@@ -652,6 +664,10 @@ properties:
   annotations: {}
   name: ManagedOOMPreference
   type: s
+- access: read
+  annotations: {}
+  name: OOMRules
+  type: as
 - access: read
   annotations: {}
   name: BPFProgram

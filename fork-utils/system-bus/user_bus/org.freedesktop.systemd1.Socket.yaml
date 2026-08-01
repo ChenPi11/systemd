@@ -166,6 +166,18 @@ properties:
   type: as
 - access: read
   annotations: {}
+  name: XAttrEntryPoint
+  type: a(ss)
+- access: read
+  annotations: {}
+  name: XAttrListen
+  type: a(ss)
+- access: read
+  annotations: {}
+  name: XAttrAccept
+  type: a(ss)
+- access: read
+  annotations: {}
   name: Mark
   type: i
 - access: read
@@ -434,6 +446,10 @@ properties:
   type: ay
 - access: read
   annotations: {}
+  name: CPUSetPartition
+  type: s
+- access: read
+  annotations: {}
   name: IOAccounting
   type: b
 - access: read
@@ -580,6 +596,10 @@ properties:
   annotations: {}
   name: ManagedOOMPreference
   type: s
+- access: read
+  annotations: {}
+  name: OOMRules
+  type: as
 - access: read
   annotations: {}
   name: BPFProgram

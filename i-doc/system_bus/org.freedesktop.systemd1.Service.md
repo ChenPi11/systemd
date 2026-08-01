@@ -84,6 +84,7 @@ org.freedesktop.systemd1.Unit
 | `RestartUSec` | `t` | 只读 | 重启前的等待时间（微秒） |
 | `RestartSteps` | `u` | 只读 | 指数退避重启的步数；`0` 表示禁用指数退避 |
 | `RestartMaxDelayUSec` | `t` | 只读 | 指数退避时重启延迟的最大值（微秒） |
+| `RestartRandomizedDelayUSec` | `t` | 只读 | 随机重启延迟的上限（微秒）。每次自动重启时，在 0 到该值之间均匀随机选取一段延迟，叠加在 `RestartUSec`（及指数退避）配置的延迟之上；用于错开同时失败的同构服务实例的重启时间。默认 `0`，表示不启用随机延迟 |
 | `RestartUSecNext` | `t` | 只读 | 下次重启将等待的延迟时间（微秒），反映当前指数退避状态 |
 | `NRestarts` | `u` | 只读 | 服务自上次成功启动以来的重启次数 |
 
@@ -115,6 +116,7 @@ org.freedesktop.systemd1.Unit
 | `FileDescriptorStoreMax` | `u` | 只读 | 文件描述符存储的最大容量（通过 `FileDescriptorStoreMax=` 配置） |
 | `NFileDescriptorStore` | `u` | 只读 | 当前文件描述符存储中持有的 FD 数量 |
 | `FileDescriptorStorePreserve` | `s` | 只读 | FD 存储的保留策略：`no`（服务停止时清空）/ `yes`（始终保留）/ `restart`（仅重启时保留） |
+| `LUOSession` | `as` | 只读 | LUO 会话名称列表。服务启动时通过 Live Update Orchestrator（`/dev/liveupdate`）为每个名称创建 LUO 会话，并以 `FDNAME=` 形式通过文件描述符存储传给服务；会话内保存的文件描述符（如 `memfd`）可跨越基于 kexec 的 live update 保留并在重启后恢复。仅系统管理器支持；`/dev/liveupdate` 不可用时无会话产生 |
 | `ExtraFileDescriptorNames` | `as` | 只读 | 传递给服务的额外文件描述符的名称列表 |
 
 ### USB 功能
@@ -168,6 +170,8 @@ org.freedesktop.systemd1.Unit
 | `TasksMax` | `t` | 只读 | 最大任务数（进程数）上限 |
 | `IOAccounting` | `b` | 只读 | 是否启用 I/O 使用量统计 |
 | `IOWeight` | `t` | 只读 | I/O 调度权重（1–10000） |
+| `CPUSetPartition` | `s` | 只读 | cpuset 分区类型，对应 cgroup `cpuset.cpus.partition` 属性：`member`（普通模式，默认）/ `root`（创建分区根，可进一步在子 cgroup 间划分 CPU）/ `isolated`（完全 CPU 隔离，适合实时负载）。要求同时设置 `AllowedCPUs=` |
+| `OOMRules` | `as` | 只读 | OOM 规则集名称列表。规则集定义于 `.oomrule` 文件（位于 `/etc/systemd/oomd/rules.d/` 等目录）；设置后 `systemd-oomd` 会监控此单元的 cgroup 并评估相应规则集（如内存压力、swap 使用阈值），满足条件时采取定义的动作。默认为空列表 |
 | `Delegate` | `b` | 只读 | 是否将 cgroup 控制委托给服务自身 |
 | `Slice` | `s` | 只读 | 所属的 slice 单元名称 |
 

@@ -59,6 +59,13 @@ org.freedesktop.systemd1.Unit
 | `ReloadResult` | `s` | 只读 | 最近一次重载（重新挂载 `remount`）操作的结果 |
 | `CleanResult` | `s` | 只读 | 最近一次清理操作的结果 |
 
+### 继承自 CGroup 上下文的关键属性
+
+| 属性名称 | 类型 | 读写 | 说明 |
+|---------|------|------|------|
+| `CPUSetPartition` | `s` | 只读 | cpuset 分区类型，对应 cgroup `cpuset.cpus.partition` 属性：`member`（普通模式，默认）/ `root`（创建分区根，可进一步在子 cgroup 间划分 CPU）/ `isolated`（完全 CPU 隔离，适合实时负载）。要求同时设置 `AllowedCPUs=` |
+| `OOMRules` | `as` | 只读 | OOM 规则集名称列表。规则集定义于 `.oomrule` 文件（位于 `/etc/systemd/oomd/rules.d/` 等目录）；设置后 `systemd-oomd` 会监控此单元的 cgroup 并评估相应规则集（如内存压力、swap 使用阈值），满足条件时采取定义的动作。默认为空列表 |
+
 ---
 
 ## 方法（Methods）

@@ -41,6 +41,13 @@
 | `ReadWriteOnly` | `b` | 是否仅接受读写挂载（拒绝只读） |
 | `Result` | `s` | 最终结果：`success`、`resources`、`timeout`、`exit-code`、`signal`、`core-dump` |
 
+继承自 CGroup 上下文的关键属性：
+
+| 属性名称 | 类型 | 说明 |
+|---------|------|------|
+| `CPUSetPartition` | `s` | cpuset 分区类型，对应 cgroup `cpuset.cpus.partition` 属性：`member`（普通模式，默认）/ `root`（创建分区根，可进一步在子 cgroup 间划分 CPU）/ `isolated`（完全 CPU 隔离，适合实时负载）。要求同时设置 `AllowedCPUs=` |
+| `OOMRules` | `as` | OOM 规则集名称列表。规则集定义于 `.oomrule` 文件（位于 `/etc/systemd/oomd/rules.d/` 等目录）；设置后 `systemd-oomd` 会监控此单元的 cgroup 并评估相应规则集（如内存压力、swap 使用阈值），满足条件时采取定义的动作。默认为空列表 |
+
 ## 使用示例
 
 ```bash

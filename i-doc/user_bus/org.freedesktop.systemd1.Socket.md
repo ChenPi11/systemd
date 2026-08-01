@@ -82,6 +82,9 @@ org.freedesktop.systemd1.Unit
 | `MessageQueueMessageSize` | `x` | 只读 | POSIX 消息队列单条消息最大字节数（`-1` 表示系统默认） |
 | `RemoveOnStop` | `b` | 只读 | 套接字单元停止时是否删除套接字文件 |
 | `Timestamping` | `s` | 只读 | 套接字时间戳模式：`off`、`us`、`ns` |
+| `XAttrEntryPoint` | `a(ss)` | 只读 | 设置于 AF_UNIX 套接字所绑定文件系统 inode 上的扩展属性列表（`名称=值` 形式，名称须在 `user.` 命名空间） |
+| `XAttrListen` | `a(ss)` | 只读 | 设置于监听套接字本身上的扩展属性列表 |
+| `XAttrAccept` | `a(ss)` | 只读 | 设置于从监听套接字接受的连接套接字上的扩展属性列表（仅与 `Accept=yes` 组合时相关） |
 
 ### 监听地址
 
@@ -139,6 +142,13 @@ org.freedesktop.systemd1.Unit
 | `SmackLabel` | `s` | 只读 | SMACK 安全标签 |
 | `SmackLabelIPIn` | `s` | 只读 | 传入 IP 数据包的 SMACK 标签 |
 | `SmackLabelIPOut` | `s` | 只读 | 传出 IP 数据包的 SMACK 标签 |
+
+### 继承自 CGroup 上下文的关键属性
+
+| 属性名称 | 类型 | 读写 | 说明 |
+|---------|------|------|------|
+| `CPUSetPartition` | `s` | 只读 | cpuset 分区类型，对应 cgroup `cpuset.cpus.partition` 属性：`member`（普通模式，默认）/ `root`（创建分区根，可进一步在子 cgroup 间划分 CPU）/ `isolated`（完全 CPU 隔离，适合实时负载）。要求同时设置 `AllowedCPUs=` |
+| `OOMRules` | `as` | 只读 | OOM 规则集名称列表。规则集定义于 `.oomrule` 文件（位于 `/etc/systemd/oomd/rules.d/` 等目录）；设置后 `systemd-oomd` 会监控此单元的 cgroup 并评估相应规则集（如内存压力、swap 使用阈值），满足条件时采取定义的动作。默认为空列表 |
 
 ---
 

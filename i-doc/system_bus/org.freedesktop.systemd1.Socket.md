@@ -47,6 +47,9 @@ org.freedesktop.systemd1.Unit
 |---------|------|------|------|
 | `Listen` | `a(ss)` | 只读 | 监听地址列表；每项为 `(类型, 地址)`，类型可以是 `ListenStream`、`ListenDatagram`、`ListenSequentialPacket`、`ListenFIFO`、`ListenNetlink`、`ListenSpecial` 等 |
 | `Symlinks` | `as` | 只读 | 套接字文件的软链接路径列表（仅对 Unix 域套接字有效） |
+| `XAttrEntryPoint` | `a(ss)` | 只读 | 设置于 AF_UNIX 套接字所绑定文件系统 inode 上的扩展属性列表（`名称=值` 形式，名称须在 `user.` 命名空间） |
+| `XAttrListen` | `a(ss)` | 只读 | 设置于监听套接字本身上的扩展属性列表 |
+| `XAttrAccept` | `a(ss)` | 只读 | 设置于从监听套接字接受的连接套接字上的扩展属性列表（仅与 `Accept=yes` 组合时相关） |
 | `Backlog` | `u` | 只读 | TCP/Unix 套接字监听队列长度（`listen()` 的 `backlog` 参数） |
 | `BindToDevice` | `s` | 只读 | 将套接字绑定到指定网络接口（`SO_BINDTODEVICE`）；为空表示不绑定 |
 | `BindIPv6Only` | `s` | 只读 | IPv6 绑定模式：`default`（系统默认）/ `both`（同时监听 IPv4 和 IPv6）/ `ipv6-only`（仅 IPv6） |
@@ -143,6 +146,13 @@ org.freedesktop.systemd1.Unit
 | `DeferTrigger` | `s` | 只读 | 延迟触发模式配置 |
 | `DeferTriggerMaxUSec` | `t` | 只读 | 最大延迟触发等待时间（微秒） |
 | `TimeoutUSec` | `t` | 只读 | 套接字激活超时时间（微秒）；超时后停止套接字单元 |
+
+### 继承自 CGroup 上下文的关键属性
+
+| 属性名称 | 类型 | 读写 | 说明 |
+|---------|------|------|------|
+| `CPUSetPartition` | `s` | 只读 | cpuset 分区类型，对应 cgroup `cpuset.cpus.partition` 属性：`member`（普通模式，默认）/ `root`（创建分区根，可进一步在子 cgroup 间划分 CPU）/ `isolated`（完全 CPU 隔离，适合实时负载）。要求同时设置 `AllowedCPUs=` |
+| `OOMRules` | `as` | 只读 | OOM 规则集名称列表。规则集定义于 `.oomrule` 文件（位于 `/etc/systemd/oomd/rules.d/` 等目录）；设置后 `systemd-oomd` 会监控此单元的 cgroup 并评估相应规则集（如内存压力、swap 使用阈值），满足条件时采取定义的动作。默认为空列表 |
 
 ---
 

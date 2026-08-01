@@ -43,6 +43,8 @@ Slice 单元除继承 `org.freedesktop.systemd1.Unit` 全部属性（包括全�
 | `MemoryHigh` | `t` | 内存使用软上限（字节，超出后调节但不立即停止） |
 | `TasksMax` | `t` | 最大任务数（进程数）上限 |
 | `IOWeight` | `t` | I/O 调度权重（1–10000） |
+| `CPUSetPartition` | `s` | cpuset 分区类型，对应 cgroup `cpuset.cpus.partition` 属性：`member`（普通模式，默认）/ `root`（创建分区根，可进一步在子 cgroup 间划分 CPU）/ `isolated`（完全 CPU 隔离，适合实时负载）。要求同时设置 `AllowedCPUs=` |
+| `OOMRules` | `as` | OOM 规则集名称列表。规则集定义于 `.oomrule` 文件（位于 `/etc/systemd/oomd/rules.d/` 等目录）；设置后 `systemd-oomd` 会监控此单元的 cgroup 并评估相应规则集（如内存压力、swap 使用阈值），满足条件时采取定义的动作。默认为空列表 |
 | `Slice` | `s` | 父 slice 单元名称 |
 | `ControlGroup` | `s` | cgroup 路径 |
 

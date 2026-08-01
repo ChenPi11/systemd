@@ -307,6 +307,25 @@
 
 ---
 
+### EnqueueUnitJobMany
+
+**说明：** 与 `EnqueueUnitJob` 类似，但可同时对多个单元批量入队作业。所有请求的单元会在**单个事务**中入队，这对于正确满足同一调用中多个单元之间的 `After=`/`Before=` 排序依赖是必要的（无论它们在数组中的顺序如何）。
+
+**参数：**
+| 名称 | 类型 | 方向 | 说明 |
+|------|------|------|------|
+| units | as | 输入 | 单元名称数组（非空，且数量受管理器限制） |
+| job_type | s | 输入 | 作业类型，应用于列表中的每个单元（同 EnqueueUnitJob） |
+| job_mode | s | 输入 | 作业模式（同 StartUnit 的 mode） |
+| flags | t | 输入 | 标志位（uint64）；当前不支持任何标志，**必须传 0**，保留用于未来扩展 |
+| jobs | a(uosos) | 输出 | 为每个请求单元入队的锚点作业数组，每项包含：(作业ID, 作业路径, 单元ID, 单元路径, 实际入队的作业类型) |
+
+**权限：** 需要 polkit 授权
+
+**返回：** 每个请求单元对应入队作业的信息数组。注意返回数组的顺序不确定，可能与输入数组顺序不一致
+
+---
+
 ### KillUnit
 
 **说明：** 向单元进程组（或部分进程）发送指定信号，等同于 `systemctl kill`。即使单元未正确加载也可用于终止其 cgroup 中的进程。
@@ -1500,7 +1519,12 @@
 | InitRDTimestamp | 只读 | initrd 启动时间点 |
 | UserspaceTimestamp | 只读 | 用户空间（systemd PID 1）启动时间点 |
 | FinishTimestamp | 只读 | 系统启动完成时间点（default.target 激活后） |
-| ShutdownStartTimestamp | 只读 | 关机开始时间点 |
+| ShutdownStartTimestamp | 只读 | 关机开始时间点（开始停止单元时） |
+| ShutdownFinishTimestamp | 只读 | 关机完成时间点（所有单元停止完毕，即到达 shutdown.target 时）；与 ShutdownStartTimestamp 一起界定停止单元阶段耗时 |
+| PreviousShutdownStartTimestamp | 只读 | 上一次启动（previous boot）中开始停止单元的时间点；仅在 kexec 式 live update（通过 Live Update Orchestrator 恢复）后填充，否则为 0 |
+| PreviousShutdownFinishTimestamp | 只读 | 上一次启动中所有单元停止完毕的时间点（上一轮到达 shutdown.target 时）；仅在 kexec 式 live update 后填充，否则为 0 |
+| PreviousShutdownLateStartTimestamp | 只读 | 上一次启动中 `systemd-shutdown` 自身开始执行的时间点；仅在 kexec 式 live update 后填充，否则为 0 |
+| PreviousShutdownLateFinishTimestamp | 只读 | 上一次启动中 `systemd-shutdown` 即将 `kexec()` 进入新内核的时间点；仅在 kexec 式 live update 后填充，否则为 0 |
 | SecurityStartTimestamp | 只读 | 安全模块初始化开始时间点 |
 | SecurityFinishTimestamp | 只读 | 安全模块初始化完成时间点 |
 | GeneratorsStartTimestamp | 只读 | 单元生成器（generators）开始运行时间点 |
@@ -1567,6 +1591,8 @@
 | SystemState | s | 只读 | 系统当前状态（`initializing`、`starting`、`running`、`degraded`、`maintenance`、`stopping`、`offline`、`unknown`） |
 | ExitCode | y | 只读 | 当前设置的退出码（byte，通过 SetExitCode 设置） |
 | SoftRebootsCount | u | 只读 | 已执行的软重启次数 |
+| KExecsCount | u | 只读 | 自上次完整启动以来成功完成的 kexec 式 live update 次数。计数器通过 Live Update Orchestrator（LUO）在 kexec 间保持，内核不支持 LUO 时为 0 |
+| ReloadCount | t | 只读 | 管理器成功完成的配置重载（daemon-reload）次数。在 `daemon-reexec` 和初始启动时重置为 0 |
 
 ### 默认超时属性
 
@@ -1580,6 +1606,8 @@
 | DefaultRestartUSec | t | 只读 | 服务重启间隔默认值（微秒） |
 | DefaultStartLimitIntervalUSec | t | 只读 | 启动频率限制的时间窗口（微秒） |
 | DefaultStartLimitBurst | u | 只读 | 启动频率限制的最大次数 |
+| EventLoopRateLimitIntervalUSec | t | 只读 | 事件循环频率限制的时间窗口（微秒），默认 1s |
+| EventLoopRateLimitBurst | u | 只读 | 事件循环频率限制的最大迭代次数，默认 50000。在时间窗口内事件循环迭代超过该次数时，事件处理会被短暂暂停以防止 CPU 占用过高 |
 
 ### 默认资源限制属性（RLIMIT）
 

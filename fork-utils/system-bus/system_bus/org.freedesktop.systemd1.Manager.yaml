@@ -170,6 +170,20 @@ methods:
     type: a(uosos)
 - annotations: {}
   in_args:
+  - name: units
+    type: as
+  - name: job_type
+    type: s
+  - name: job_mode
+    type: s
+  - name: flags
+    type: t
+  name: EnqueueUnitJobMany
+  out_args:
+  - name: jobs
+    type: a(uosos)
+- annotations: {}
+  in_args:
   - name: name
     type: s
   - name: whom
@@ -864,6 +878,46 @@ properties:
   type: t
 - access: read
   annotations: {}
+  name: ShutdownFinishTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: ShutdownFinishTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: PreviousShutdownStartTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: PreviousShutdownStartTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: PreviousShutdownFinishTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: PreviousShutdownFinishTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: PreviousShutdownLateStartTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: PreviousShutdownLateStartTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
+  name: PreviousShutdownLateFinishTimestamp
+  type: t
+- access: read
+  annotations: {}
+  name: PreviousShutdownLateFinishTimestampMonotonic
+  type: t
+- access: read
+  annotations: {}
   name: SecurityStartTimestamp
   type: t
 - access: read
@@ -1116,6 +1170,14 @@ properties:
   type: u
 - access: read
   annotations: {}
+  name: EventLoopRateLimitIntervalUSec
+  type: t
+- access: read
+  annotations: {}
+  name: EventLoopRateLimitBurst
+  type: u
+- access: read
+  annotations: {}
   name: DefaultIOAccounting
   type: b
 - access: read
@@ -1310,6 +1372,14 @@ properties:
   annotations: {}
   name: SoftRebootsCount
   type: u
+- access: read
+  annotations: {}
+  name: KExecsCount
+  type: u
+- access: read
+  annotations: {}
+  name: ReloadCount
+  type: t
 - access: read
   annotations: {}
   name: DefaultMemoryZSwapWriteback

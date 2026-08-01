@@ -214,6 +214,10 @@ properties:
   type: ay
 - access: read
   annotations: {}
+  name: CPUSetPartition
+  type: s
+- access: read
+  annotations: {}
   name: IOAccounting
   type: b
 - access: read
@@ -360,6 +364,10 @@ properties:
   annotations: {}
   name: ManagedOOMPreference
   type: s
+- access: read
+  annotations: {}
+  name: OOMRules
+  type: as
 - access: read
   annotations: {}
   name: BPFProgram
