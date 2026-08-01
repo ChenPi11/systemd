@@ -494,7 +494,7 @@ static int parse_argv(int argc, char *argv[]) {
                         break;
 
                 OPTION_LONG("make-archive", NULL, "Convert the DDI to an archive file"):
-                        r = DLOPEN_LIBARCHIVE(LOG_ERR, recommended);
+                        r = dlopen_libarchive(LOG_ERR);
                         if (r < 0)
                                 return r;
 
@@ -890,7 +890,6 @@ static int action_dissect(
         _cleanup_(sd_json_variant_unrefp) sd_json_variant *v = NULL;
         _cleanup_(table_unrefp) Table *t = NULL;
         _cleanup_free_ char *bn = NULL;
-        uint64_t size = UINT64_MAX;
         int r;
 
         assert(m);
@@ -1009,7 +1008,7 @@ static int action_dissect(
                 r = sd_json_buildo(
                                 &v,
                                 SD_JSON_BUILD_PAIR_STRING("name", bn),
-                                SD_JSON_BUILD_PAIR_CONDITION(size != UINT64_MAX, "size", SD_JSON_BUILD_INTEGER(size)),
+                                SD_JSON_BUILD_PAIR_CONDITION(m->image_size != UINT64_MAX, "size", SD_JSON_BUILD_INTEGER(m->image_size)),
                                 SD_JSON_BUILD_PAIR_INTEGER("sectorSize", m->sector_size),
                                 SD_JSON_BUILD_PAIR_CONDITION(a >= 0, "architecture", SD_JSON_BUILD_STRING(architecture_to_string(a))),
                                 SD_JSON_BUILD_PAIR_CONDITION(!sd_id128_is_null(m->image_uuid), "imageUuid", SD_JSON_BUILD_UUID(m->image_uuid)),
@@ -1970,6 +1969,7 @@ static int run(int argc, char *argv[]) {
         int r;
 
         LIBACL_NOTE(recommended);
+        LIBARCHIVE_NOTE(recommended);
         LIBBLKID_NOTE(recommended);
         LIBCRYPTO_NOTE(suggested);
         LIBCRYPTSETUP_NOTE(suggested);

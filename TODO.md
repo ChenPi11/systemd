@@ -118,9 +118,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
   That requires distros to enable CONFIG_ACPI_FPDT, and have kernels v5.12 for
   x86 and v6.2 for arm.
 
-- Remove support for deprecated FactoryReset EFI variable in
-  systemd-repart, replaced by FactoryResetRequest (was planned for v260).
-
 - Consider removing root=gpt-auto, and push people to use root=dissect instead.
 
 - remove any trace of "cpuacct" cgroup controller, it's a cgroupv1 thing.
@@ -183,7 +180,7 @@ SPDX-License-Identifier: LGPL-2.1-or-later
 
 - ed25519 authentication for sd-boot upgrades for the dm-verity key logic
 
-- in sysupdate resolve %C or so as specifier in transfer fiels to the value of
+- in sysupdate resolve %C or so as specifier in transfer fields to the value of
   a specific machine tag channel= or so.
 
 - make vmspawn parse UKIs for direct kernel boot
@@ -201,7 +198,7 @@ SPDX-License-Identifier: LGPL-2.1-or-later
   environments systemd runs in.
 
 - nspawn/vmspawn: add a concept how we can hand into the payload some proof
-  that it is runnin on a certain host, which it can then include in the report,
+  that it is running on a certain host, which it can then include in the report,
   and which allows us to put together a map about which node runs as payload of
   which other note. in particular useful for transient nodes, as it gives them
   a better location
@@ -2687,9 +2684,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
   automatically support reverting back to older OS version images if newer ones
   fail to boot.
 
-- **test/:**
-  - add unit tests for config_parse_device_allow()
-
 - The bind(AF_UNSPEC) construct (for resetting sockets to their initial state)
   should be blocked in many cases because it punches holes in many sandboxes.
 
@@ -2735,8 +2729,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
   DHCP/HTTP base EFI boot.
 
 - **tmpfiles:**
-  - allow time-based cleanup in r and R too
-  - instead of ignoring unknown fields, reject them.
   - creating new directories/subvolumes/fifos/device nodes
     should not follow symlinks. None of the other adjustment or creation
     calls follow symlinks.
@@ -2745,7 +2737,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
   - teach tmpfiles.d m/M to move / atomic move + symlink old -> new
   - add new line type for setting btrfs subvolume attributes (i.e. rw/ro)
   - tmpfiles: add new line type for setting fcaps
-  - add -n as shortcut for --dry-run in tmpfiles & sysusers & possibly other places
   - add new line type for moving files from some source dir to some
     target dir. then use that to move sysexts/confexts and stuff from initrd
     tmpfs to /run/, so that host can pick things up.

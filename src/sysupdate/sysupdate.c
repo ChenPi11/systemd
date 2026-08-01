@@ -255,7 +255,7 @@ static int read_features(
         r = conf_files_list_strv_full(
                         ".feature",
                         c->root,
-                        CONF_FILES_REGULAR|CONF_FILES_FILTER_MASKED|CONF_FILES_WARN,
+                        CONF_FILES_REGULAR|CONF_FILES_FILTER_MASKED|CONF_FILES_WARN|CONF_FILES_DONT_PREFIX_ROOT,
                         dirs,
                         &files,
                         &n_files);
@@ -303,7 +303,7 @@ static int read_transfers(
         assert(suffix);
 
         r = conf_files_list_strv_full(suffix, c->root,
-                                      CONF_FILES_REGULAR|CONF_FILES_FILTER_MASKED|CONF_FILES_WARN,
+                                      CONF_FILES_REGULAR|CONF_FILES_FILTER_MASKED|CONF_FILES_WARN|CONF_FILES_DONT_PREFIX_ROOT,
                                       dirs, &files, &n_files);
         if (r < 0)
                 return log_error_errno(r, "Failed to enumerate sysupdate.d/*%s definitions: %m", suffix);
@@ -2244,9 +2244,9 @@ static int context_enable_feature(
                 HASHMAP_FOREACH(f, c->features) {
                         r = feature_is_suggested(f);
                         if (r < 0)
-                                return log_error_errno(r, "Failed to determine if feature '%s' of component '%s' shall be enabled: %m", f->id, context_component_display(c));
-                        if (!!r != !!enable) {
-                                log_debug("Skipping feature '%s' of component '%s'.", f->id, context_component_display(c));
+                                return log_error_errno(r, "Failed to determine if feature '%s' of component '%s' is suggested: %m", f->id, context_component_display(c));
+                        if (r == 0) {
+                                log_debug("Feature '%s' of component '%s' is not suggested, skipping.", f->id, context_component_display(c));
                                 continue;
                         }
 
@@ -2531,6 +2531,9 @@ static int verb_check_new(int argc, char *argv[], uintptr_t _data, void *userdat
                 r = sd_json_variant_dump(json, arg_json_format_flags, stdout, NULL);
                 if (r < 0)
                         return log_error_errno(r, "Failed to print JSON: %m");
+
+                if (!context.candidate)
+                        return EXIT_FAILURE;
         }
 
         return EXIT_SUCCESS;
@@ -2946,15 +2949,13 @@ static int context_list_components(Context *context, char ***ret_component_names
         if (ret_component_names)
                 *ret_component_names = TAKE_PTR(z);
 
-        /* Does the system have at least one transfer file in /etc/sysupdate.d, which can be considered a
-         * TARGET_HOST? See target_get_argument() in sysupdated.c */
+        /* Does the system have at least one transfer file in sysupdate.d, which can be considered the
+         * default component-less installation? */
         if (ret_has_default_component)
                 *ret_has_default_component =
                         !context->definitions &&
                         !context->component &&
-                        !context->root &&
-                        !context->image &&
-                        context->n_transfers > 0;
+                        context->n_transfers + context->n_disabled_transfers > 0;
 
         return 0;
 }
@@ -3244,15 +3245,11 @@ static int verb_enable_component(int argc, char *argv[], uintptr_t _data, void *
 
                         r = context_component_is_suggested(&cc);
                         if (r < 0) {
-                                log_warning_errno(r, "Failed to determine whether '%s' shall be enabled, skipping: %m", *name);
+                                log_warning_errno(r, "Failed to determine whether '%s' is suggested, skipping: %m", *name);
                                 continue;
                         }
-
-                        /* This reconciles the system with the suggestions: on 'enable-component' we act on
-                         * the components that are suggested, on 'disable-component' we act on the ones that
-                         * are not. Hence pick the components whose suggestion state matches the operation. */
-                        if (!!r != !!enable) {
-                                log_debug("Skipping '%s'.", *name);
+                        if (r == 0) {
+                                log_debug("Component '%s' is not suggested, skipping.", *name);
                                 continue;
                         }
 
@@ -3568,6 +3565,7 @@ static int run(int argc, char *argv[]) {
         LIBBLKID_NOTE(recommended);
         LIBCRYPTO_NOTE(suggested);
         LIBCRYPTSETUP_NOTE(suggested);
+        LIBFDISK_NOTE(recommended);
         LIBMOUNT_NOTE(recommended);
         LIBSELINUX_NOTE(recommended);
         LIBTSS2_ESYS_NOTE(suggested);

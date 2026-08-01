@@ -612,7 +612,7 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
                                 return r;
                         break;
 
-                OPTION_LONG("dry-run", NULL, "Dry run (unlink and cleanup)"):
+                OPTION('n', "dry-run", NULL, "Dry run (unlink and cleanup)"):
                         arg_dry_run = true;
                         break;
 
@@ -860,6 +860,7 @@ static int run(int argc, char *argv[]) {
         int r;
 
         LIBBLKID_NOTE(recommended);
+        LIBCRYPTO_NOTE(recommended);
         LIBCRYPTSETUP_NOTE(suggested);
         LIBMOUNT_NOTE(recommended);
         LIBTSS2_ESYS_NOTE(suggested);

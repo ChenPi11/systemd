@@ -249,7 +249,7 @@ PaddingMinBytes=92M
 EOF
 
     systemd-repart --definitions="$defs" \
-                   --dry-run=yes \
+                   -n \
                    --seed="$seed" \
                    --include-partitions=home,swap \
                    "-"
@@ -2871,6 +2871,35 @@ EOF
     systemd-cryptsetup detach "$volume"
 
     losetup -d "$loop"
+}
+
+testcase_generate_fstab_dry_run() {
+    local defs root
+
+    defs="$(mktemp --directory "/tmp/test-repart.defs.XXXXXXXXXX")"
+    root="$(mktemp --directory "/var/test-repart.root.XXXXXXXXXX")"
+    # shellcheck disable=SC2064
+    trap "rm -rf '$defs' '$root'" RETURN
+    chmod 0755 "$defs"
+
+    echo "*** testcase for skipping generated fstab in dry-run mode ***"
+
+    mkdir -p "$root/etc"
+    tee "$defs/root.conf" <<EOF
+[Partition]
+Type=root
+Format=ext4
+MountPoint=/
+EOF
+
+    systemd-repart --pretty=yes \
+                   --definitions "$defs" \
+                   --dry-run=yes \
+                   --seed="$seed" \
+                   --generate-fstab="$root/etc/fstab" \
+                   -
+
+    test ! -e "$root/etc/fstab"
 }
 
 testcase_encrypted_volume_empty_name() {

@@ -51,7 +51,7 @@ meson compile -C build
 
 ## Details
 
-Most documentation is available on [systemd's web site](https://systemd.io/).
+Most documentation is available on [systemd's website](https://systemd.io/).
 
 Assorted, older, general information about systemd can be found in the [systemd Wiki](https://www.freedesktop.org/wiki/Software/systemd).
 

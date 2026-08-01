@@ -15,7 +15,7 @@ project('systemd', 'c',
 
 add_test_setup(
         'default',
-        exclude_suites : ['clang-tidy', 'coccinelle', 'dlopen', 'unused-symbols', 'integration-tests'],
+        exclude_suites : ['clang-tidy', 'coccinelle', 'unused-symbols', 'integration-tests'],
         exe_wrapper : find_program('tools/test-crash-trace.sh'),
         is_default : true,
 )
@@ -99,7 +99,10 @@ endif
 conf.set10('HAVE_SPLIT_BIN', split_bin,
            description : 'bin and sbin directories are separate')
 
-have_standalone_binaries = get_option('standalone-binaries')
+standalone_binaries = get_option('standalone-binaries').split(',')
+if standalone_binaries == ['']
+        standalone_binaries = []
+endif
 
 conf.set10('CREATE_LOG_DIRS', get_option('create-log-dirs'))
 
@@ -352,6 +355,7 @@ userspace_c_ld_args = []
 userspace_sources = []
 
 want_tests = get_option('tests')
+want_dlopen_tests = want_tests != 'false' and get_option('dlopen-tests')
 want_slow_tests = want_tests != 'false' and get_option('slow-tests')
 want_fuzz_tests = want_tests != 'false' and get_option('fuzz-tests')
 install_tests = want_tests != 'false' and get_option('install-tests')
@@ -1053,6 +1057,9 @@ elif tty_mode != '0600' and tty_mode != '0620'
 endif
 # Do not use set_quoted() here, so that the value is available as an integer.
 conf.set('TTY_MODE', tty_mode)
+
+var_log_mode = get_option('var-log-mode')
+conf.set_quoted('VAR_LOG_MODE', var_log_mode)
 
 kill_user_processes = get_option('default-kill-user-processes')
 conf.set10('KILL_USER_PROCESSES', kill_user_processes)
@@ -1916,9 +1923,11 @@ efi_arch = {
         'x86'         : 'ia32',
 }.get(host_machine.cpu_family(), '')
 
-pyelftools = pymod.find_installation('python3',
-                                     required : get_option('bootloader'),
-                                     modules : ['elftools'])
+pyelftools = pymod.find_installation(
+        'python3',
+        required : get_option('bootloader').enabled() or want_dlopen_tests,
+        modules : ['elftools'],
+)
 
 have = get_option('bootloader').require(
         pyelftools.found() and get_option('efi') and efi_arch != '',
@@ -1996,7 +2005,7 @@ fuzzer_exes = []
 sources = []
 
 # binaries that have --help and are intended for use by humans,
-# usually, but not always, installed in /bin.
+# usually, but not always, installed in /usr/bin.
 public_programs = []
 
 # D-Bus introspection XML export
@@ -2194,13 +2203,15 @@ endif
 
 # The 'install' field is extended to also control whether the automatically
 # added variant, which is statically linked with libsystemd-shared, is installed:
-#   'yes'    : Mapped to true. The static variant will not be installed.
-#   'no'     : Mapped to false. The static variant will not be installed either.
-#   'both'   : Mapped to true. The static variant will also be installed.
+#   'yes'    : Mapped to true.
+#   'no'     : Mapped to false.
 #   'static' : Mapped to false, and its target name is suffixed with '.shared'.
 #              The static variant will be installed instead using the original name
 #              (without the '.standalone' suffix).
 # Currently, test and fuzzer executables only support 'yes' or 'no'.
+#
+# For executables matched by the install-standalone list, a .standalone variant
+# will be installed if install is true.
 executable_template = {
         'include_directories' : includes,
         'link_with' : [libshared],
@@ -2517,24 +2528,20 @@ foreach dict : executables
         name_static = name + '.standalone'
         install = dict.get('install')
         build_by_default = dict.get('build_by_default')
-        if install == 'yes'
-                install_shared = true
-                install_static = false
+        install_standalone = false
+        if not (is_test or is_fuzz)
+                foreach pattern : standalone_binaries
+                        if name.contains(pattern)
+                                install_standalone = true
+                        endif
+                endforeach
+        endif
+
+        if install in ['yes', 'no']
+                install_shared = install == 'yes'
+                install_static = install_shared and install_standalone
                 build_by_default_shared = build_by_default
-                build_by_default_static = false
-        elif install == 'no'
-                install_shared = false
-                install_static = false
-                build_by_default_shared = build_by_default
-                build_by_default_static = false
-        elif install == 'both'
-                if is_test or is_fuzz
-                        error('Install mode "@0@" is not supported for test or fuzzer target "@1@"'.format(install, name))
-                endif
-                install_shared = true
-                install_static = true
-                build_by_default_shared = build_by_default
-                build_by_default_static = build_by_default
+                build_by_default_static = build_by_default and (install_standalone or want_dlopen_tests)
         elif install == 'static'
                 if is_test or is_fuzz
                         error('Install mode "@0@" is not supported for test or fuzzer target "@1@"'.format(install, name))
@@ -2611,9 +2618,9 @@ foreach dict : executables
                         install: install_static,
                 )
 
-                executables_by_name += { name_static : exe_static }
-
                 if build_by_default_static
+                        executables_by_name += { name_static : exe_static }
+
                         if dict.get('dbus', false) and not build_by_default_shared
                                 dbus_programs += exe_static
                         endif
@@ -2930,18 +2937,20 @@ endif
 foreach exec : public_programs
         name = fs.name(exec.full_path())
         if want_tests != 'false'
-                test('check-help-' + name,
-                     check_help_sh,
-                     suite : 'dist',
-                     args : exec.full_path(),
-                     depends: exec)
-
                 test('check-version-' + name,
                      check_version_sh,
                      suite : 'dist',
                      args : [exec.full_path(),
                              project_major_version],
                      depends: exec)
+
+                if not name.endswith('.standalone')
+                        test('check-help-' + name,
+                             check_help_sh,
+                             suite : 'dist',
+                             args : exec.full_path(),
+                             depends: exec)
+                endif
         endif
 endforeach
 
@@ -3341,7 +3350,6 @@ foreach tuple : [
         ['link-portabled-shared',  get_option('link-portabled-shared')],
         ['first-boot-full-preset'],
         ['fexecve'],
-        ['standalone-binaries',    get_option('standalone-binaries')],
         ['coverage',               get_option('b_coverage')],
 ]
 

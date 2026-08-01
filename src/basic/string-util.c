@@ -293,13 +293,15 @@ static size_t previous_ansi_sequence(const char *s, size_t length, const char **
                 return 0;
         }
 
-        for (size_t i = length - 2; i > 0; i--) {  /* -2 because at least two bytes are needed */
-                size_t slen = ansi_sequence_length(s + (i - 1), length - (i - 1));
-                if (slen == 0)
-                        continue;
+        for (size_t i = length - 2;; i--) {  /* -2 because at least two bytes are needed */
+                size_t slen = ansi_sequence_length(s + i, length - i);
+                if (slen > 0) {
+                        *ret_where = s + i;
+                        return slen;
+                }
 
-                *ret_where = s + (i - 1);
-                return slen;
+                if (i == 0)
+                        break;
         }
 
         *ret_where = NULL;
@@ -1520,7 +1522,7 @@ char* find_line_after_internal(const char *haystack, const char *needle) {
 
 bool version_is_valid(const char *s, VersionFlags flags) {
 
-        /* Validates a version string superficially. This does not proces the version string in any
+        /* Validates a version string superficially. This does not process the version string in any
          * semantical way, it mostly just validates that its charset is reasonable. */
 
         if (FLAGS_SET(flags, VERSION_ALLOW_EMPTY) ? !s : isempty(s))
