@@ -20,6 +20,7 @@
 #define makecontext libucontext_makecontext
 #define getcontext libucontext_getcontext
 #define setcontext libucontext_setcontext
+#define ucontext_t libucontext_ucontext_t
 #endif
 
 #if HAVE_VALGRIND_VALGRIND_H

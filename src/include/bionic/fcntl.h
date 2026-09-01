@@ -3,6 +3,128 @@
 
 #include_next <fcntl.h>
 
+/* bionic's fcntl.h does not define AT_* and F_* constants itself — it expects them from
+ * <linux/fcntl.h>. When systemd builds with the libc vendor override directory, the override
+ * <linux/fcntl.h> shadows the real one (it only adds the PIDFD_* constants, since glibc's own
+ * fcntl.h already defines everything else). On bionic that leaves AT_* and F_* undefined, so
+ * re-provide them here, mirroring the values from bionic's linux/fcntl.h. */
+#include <asm/fcntl.h>
+#ifndef AT_FDCWD
+#define AT_FDCWD -100
+#endif
+#ifndef AT_SYMLINK_NOFOLLOW
+#define AT_SYMLINK_NOFOLLOW 0x100
+#endif
+#ifndef AT_SYMLINK_FOLLOW
+#define AT_SYMLINK_FOLLOW 0x400
+#endif
+#ifndef AT_NO_AUTOMOUNT
+#define AT_NO_AUTOMOUNT 0x800
+#endif
+#ifndef AT_EMPTY_PATH
+#define AT_EMPTY_PATH 0x1000
+#endif
+#ifndef AT_EACCESS
+#define AT_EACCESS 0x200
+#endif
+#ifndef AT_REMOVEDIR
+#define AT_REMOVEDIR 0x200
+#endif
+#ifndef AT_HANDLE_FID
+#define AT_HANDLE_FID 0x200
+#endif
+#ifndef AT_RECURSIVE
+#define AT_RECURSIVE 0x8000
+#endif
+#ifndef AT_STATX_SYNC_TYPE
+#define AT_STATX_SYNC_TYPE 0x6000
+#endif
+#ifndef AT_STATX_SYNC_AS_STAT
+#define AT_STATX_SYNC_AS_STAT 0x0000
+#endif
+#ifndef AT_STATX_FORCE_SYNC
+#define AT_STATX_FORCE_SYNC 0x2000
+#endif
+#ifndef AT_STATX_DONT_SYNC
+#define AT_STATX_DONT_SYNC 0x4000
+#endif
+#ifndef AT_RENAME_NOREPLACE
+#define AT_RENAME_NOREPLACE 0x0001
+#endif
+#ifndef AT_RENAME_EXCHANGE
+#define AT_RENAME_EXCHANGE 0x0002
+#endif
+#ifndef AT_RENAME_WHITEOUT
+#define AT_RENAME_WHITEOUT 0x0004
+#endif
+
+#ifndef F_SETLEASE
+#define F_SETLEASE (F_LINUX_SPECIFIC_BASE + 0)
+#endif
+#ifndef F_GETLEASE
+#define F_GETLEASE (F_LINUX_SPECIFIC_BASE + 1)
+#endif
+#ifndef F_NOTIFY
+#define F_NOTIFY (F_LINUX_SPECIFIC_BASE + 2)
+#endif
+#ifndef F_CANCELLK
+#define F_CANCELLK (F_LINUX_SPECIFIC_BASE + 5)
+#endif
+#ifndef F_DUPFD_CLOEXEC
+#define F_DUPFD_CLOEXEC (F_LINUX_SPECIFIC_BASE + 6)
+#endif
+#ifndef F_SETPIPE_SZ
+#define F_SETPIPE_SZ (F_LINUX_SPECIFIC_BASE + 7)
+#endif
+#ifndef F_GETPIPE_SZ
+#define F_GETPIPE_SZ (F_LINUX_SPECIFIC_BASE + 8)
+#endif
+#ifndef F_ADD_SEALS
+#define F_ADD_SEALS (F_LINUX_SPECIFIC_BASE + 9)
+#endif
+#ifndef F_GET_SEALS
+#define F_GET_SEALS (F_LINUX_SPECIFIC_BASE + 10)
+#endif
+#ifndef F_SEAL_SEAL
+#define F_SEAL_SEAL 0x0001
+#endif
+#ifndef F_SEAL_SHRINK
+#define F_SEAL_SHRINK 0x0002
+#endif
+#ifndef F_SEAL_GROW
+#define F_SEAL_GROW 0x0004
+#endif
+#ifndef F_SEAL_WRITE
+#define F_SEAL_WRITE 0x0008
+#endif
+#ifndef F_SEAL_FUTURE_WRITE
+#define F_SEAL_FUTURE_WRITE 0x0010
+#endif
+#ifndef F_SEAL_EXEC
+#define F_SEAL_EXEC 0x0020
+#endif
+#ifndef DN_ACCESS
+#define DN_ACCESS 0x00000001
+#endif
+#ifndef DN_MODIFY
+#define DN_MODIFY 0x00000002
+#endif
+#ifndef DN_CREATE
+#define DN_CREATE 0x00000004
+#endif
+#ifndef DN_DELETE
+#define DN_DELETE 0x00000008
+#endif
+#ifndef DN_RENAME
+#define DN_RENAME 0x00000010
+#endif
+#ifndef DN_ATTRIB
+#define DN_ATTRIB 0x00000020
+#endif
+#ifndef DN_MULTISHOT
+#define DN_MULTISHOT 0x80000000
+#endif
+
 /* struct file_handle and open_by_handle_at() are GNU extensions provided by glibc's fcntl.h
  * via bits/fcntl-linux.h. Android bionic does not expose them in its NDK headers, even though
  * the underlying syscalls exist. Provide the definitions here. */
