@@ -23,14 +23,12 @@
 #include "format-table.h"
 #include "glyph-util.h"
 #include "hashmap.h"
-#include "help-util.h"
 #include "hexdecoct.h"
 #include "image-policy.h"
 #include "json-util.h"
 #include "loop-util.h"
 #include "main-func.h"
 #include "mount-util.h"
-#include "options.h"
 #include "os-util.h"
 #include "pager.h"
 #include "parse-argument.h"
@@ -82,6 +80,13 @@ STATIC_DESTRUCTOR_REGISTER(arg_image, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_component, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_image_policy, image_policy_freep);
 STATIC_DESTRUCTOR_REGISTER(arg_transfer_source, freep);
+
+COMMAND(
+        "systemd-sysupdate\0",
+        "Update OS images.",
+        .man_pages = "systemd-sysupdate(8)\0",
+        .pager_flags = &arg_pager_flags,
+);
 
 #define CONTEXT_NULL                                              \
         (Context) {                                               \
@@ -1937,7 +1942,7 @@ static int verify_polkit(Context *context, sd_varlink *link, const char *action,
                         &s->polkit_registry);
 }
 
-VERB(verb_list, "list", "[VERSION]", VERB_ANY, 2, VERB_DEFAULT,
+VERB(verb_list, "list", "[VERSION]\0", VERB_ANY, 2, VERB_DEFAULT,
      "Show installed and available versions");
 static int verb_list(int argc, char *argv[], uintptr_t _data, void *userdata) {
         _cleanup_(context_done) Context context = CONTEXT_NULL;
@@ -2014,7 +2019,7 @@ static int verb_list(int argc, char *argv[], uintptr_t _data, void *userdata) {
         }
 }
 
-VERB(verb_features, "features", "[FEATURE]", VERB_ANY, 2, 0,
+VERB(verb_features, "features", "[FEATURE]\0", VERB_ANY, 2, 0,
      "Show optional features");
 static int verb_features(int argc, char *argv[], uintptr_t _data, void *userdata) {
         _cleanup_(context_done) Context context = CONTEXT_NULL;
@@ -2307,9 +2312,9 @@ static int context_enable_feature(
         return ret;
 }
 
-VERB(verb_enable_feature, "enable-feature", "FEATURE…", 1, VERB_ANY, 0,
+VERB(verb_enable_feature, "enable-feature", "FEATURE…\0", 1, VERB_ANY, 0,
      "Enable optional feature");
-VERB(verb_enable_feature, "disable-feature", "FEATURE…", 1, VERB_ANY, 0,
+VERB(verb_enable_feature, "disable-feature", "FEATURE…\0", 1, VERB_ANY, 0,
      "Disable optional feature");
 static int verb_enable_feature(int argc, char *argv[], uintptr_t _data, void *userdata) {
         bool enable = streq(argv[0], "enable-feature");
@@ -2754,7 +2759,7 @@ static int verb_update_impl(int argc, char **argv, UpdateActionFlags action_flag
         }
 }
 
-VERB(verb_update, "update", "[VERSION]", VERB_ANY, 2, 0,
+VERB(verb_update, "update", "[VERSION]\0", VERB_ANY, 2, 0,
      "Install new version now");
 static int verb_update(int argc, char *argv[], uintptr_t _data, void *userdata) {
         UpdateActionFlags flags = UPDATE_ACTION_INSTALL;
@@ -2765,7 +2770,7 @@ static int verb_update(int argc, char *argv[], uintptr_t _data, void *userdata) 
         return verb_update_impl(argc, argv, flags);
 }
 
-VERB(verb_acquire, "acquire", "[VERSION]", VERB_ANY, 2, 0,
+VERB(verb_acquire, "acquire", "[VERSION]\0", VERB_ANY, 2, 0,
      "Acquire (download) new version now");
 static int verb_acquire(int argc, char *argv[], uintptr_t _data, void *userdata) {
         return verb_update_impl(argc, argv, UPDATE_ACTION_ACQUIRE);
@@ -3158,9 +3163,9 @@ static int vl_method_list_targets(sd_varlink *link, sd_json_variant *parameters,
                         SD_JSON_BUILD_PAIR_VARIANT("targets", l));
 }
 
-VERB(verb_enable_component, "enable-component", "COMPONENT…", 1, VERB_ANY, 0,
+VERB(verb_enable_component, "enable-component", "COMPONENT…\0", 1, VERB_ANY, 0,
      "Enable component");
-VERB(verb_enable_component, "disable-component", "COMPONENT…", 1, VERB_ANY, 0,
+VERB(verb_enable_component, "disable-component", "COMPONENT…\0", 1, VERB_ANY, 0,
      "Disable component");
 static int verb_enable_component(int argc, char *argv[], uintptr_t _data, void *userdata) {
         bool enable = streq(argv[0], "enable-component");
@@ -3301,46 +3306,7 @@ static int verb_enable_component(int argc, char *argv[], uintptr_t _data, void *
         return 0;
 }
 
-static int help(void) {
-        _cleanup_(table_unrefp) Table *common_options = NULL, *options = NULL, *verbs = NULL;
-        int r;
-
-        r = verbs_get_help_table(&verbs);
-        if (r < 0)
-                return r;
-
-        r = option_parser_get_help_table(&common_options);
-        if (r < 0)
-                return r;
-
-        r = option_parser_get_help_table_group("Options", &options);
-        if (r < 0)
-                return r;
-
-        (void) table_sync_column_widths(0, verbs, common_options, options);
-
-        help_cmdline("[OPTIONS…] [VERSION]");
-        help_abstract("Update OS images.");
-
-        help_section("Commands");
-        r = table_print_or_warn(verbs);
-        if (r < 0)
-                return r;
-
-        r = table_print_or_warn(common_options);
-        if (r < 0)
-                return r;
-
-        help_section("Options");
-        r = table_print_or_warn(options);
-        if (r < 0)
-                return r;
-
-        help_man_page_reference("systemd-sysupdate", "8");
-        return 0;
-}
-
-VERB_COMMON_HELP_HIDDEN(help);
+VERB_COMMON_HELP_AUTO_HIDDEN();
 
 static int parse_argv(int argc, char *argv[], char ***remaining_args) {
         assert(argc >= 0);
@@ -3354,13 +3320,10 @@ static int parse_argv(int argc, char *argv[], char ***remaining_args) {
                 switch (c) {
 
                 OPTION_COMMON_HELP:
-                        return help();
+                        return command_print_help();
 
                 OPTION_COMMON_VERSION:
                         return version();
-
-                OPTION_GROUP("Options"):
-                        break;
 
                 OPTION('C', "component", "NAME",
                        "Select component to update"):
@@ -3496,6 +3459,9 @@ static int parse_argv(int argc, char *argv[], char ***remaining_args) {
                                 return r;
 
                         break;
+
+                OPTION_COMMON_INTROSPECT_CLI:
+                        return introspect_cli(arg_json_format_flags);
                 }
 
         if (arg_image && arg_root)

@@ -7,6 +7,7 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "sd-json.h"
 #include "sd-path.h"
 
 #include "acl-util.h"
@@ -32,7 +33,6 @@
 #include "extract-word.h"
 #include "fd-util.h"
 #include "fileio.h"
-#include "format-table.h"
 #include "format-util.h"
 #include "fs-util.h"
 #include "glob-util.h"
@@ -47,7 +47,6 @@
 #include "mount-util.h"
 #include "mountpoint-util.h"
 #include "offline-passwd.h"
-#include "options.h"
 #include "pager.h"
 #include "parse-argument.h"
 #include "parse-util.h"
@@ -232,6 +231,7 @@ static char *arg_root = NULL;
 static char *arg_image = NULL;
 static const char *arg_replace = NULL;
 static ImagePolicy *arg_image_policy = NULL;
+static LabelContext *arg_label_context = NULL;
 
 #define MAX_DEPTH 256
 
@@ -248,6 +248,15 @@ STATIC_DESTRUCTOR_REGISTER(arg_exclude_prefixes, strv_freep);
 STATIC_DESTRUCTOR_REGISTER(arg_root, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_image, freep);
 STATIC_DESTRUCTOR_REGISTER(arg_image_policy, image_policy_freep);
+STATIC_DESTRUCTOR_REGISTER(arg_label_context, mac_label_context_freep);
+
+COMMAND(
+        "systemd-tmpfiles\0",
+        "Create, delete, and clean up files and directories.",
+        .argspec = "[CONFIGURATION FILE…]\0",
+        .man_pages = "systemd-tmpfiles(8)\0",
+        .pager_flags = &arg_pager_flags,
+);
 
 static const char *const creation_mode_verb_table[_CREATION_MODE_MAX] = {
         [CREATION_NORMAL]   = "Created",
@@ -1062,7 +1071,7 @@ shortcut:
         }
 
         log_debug("Relabelling \"%s\"", path);
-        return label_fix_full(fd, /* inode_path= */ NULL, /* label_path= */ path, 0);
+        return label_fix_full(fd, /* inode_path= */ NULL, /* label_path= */ path, /* flags= */ 0, arg_label_context);
 }
 
 static int path_open_parent_safe(const char *path, bool allow_failure) {
@@ -2070,7 +2079,7 @@ static int create_file(
                 return dir_fd;
 
         WITH_UMASK(0000) {
-                mac_selinux_create_file_prepare(path, S_IFREG);
+                mac_selinux_create_file_prepare(path, S_IFREG, arg_label_context);
                 fd = RET_NERRNO(openat(dir_fd, bn, O_CREAT|O_EXCL|O_NOFOLLOW|O_NONBLOCK|O_CLOEXEC|O_WRONLY|O_NOCTTY, i->mode));
                 mac_selinux_create_file_clear();
         }
@@ -2153,7 +2162,7 @@ static int truncate_file(
                 creation = CREATION_NORMAL; /* Didn't work without O_CREATE, try again with */
 
                 WITH_UMASK(0000) {
-                        mac_selinux_create_file_prepare(path, S_IFREG);
+                        mac_selinux_create_file_prepare(path, S_IFREG, arg_label_context);
                         fd = RET_NERRNO(openat(dir_fd, bn, O_CREAT|O_NOFOLLOW|O_NONBLOCK|O_CLOEXEC|O_WRONLY|O_NOCTTY, i->mode));
                         mac_selinux_create_file_clear();
                 }
@@ -2314,7 +2323,7 @@ static int create_directory_or_subvolume(
                 log_action("Would create", "Creating", "%s directory \"%s\"", path);
                 if (!arg_dry_run)
                         WITH_UMASK(0000)
-                                r = mkdirat_label(pfd, bn, mode);
+                                r = mkdirat_label(pfd, bn, mode, arg_label_context);
         }
 
         if (arg_dry_run)
@@ -2501,7 +2510,7 @@ static int create_device(
                 return dfd;
 
         WITH_UMASK(0000) {
-                mac_selinux_create_file_prepare(i->path, file_type);
+                mac_selinux_create_file_prepare(i->path, file_type, arg_label_context);
                 r = RET_NERRNO(mknodat(dfd, bn, i->mode | file_type, i->major_minor));
                 mac_selinux_create_file_clear();
         }
@@ -2532,7 +2541,7 @@ static int create_device(
                         fd = safe_close(fd);
 
                         WITH_UMASK(0000) {
-                                mac_selinux_create_file_prepare(i->path, file_type);
+                                mac_selinux_create_file_prepare(i->path, file_type, arg_label_context);
                                 r = mknodat_atomic(dfd, bn, i->mode | file_type, i->major_minor);
                                 mac_selinux_create_file_clear();
                         }
@@ -2543,7 +2552,7 @@ static int create_device(
                                 if (r < 0)
                                         return log_error_errno(r, "rm -rf %s failed: %m", i->path);
 
-                                mac_selinux_create_file_prepare(i->path, file_type);
+                                mac_selinux_create_file_prepare(i->path, file_type, arg_label_context);
                                 r = RET_NERRNO(mknodat(dfd, bn, i->mode | file_type, i->major_minor));
                                 mac_selinux_create_file_clear();
                         }
@@ -2611,7 +2620,7 @@ static int create_fifo(Context *c, Item *i) {
                 return pfd;
 
         WITH_UMASK(0000) {
-                mac_selinux_create_file_prepare(i->path, S_IFIFO);
+                mac_selinux_create_file_prepare(i->path, S_IFIFO, arg_label_context);
                 r = RET_NERRNO(mkfifoat(pfd, bn, i->mode));
                 mac_selinux_create_file_clear();
         }
@@ -2636,7 +2645,7 @@ static int create_fifo(Context *c, Item *i) {
                         fd = safe_close(fd);
 
                         WITH_UMASK(0000) {
-                                mac_selinux_create_file_prepare(i->path, S_IFIFO);
+                                mac_selinux_create_file_prepare(i->path, S_IFIFO, arg_label_context);
                                 r = mkfifoat_atomic(pfd, bn, i->mode);
                                 mac_selinux_create_file_clear();
                         }
@@ -2645,7 +2654,7 @@ static int create_fifo(Context *c, Item *i) {
                                 if (r < 0)
                                         return log_error_errno(r, "rm -rf %s failed: %m", i->path);
 
-                                mac_selinux_create_file_prepare(i->path, S_IFIFO);
+                                mac_selinux_create_file_prepare(i->path, S_IFIFO, arg_label_context);
                                 r = RET_NERRNO(mkfifoat(pfd, bn, i->mode));
                                 mac_selinux_create_file_clear();
                         }
@@ -2730,7 +2739,7 @@ static int create_symlink(Context *c, Item *i) {
         if (pfd < 0)
                 return pfd;
 
-        mac_selinux_create_file_prepare(i->path, S_IFLNK);
+        mac_selinux_create_file_prepare(i->path, S_IFLNK, arg_label_context);
         r = RET_NERRNO(symlinkat(i->argument, pfd, bn));
         mac_selinux_create_file_clear();
 
@@ -2766,13 +2775,13 @@ static int create_symlink(Context *c, Item *i) {
 
                 fd = safe_close(fd);
 
-                r = symlinkat_atomic_full(i->argument, pfd, bn, SYMLINK_LABEL);
+                r = symlinkat_atomic_full_label(i->argument, pfd, bn, SYMLINK_LABEL, arg_label_context);
                 if (IN_SET(r, -EISDIR, -EEXIST, -ENOTEMPTY)) {
                         r = rm_rf_child(pfd, bn, REMOVE_PHYSICAL);
                         if (r < 0)
                                 return log_error_errno(r, "rm -rf %s failed: %m", i->path);
 
-                        r = symlinkat_atomic_full(i->argument, pfd, bn, SYMLINK_LABEL);
+                        r = symlinkat_atomic_full_label(i->argument, pfd, bn, SYMLINK_LABEL, arg_label_context);
                 }
                 if (r < 0)
                         return log_error_errno(r, "symlink(%s, %s) failed: %m", i->argument, i->path);
@@ -3060,7 +3069,7 @@ static int mkdir_parents_rm_if_wrong_type(mode_t child_mode, const char *path) {
                 if (r == -ENOENT) {
                         if (!arg_dry_run) {
                                 WITH_UMASK(0000)
-                                        r = mkdirat_label(parent_fd, t, 0755);
+                                        r = mkdirat_label(parent_fd, t, 0755, arg_label_context);
                                 if (r < 0) {
                                         _cleanup_free_ char *parent_name = NULL;
 
@@ -3101,7 +3110,7 @@ static int mkdir_parents_item(Item *i, mode_t child_mode) {
         } else
                 WITH_UMASK(0000)
                         if (!arg_dry_run)
-                                (void) mkdir_parents_label(i->path, 0755);
+                                (void) mkdirat_parents_label(AT_FDCWD, i->path, 0755, arg_label_context);
 
         return 0;
 }
@@ -4914,46 +4923,6 @@ static int exclude_default_prefixes(void) {
         return 0;
 }
 
-static int help(void) {
-        _cleanup_free_ char *link = NULL;
-        _cleanup_(table_unrefp) Table *cmds = NULL, *opts = NULL;
-        int r;
-
-        r = terminal_urlify_man("systemd-tmpfiles", "8", &link);
-        if (r < 0)
-                return log_oom();
-
-        r = option_parser_get_help_table(&cmds);
-        if (r < 0)
-                return r;
-
-        r = option_parser_get_help_table_group("Options", &opts);
-        if (r < 0)
-                return r;
-
-        (void) table_sync_column_widths(0, cmds, opts);
-
-        printf("%s COMMAND [OPTIONS...] [CONFIGURATION FILE...]\n"
-               "\n%sCreate, delete, and clean up files and directories.%s\n"
-               "\nCommands:\n",
-               program_invocation_short_name,
-               ansi_highlight(),
-               ansi_normal());
-
-        r = table_print_or_warn(cmds);
-        if (r < 0)
-                return r;
-
-        printf("\nOptions:\n");
-
-        r = table_print_or_warn(opts);
-        if (r < 0)
-                return r;
-
-        printf("\nSee the %s for details.\n", link);
-        return 0;
-}
-
 static int parse_argv(int argc, char *argv[], char ***ret_args) {
         int r;
 
@@ -4964,6 +4933,8 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
 
         FOREACH_OPTION_OR_RETURN(c, &opts)
                 switch (c) {
+
+                OPTION_GROUP("Commands"): {}
 
                 OPTION_LONG("create", NULL, "Create and adjust files and directories"):
                         arg_operation |= OPERATION_CREATE;
@@ -4992,7 +4963,7 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
                         break;
 
                 OPTION_COMMON_HELP:
-                        return help();
+                        return command_print_help();
 
                 OPTION_COMMON_VERSION:
                         return version();
@@ -5072,6 +5043,9 @@ static int parse_argv(int argc, char *argv[], char ***ret_args) {
                 OPTION_COMMON_NO_PAGER:
                         arg_pager_flags |= PAGER_DISABLE;
                         break;
+
+                OPTION_COMMON_INTROSPECT_CLI:
+                        return introspect_cli(SD_JSON_FORMAT_OFF);
                 }
 
         char **args = option_parser_get_args(&opts);
@@ -5405,6 +5379,10 @@ static int run(int argc, char *argv[]) {
                 if (!arg_root)
                         return log_oom();
         }
+
+        r = mac_label_context_new(arg_root, &arg_label_context);
+        if (r < 0)
+                return log_error_errno(r, "Failed to initialize label context for root '%s': %m", arg_root);
 
         c.items = ordered_hashmap_new(&item_array_hash_ops);
         c.globs = ordered_hashmap_new(&item_array_hash_ops);

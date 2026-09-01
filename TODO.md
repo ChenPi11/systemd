@@ -127,6 +127,19 @@ SPDX-License-Identifier: LGPL-2.1-or-later
 
 ## Features
 
+- sysupdate: run things in a loop always, to deal with stepping stones, and
+  adding new transfer files. finish, when stable.
+
+- sysupdate: add flag field for features and components, to require a restart
+  of the update loop once they have been updated.
+
+- confext/sysext: add policy file concept: json files that encode for rleevant
+  confext/sysext ddis rules when to enable them, i.e. version checks. also use
+  it for the garbage collector
+
+- confext/sysext: mark system as refusing refreshes until reboot if
+  confext/sysext says it require a reboot
+
 - cryptsetup: add a new switch which makes it wait for the keyfile to
   appear. use inotify/mount watching for that. usecase: system waits at boot
   for some key to be supplied, possibly delivered via confext or so. This could
@@ -1262,8 +1275,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
 - in pid1: include ExecStart= cmdlines (and other Exec*= cmdlines) in polkit
   request, so that policies can match against command lines.
 
-- in sd-id128: also parse UUIDs in RFC4122 URN syntax (i.e. chop off urn:uuid: prefix)
-
 - in sd-stub: optionally add support for a new PE section .keyring or so that
   contains additional certificates to include in the Mok keyring, extending
   what shim might have placed there. why? let's say I use "ukify" to build +
@@ -1776,8 +1787,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
 - Merge systemd-creds options --uid= (which accepts user names) and --user.
 
 - merge unit_kill_common() and unit_kill_context()
-
-- MessageQueueMessageSize= (and suchlike) should use parse_iec_size().
 
 - mount /tmp/ and /var/tmp with a uidmap applied that blocks out "nobody" user
   among other things such as dynamic uid ranges for containers and so on. That
@@ -2803,10 +2812,6 @@ SPDX-License-Identifier: LGPL-2.1-or-later
   - reimport udev db after MOVE events for devices without dev_t
   - re-enable ProtectClock= once only cgroupsv2 is supported.
     See f562abe2963bad241d34e0b308e48cf114672c84.
-
-- **udevadm: to make symlink querying with udevadm nicer:**
-  - do not enable the pager for queries like 'udevadm info -q symlink -r'
-  - add mode with newlines instead of spaces (for grep)?
 
 - udevd: extend memory pressure logic: also kill any idle worker processes
 
